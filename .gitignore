@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/dedit
+dedit.so
+dedit.dylib
+dedit.dll
+dedit.a
+dedit.lib
+dedit-test-*
+*.exe
+*.o
+*.obj
+*.lst
