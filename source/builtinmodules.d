@@ -5,6 +5,6 @@ import dedit.ModuleInformation;
 import dedit.modules.d.mod;
 
 
-dedit.ModuleInformation.ModuleInformation[] builtinModules = [
+static const dedit.ModuleInformation.ModuleInformation[] builtinModules = [
     dedit.modules.d.mod.ModuleInformation
 ];

@@ -7,10 +7,14 @@ import gtk.TextTagTable;
 
 class Buffer {
 
-    private TextBuffer textBuffer;
-    private string originalFileName;
+private {
+     TextBuffer textBuffer;
+     string originalFileName;
 
-    public this(string filename) {
+     
+}
+
+     this(string filename) {
 
           auto f = new std.stdio.File(filename);
 
@@ -23,13 +27,10 @@ class Buffer {
           textBuffer.setText(cast(string)buff.idup);
     };
 
-    gtk.Menu.Menu getMenuWidget() {
-        return null;
-    };
+    TextBuffer getTextBuffer() {
+        return textBuffer;
+    }
 
-    gtk.Widget.Widget getMainWidget() {
-        return null;
-    };
 
         void close() {};
 }
