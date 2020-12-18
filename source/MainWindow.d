@@ -1,19 +1,27 @@
 module dedit.MainWindow;
 
-private import gtk.Window;
-private import gtk.Label;
-private import gtk.Box;
-private import gtk.TreeView;
-private import gtk.Frame;
-private import gtk.ScrolledWindow;
-private import gtk.Paned;
+import gtk.Window;
+import gtk.Label;
+import gtk.Box;
+import gtk.TreeView;
+import gtk.Frame;
+import gtk.ScrolledWindow;
+import gtk.Paned;
+import gtk.Widget;
 
-private import gtk.c.types;
 
-class MainWindow : Window
+import gtk.c.types;
+
+import dedit.MainWindowMainMenu;
+
+class MainWindow
 {
 
-    // MainWindowMainMenu main_menu;
+    private {
+
+        Window window;
+
+    MainWindowMainMenu main_menu;
 
     Box root_box;
 
@@ -32,15 +40,16 @@ class MainWindow : Window
 
     TreeView files_view;
         ScrolledWindow files_view_sw;
-
+}
 
     this()
     {
-        super("code editor");
-        //        main_menu = new MainWindowMainMenu(this);
+        window = new Window ("code editor");
+
+        main_menu= new MainWindowMainMenu(this);
 
         root_box = new Box(GtkOrientation.VERTICAL, 0);
-        add(root_box);
+        window.add(root_box);
 
         main_paned = new Paned(GtkOrientation.HORIZONTAL);
         secondary_paned = new Paned(GtkOrientation.HORIZONTAL);
@@ -61,5 +70,9 @@ class MainWindow : Window
         root_box.packStart(main_paned, true, true, 0);
 
     }
+
+    Widget getWidget() {
+        return window;
+    };
 
 }

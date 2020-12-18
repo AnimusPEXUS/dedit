@@ -52,6 +52,8 @@ class DLangBufferControls : BufferControlsInterface {
         return viewMenu;
     }    ;
 
+    void close() {};
+
 }
 
 BufferControlsInterface createBufferControlsForBuffer(Buffer buff, string name) {

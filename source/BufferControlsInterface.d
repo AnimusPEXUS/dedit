@@ -12,5 +12,6 @@ interface BufferControlsInterface {
     Widget getBufferView();
     Widget getMainMenu();
     Widget getViewMenu();
-    /* void close(); // TODO: possibly this is not needed and object can be GCed */
+
+    void close(); //
 };

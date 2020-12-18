@@ -3,6 +3,10 @@ module dedit.main;
 import gtk.Application;
 import gio.Application;
 
+import gtk.Widget;
+import gtk.Window;
+
+
 import dedit.MainWindow;
 
 int main(string[] args)
@@ -15,8 +19,12 @@ int main(string[] args)
 
     app.addOnActivate(delegate void(gio.Application.Application gioapp) {
         auto w = new MainWindow();
-        app.addWindow(w);
-        w.showAll();
+
+        auto widget = w.getWidget();
+        auto window = cast(Window) widget;
+
+        app.addWindow(window);
+        window.showAll();
     });
 
     return app.run(args);
