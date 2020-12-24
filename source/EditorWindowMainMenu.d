@@ -1,4 +1,4 @@
-module dedit.MainWindowMainMenu;
+module dedit.EditorWindowMainMenu;
 
 
 import std.stdio;
@@ -10,20 +10,20 @@ import gtk.MenuBar;
 import gtk.Menu;
 import gtk.MenuItem;
 
-import dedit.MainWindow;
+import dedit.EditorWindow;
 
-class MainWindowMainMenu
+class EditorWindowMainMenu
 {
     private {
 
         MenuBar menuBar;
 
-        MainWindow main_window;
+        EditorWindow main_window;
 
         MenuItem menu_special;
     }
 
-    this(MainWindow main_window) {
+    this(EditorWindow main_window) {
 
         assert(main_window !is null);
 

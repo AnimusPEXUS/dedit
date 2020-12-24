@@ -12,7 +12,7 @@ import gtk.Window;
 
 
 
-import dedit.MainWindow;
+import dedit.EditorWindow;
 import dedit.Buffer;
 
 
@@ -25,7 +25,7 @@ class Controller {
 
         string settingsPath;
 
-        MainWindow[] windows;
+        EditorWindow[] windows;
     }
 
     void saveState() {
@@ -83,8 +83,8 @@ class Controller {
             return app.run(args);
     }
 
-    MainWindow createNewCleanWindow() {
-        auto w = new MainWindow();
+    EditorWindow createNewCleanWindow() {
+        auto w = new EditorWindow();
 
         auto widget = w.getWidget();
         auto window = cast(Window) widget;
@@ -94,7 +94,7 @@ class Controller {
         return w;
     }
 
-    MainWindow createIfNotExistsAndReturnWindowForProject(string project_name) {
+    EditorWindow createIfNotExistsAndReturnWindowForProject(string project_name) {
             return null;
     }
 

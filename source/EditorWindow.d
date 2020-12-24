@@ -1,4 +1,4 @@
-module dedit.MainWindow;
+module dedit.EditorWindow;
 
 import std.stdio;
 
@@ -16,17 +16,17 @@ import gtk.TreeViewColumn;
 
 import gtk.c.types;
 
-import dedit.MainWindowMainMenu;
+import dedit.EditorWindowMainMenu;
 import dedit.Buffer;
 
-class MainWindow
+class EditorWindow
 {
 
     private {
 
         Window window;
 
-        MainWindowMainMenu main_menu;
+        EditorWindowMainMenu main_menu;
 
         Box root_box;
 
@@ -54,13 +54,12 @@ class MainWindow
     {
         window = new Window ("code editor");
 
-        main_menu= new MainWindowMainMenu(this);
+        main_menu= new EditorWindowMainMenu(this);
 
         root_box = new Box(GtkOrientation.VERTICAL, 0);
         window.add(root_box);
 
         main_paned = new Paned(GtkOrientation.HORIZONTAL);
-        secondary_paned = new Paned(GtkOrientation.HORIZONTAL);
         left_paned = new Paned(GtkOrientation.VERTICAL);
 
         left_upper_frame = new Frame(cast(string) null);
@@ -68,29 +67,35 @@ class MainWindow
         main_frame = new Frame(cast(string) null);
 
         main_paned.add1(left_paned);
-        main_paned.add2(secondary_paned);
-
-        secondary_paned.add1(main_frame);
+        main_paned.add2(new Label("todo 2"));
 
         left_paned.add1(left_upper_frame);
-        left_paned.add2(left_lower_frame);
+        left_paned.add2(new Label("todo"));
 
         root_box.packStart(main_menu.getWidget(), false, true, 0);
         root_box.packStart(main_paned, true, true, 0);
 
         buffers_view = new TreeView();
         setupBufferView(buffers_view);
-        buffers_view_sw = new ScrolledWindow();
-        buffers_view_sw.add(buffers_view);
+        /* buffers_view_sw = new ScrolledWindow();
+        buffers_view_sw.add(buffers_view); */
+        left_upper_frame.add(buffers_view);
 
     }
 
     private void setupBufferView(TreeView tw) {
-                {
+        {
             auto rend = new CellRendererText();
             auto col = new TreeViewColumn("File Base Name",rend, "text",0);
             tw.insertColumn(col,0);
         }
+
+        {
+            auto rend = new CellRendererText();
+            auto col = new TreeViewColumn("Changed?",rend, "text",0);
+            tw.insertColumn(col,1);
+        }
+
     }
 
     Widget getWidget() {
