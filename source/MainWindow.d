@@ -1,5 +1,7 @@
 module dedit.MainWindow;
 
+import std.stdio;
+
 import gtk.Window;
 import gtk.Label;
 import gtk.Box;
@@ -8,11 +10,14 @@ import gtk.Frame;
 import gtk.ScrolledWindow;
 import gtk.Paned;
 import gtk.Widget;
+import gtk.CellRendererText;
+import gtk.TreeViewColumn;
 
 
 import gtk.c.types;
 
 import dedit.MainWindowMainMenu;
+import dedit.Buffer;
 
 class MainWindow
 {
@@ -21,26 +26,29 @@ class MainWindow
 
         Window window;
 
-    MainWindowMainMenu main_menu;
+        MainWindowMainMenu main_menu;
 
-    Box root_box;
+        Box root_box;
 
-    Paned main_paned;
-    Paned secondary_paned;
-    Paned left_paned;
+        Paned main_paned;
+        Paned secondary_paned;
+        Paned left_paned;
 
-    Frame left_upper_frame;
-    Frame left_lower_frame;
+        Frame left_upper_frame;
+        Frame left_lower_frame;
 
-    Frame main_frame;
-    Box main_view_box;
+        Frame main_frame;
+        Box main_view_box;
 
-    TreeView buffers_view;
-    ScrolledWindow buffers_view_sw;
+        TreeView buffers_view;
+        ScrolledWindow buffers_view_sw;
 
-    TreeView files_view;
+        TreeView files_view;
         ScrolledWindow files_view_sw;
-}
+
+        Buffer[] buffers;
+
+        }
 
     this()
     {
@@ -67,8 +75,22 @@ class MainWindow
         left_paned.add1(left_upper_frame);
         left_paned.add2(left_lower_frame);
 
+        root_box.packStart(main_menu.getWidget(), false, true, 0);
         root_box.packStart(main_paned, true, true, 0);
 
+        buffers_view = new TreeView();
+        setupBufferView(buffers_view);
+        buffers_view_sw = new ScrolledWindow();
+        buffers_view_sw.add(buffers_view);
+
+    }
+
+    private void setupBufferView(TreeView tw) {
+                {
+            auto rend = new CellRendererText();
+            auto col = new TreeViewColumn("File Base Name",rend, "text",0);
+            tw.insertColumn(col,0);
+        }
     }
 
     Widget getWidget() {

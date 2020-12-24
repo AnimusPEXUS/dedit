@@ -6,12 +6,12 @@ import gtk.Menu;
 
 import dedit.ModuleView;
 import dedit.Buffer;
-import dedit.BufferControlsInterface;
 
 struct ModuleInformation
 {
     string ModuleName;
     string[] SupportedExtensions;
     string[] SupportedMIMETypes;
-    BufferControlsInterface createBufferControlsForBuffer(Buffer buff, string name);
+    Widget createViewForBuffer(Buffer buff);
+    Menu createMenuForBuffer(Buffer buff);
 }
