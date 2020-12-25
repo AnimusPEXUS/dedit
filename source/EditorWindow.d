@@ -12,6 +12,8 @@ import gtk.Paned;
 import gtk.Widget;
 import gtk.CellRendererText;
 import gtk.TreeViewColumn;
+import gtk.ListStore;
+import gtk.TreeIter;
 
 
 import gtk.c.types;
@@ -42,6 +44,7 @@ class EditorWindow
 
         TreeView buffers_view;
         ScrolledWindow buffers_view_sw;
+        ListStore buffers_view_list_store;
 
         TreeView files_view;
         ScrolledWindow files_view_sw;
@@ -52,7 +55,7 @@ class EditorWindow
 
     this()
     {
-        window = new Window ("code editor");
+        window = new Window ("Editor Window");
 
         main_menu= new EditorWindowMainMenu(this);
 
@@ -62,24 +65,31 @@ class EditorWindow
         main_paned = new Paned(GtkOrientation.HORIZONTAL);
         left_paned = new Paned(GtkOrientation.VERTICAL);
 
-        left_upper_frame = new Frame(cast(string) null);
-        left_lower_frame = new Frame(cast(string) null);
-        main_frame = new Frame(cast(string) null);
 
         main_paned.add1(left_paned);
         main_paned.add2(new Label("todo 2"));
 
-        left_paned.add1(left_upper_frame);
-        left_paned.add2(new Label("todo"));
-
         root_box.packStart(main_menu.getWidget(), false, true, 0);
         root_box.packStart(main_paned, true, true, 0);
 
+        // buffers
+        buffers_view_list_store = new ListStore(cast(GType[])[GType.STRING,GType.STRING]);
         buffers_view = new TreeView();
+        buffers_view.setModel(buffers_view_list_store);
         setupBufferView(buffers_view);
-        /* buffers_view_sw = new ScrolledWindow();
-        buffers_view_sw.add(buffers_view); */
-        left_upper_frame.add(buffers_view);
+        buffers_view_sw = new ScrolledWindow();
+        buffers_view_sw.add(buffers_view);
+
+        left_paned.add1(buffers_view_sw);
+        left_paned.add2(new Label("todo"));
+
+        /* {
+        auto itr = new TreeIter();
+        buffers_view_list_store.append( itr);
+        buffers_view_list_store.set(itr, cast(int[]) [0,1], cast(string[]) [ "test1", "test2"]);
+    } */
+
+
 
     }
 
@@ -87,12 +97,14 @@ class EditorWindow
         {
             auto rend = new CellRendererText();
             auto col = new TreeViewColumn("File Base Name",rend, "text",0);
+            col.setResizable(true);
             tw.insertColumn(col,0);
         }
 
         {
             auto rend = new CellRendererText();
-            auto col = new TreeViewColumn("Changed?",rend, "text",0);
+            auto col = new TreeViewColumn("Changed?",rend, "text",1);
+            col.setResizable(true);
             tw.insertColumn(col,1);
         }
 
