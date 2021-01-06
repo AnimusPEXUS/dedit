@@ -13,6 +13,7 @@ import gtk.Window;
 
 
 import dedit.EditorWindow;
+import dedit.ProjectsWindow;
 import dedit.Buffer;
 
 
@@ -71,10 +72,14 @@ class Controller {
             app.addOnActivate(
                     delegate void(gio.Application.Application gioapp) {
 
-                        auto w = createNewCleanWindow();
+                        auto w = new ProjectsWindow(this);
 
-                        auto widget = w.getWidget();
+                        /* auto w = createNewCleanWindow(); */
+
+                        auto widget = w.getWindow();
                         auto window = cast(Window) widget;
+
+                        window.showAll();
 
                         app.addWindow(window);
                     }
@@ -83,7 +88,7 @@ class Controller {
             return app.run(args);
     }
 
-    EditorWindow createNewCleanWindow() {
+    /* EditorWindow createNewCleanWindow() {
         auto w = new EditorWindow();
 
         auto widget = w.getWidget();
@@ -96,7 +101,7 @@ class Controller {
 
     EditorWindow createIfNotExistsAndReturnWindowForProject(string project_name) {
             return null;
-    }
+    } */
 
 
 
