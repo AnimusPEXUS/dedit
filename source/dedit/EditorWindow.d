@@ -15,11 +15,12 @@ import gtk.TreeViewColumn;
 import gtk.ListStore;
 import gtk.TreeIter;
 
-
 import gtk.c.types;
 
 import dedit.EditorWindowMainMenu;
 import dedit.Buffer;
+
+import dutils.gtkcollection.FileTreeView;
 
 class EditorWindow
 {
@@ -51,6 +52,8 @@ class EditorWindow
 
         Buffer[] buffers;
 
+        FileTreeView filebrowser;
+
         }
 
     this()
@@ -80,8 +83,10 @@ class EditorWindow
         buffers_view_sw = new ScrolledWindow();
         buffers_view_sw.add(buffers_view);
 
+        filebrowser = new FileTreeView();
+
         left_paned.add1(buffers_view_sw);
-        left_paned.add2(new Label("todo"));
+        left_paned.add2(filebrowser.getWidget());
 
         /* {
         auto itr = new TreeIter();
