@@ -17,16 +17,21 @@ import gtk.TreeIter;
 
 import gtk.c.types;
 
+import dutils.gtkcollection.FileTreeView;
+
 import dedit.EditorWindowMainMenu;
 import dedit.Buffer;
+import dedit.Controller;
 
-import dutils.gtkcollection.FileTreeView;
+// TODO: ensure window destroyed on close
 
 class EditorWindow
 {
 
     private
     {
+        Controller controller;
+        string project_name;
 
         Window window;
 
@@ -57,9 +62,13 @@ class EditorWindow
 
     }
 
-    this()
+    this(Controller controller, string project_name)
     {
-        window = new Window("Editor Window");
+        this.controller = controller;
+        this.project_name = project_name;
+
+        window = new Window(project_name ~ ":: dedit");
+        window.addOnDestroy(&windowOnDestroy);
 
         main_menu = new EditorWindowMainMenu(this);
 
@@ -98,6 +107,11 @@ class EditorWindow
 
     }
 
+    void windowOnDestroy(Widget w)
+    {
+        controller.editorWindowIsClosed(project_name);
+    }
+
     private void setupBufferView(TreeView tw)
     {
         {
@@ -113,12 +127,32 @@ class EditorWindow
             col.setResizable(true);
             tw.insertColumn(col, 1);
         }
+    }
 
+    void setProject(string name)
+    {
+        // TODO: todo
     }
 
     Widget getWidget()
     {
         return window;
-    };
+    }
+
+    void show()
+    {
+        window.showAll();
+    }
+
+    void pop()
+    {
+        window.present();
+    }
+
+    void showAndPop()
+    {
+        show();
+        pop();
+    }
 
 }

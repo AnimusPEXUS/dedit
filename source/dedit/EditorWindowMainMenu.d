@@ -46,11 +46,11 @@ class EditorWindowMainMenu
     MenuBar getWidget()
     {
         return menuBar;
-    };
+    }
 
     void setSpecialMenuItem(string label, Menu newSubmenu)
     {
         menu_special.setLabel(label);
         menu_special.setSubmenu(newSubmenu);
-    };
+    }
 }

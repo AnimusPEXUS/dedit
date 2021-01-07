@@ -4,10 +4,14 @@ import std.stdio;
 import std.path;
 
 import gtk.Window;
-import gtk.TreeView;
-import gtk.CellRendererText;
-import gtk.TreeViewColumn;
+import gtk.TreeModelIF;
 import gtk.ListStore;
+import gtk.TreeView;
+import gtk.TreeViewColumn;
+import gtk.TreeIter;
+import gtk.TreePath;
+import gtk.TreeSelection;
+import gtk.CellRendererText;
 import gtk.ScrolledWindow;
 import gtk.Button;
 import gtk.ButtonBox;
@@ -17,6 +21,7 @@ import gtk.Label;
 import gtk.FileChooserDialog;
 
 import dedit.Controller;
+import dedit.EditorWindow;
 
 class ProjectsWindow
 {
@@ -24,8 +29,12 @@ class ProjectsWindow
     private
     {
         Window win;
-        TreeView tw;
-        ListStore tw_ls;
+        TreeView tv;
+        ListStore tv_ls;
+        Entry entry_name;
+        Entry entry_path;
+
+        /* Button btn_open; */
 
         Controller controller;
 
@@ -37,28 +46,33 @@ class ProjectsWindow
 
         win = new Window("dedit :: project mgr");
 
-        tw_ls = new ListStore(cast(GType[])[GType.STRING, GType.STRING]);
+        tv_ls = new ListStore(cast(GType[])[GType.STRING, GType.STRING]);
 
-        tw = new TreeView();
-        tw.setModel(tw_ls);
+        tv = new TreeView();
+        tv.setModel(tv_ls);
+        {
+            auto sel = tv.getSelection();
+            sel.addOnChanged(&onSelectionChanged);
+        }
         {
             {
                 auto rend = new CellRendererText();
                 auto col = new TreeViewColumn("Project Name", rend, "text", 0);
                 col.setResizable(true);
-                tw.appendColumn(col);
+                tv.appendColumn(col);
             }
 
             {
                 auto rend = new CellRendererText();
                 auto col = new TreeViewColumn("Path (Directory)", rend, "text", 1);
                 col.setResizable(true);
-                tw.appendColumn(col);
+                tv.appendColumn(col);
             }
         }
+        tv.addOnRowActivated(&onRowActivated);
 
         auto sw = new ScrolledWindow();
-        sw.add(tw);
+        sw.add(tv);
 
         auto box = new Box(GtkOrientation.VERTICAL, 0);
         box.setSpacing(5);
@@ -81,10 +95,10 @@ class ProjectsWindow
         auto btn_delete = new Button("Remove from List");
         hb.packStart(btn_delete, false, true, 0);
 
-        auto entry_name = new Entry();
+        entry_name = new Entry();
         hb.packStart(entry_name, false, true, 0);
 
-        auto entry_path = new Entry();
+        entry_path = new Entry();
         hb.packStart(entry_path, true, true, 0);
 
         auto btn_browse = new Button("Browse..");
@@ -93,9 +107,11 @@ class ProjectsWindow
 
         auto btn_add = new Button("Add / Set");
         hb.packStart(btn_add, false, true, 0);
+        btn_add.addOnClicked(&onClickedAdd);
 
         auto btn_open = new Button("Open Editor Window for Project..");
         hb.packStart(btn_open, false, true, 0);
+        btn_open.addOnClicked(&onClickedOpen);
 
     }
 
@@ -122,7 +138,83 @@ class ProjectsWindow
         d.destroy();
     }
 
-    /* void show() {
-        win.showAll();
-    } */
+    void onClickedAdd(Button btn)
+    {
+        // TODO: add checks
+        string name = entry_name.getText();
+        string path = entry_path.getText();
+        auto iter = new TreeIter();
+        tv_ls.append(iter);
+        tv_ls.set(iter, [0, 1], [name, path]);
+
+        controller.project_paths[name] = path;
+    }
+
+    void onClickedRemove(Button btn)
+    {
+        // TODO: add checks
+        string name = entry_name.getText();
+        auto iter = new TreeIter();
+
+        // TODO: todo
+
+        if (name in controller.project_paths)
+        {
+            controller.project_paths.remove(name);
+        }
+    }
+
+    void onClickedOpen(Button btn)
+    {
+        string name = entry_name.getText();
+        auto m = tv.getModel();
+        bool found = false;
+
+        {
+            TreeIter chi;
+            bool res = m.iterChildren(chi, null);
+            while (res)
+            {
+
+                auto v = m.getValue(chi, 0, null);
+                if (v.getString() == name)
+                {
+                    found = true;
+                    break;
+                }
+                res = m.iterNext(chi);
+            }
+        }
+        if (!found)
+        {
+            // TODO: show message
+            return;
+        }
+        auto w = controller.createNewOrGetExistingEditorWindow(name);
+        w.showAndPop();
+    }
+
+    void onSelectionChanged(TreeSelection ts)
+    {
+
+        TreeModelIF tm;
+        TreeIter ti;
+        bool res = ts.getSelected(tm, ti);
+        if (res)
+        {
+            auto tv0 = tm.getValue(ti, 0, null);
+            auto tv1 = tm.getValue(ti, 1, null);
+
+            entry_name.setText(tv0.getString());
+            entry_path.setText(tv1.getString());
+
+        }
+    }
+
+    void onRowActivated(TreePath tp, TreeViewColumn tvc, TreeView tv)
+    {
+        onSelectionChanged(tv.getSelection());
+        onClickedOpen(null);
+    }
+
 }

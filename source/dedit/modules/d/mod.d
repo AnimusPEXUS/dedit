@@ -8,6 +8,7 @@ import dedit.ModuleInformation;
 import dedit.Buffer;
 
 static const dedit.ModuleInformation.ModuleInformation ModuleInformation = {
-    ModuleName: "D", SupportedExtensions: ["d"],/* createViewForBuffer: &createViewForBuffer  */
+    ModuleName: "D", SupportedExtensions: ["d"], /* createViewForBuffer: &createViewForBuffer  */
+
 
 };

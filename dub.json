@@ -1,13 +1,7 @@
+
 {
-	"authors": [
-		"AnimusPEXUS"
-	],
-	"copyright": "Copyright © 2020, AnimusPEXUS",
-	"dependencies": {
-		"gtk-d": "~>3.9.0",
-		"dutils": "~>0"
-	},
-	"description": "code editor",
-	"license": "gplv3",
-	"name": "dedit"
+    "authors" : ["AnimusPEXUS"], "copyright" : "Copyright © 2020, AnimusPEXUS", "dependencies" : 
+    {
+        "gtk-d" : "~>3.9.0", "dutils" : "~>0"
+    }, "description" : "code editor", "license" : "gplv3", "name" : "dedit"
 }

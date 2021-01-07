@@ -27,7 +27,7 @@ class Buffer
 
         textBuffer = new TextBuffer(cast(TextTagTable) null);
         textBuffer.setText(cast(string) buff.idup);
-    };
+    }
 
     TextBuffer getTextBuffer()
     {
@@ -36,5 +36,5 @@ class Buffer
 
     void close()
     {
-    };
+    }
 }

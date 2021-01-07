@@ -20,44 +20,48 @@ class Controller
     private
     {
         Buffer[] buffers;
-        string[string] projects;
+        /* string[string] projects; */
 
         string settingsPath;
 
-        EditorWindow[] windows;
+        EditorWindow[string] windows;
+    }
+
+    public
+    {
+        string[string] project_paths;
     }
 
     void saveState()
     {
-        /*
+
         JSONValue v = JSONType.object;
 
-        v.object["projects"] = this.projects;
-        v.object["buffers"] = JSONValue([]);
-        v.object["open_projects"] = JSONValue([]);
+        v.object["projects"] = project_paths;
+        /* v.object["buffers"] = JSONValue([]); */
+        /* v.object["open_projects"] = JSONValue([]); */
 
-
-        string j= toJSON(v);
+        string j = toJSON(v);
 
         mkdir(dirName(settingsPath));
 
-        File of = new File(settingsPath,"w");
+        File of = new File(settingsPath, "w");
 
-        of.rawWrite(j); */
+        of.rawWrite(j);
     }
 
     void loadState()
     {
 
-        /* if (isFile(settingsPath)) {
+        if (isFile(settingsPath))
+        {
             auto f = new File(settingsPath);
             char[] buf;
             buf.length = f.size;
             string data = f.rawRead(buf);
 
-
             this.projects = v.object["projects"];
-        } */
+        }
     }
 
     int main(string[] args)
@@ -85,19 +89,30 @@ class Controller
         return app.run(args);
     }
 
-    /* EditorWindow createNewCleanWindow() {
-        auto w = new EditorWindow();
-
-        auto widget = w.getWidget();
-        auto window = cast(Window) widget;
-
-        window.showAll();
-
+    EditorWindow createNewEditorWindow(string project_name)
+    {
+        auto w = new EditorWindow(this, project_name);
         return w;
     }
 
-    EditorWindow createIfNotExistsAndReturnWindowForProject(string project_name) {
-            return null;
-    } */
+    EditorWindow createNewOrGetExistingEditorWindow(string project_name)
+    {
+        EditorWindow ret;
+        if (project_name !in windows)
+        {
+            ret = createNewEditorWindow(project_name);
+            windows[project_name] = ret;
+        }
+        ret = windows[project_name];
+        return ret;
+    }
+
+    void editorWindowIsClosed(string project_name)
+    {
+        if (project_name in windows)
+        {
+            windows.remove(project_name);
+        }
+    }
 
 }
