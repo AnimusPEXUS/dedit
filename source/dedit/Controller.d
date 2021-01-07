@@ -10,17 +10,15 @@ import gio.Application;
 import gtk.Widget;
 import gtk.Window;
 
-
-
 import dedit.EditorWindow;
 import dedit.ProjectsWindow;
 import dedit.Buffer;
 
+class Controller
+{
 
-
-class Controller {
-
-    private {
+    private
+    {
         Buffer[] buffers;
         string[string] projects;
 
@@ -29,8 +27,9 @@ class Controller {
         EditorWindow[] windows;
     }
 
-    void saveState() {
-/*
+    void saveState()
+    {
+        /*
         JSONValue v = JSONType.object;
 
         v.object["projects"] = this.projects;
@@ -47,7 +46,8 @@ class Controller {
         of.rawWrite(j); */
     }
 
-    void loadState() {
+    void loadState()
+    {
 
         /* if (isFile(settingsPath)) {
             auto f = new File(settingsPath);
@@ -60,32 +60,29 @@ class Controller {
         } */
     }
 
-    int main(string[] args) {
+    int main(string[] args)
+    {
 
-            settingsPath = expandTilde("~/.config/dedit/settings.json");
+        settingsPath = expandTilde("~/.config/dedit/settings.json");
 
-            auto app = new gtk.Application.Application(
-                "dedit.wayround.i2p",
-                gio.Application.GApplicationFlags.FLAGS_NONE
-                );
+        auto app = new gtk.Application.Application("dedit.wayround.i2p",
+                gio.Application.GApplicationFlags.FLAGS_NONE);
 
-            app.addOnActivate(
-                    delegate void(gio.Application.Application gioapp) {
+        app.addOnActivate(delegate void(gio.Application.Application gioapp) {
 
-                        auto w = new ProjectsWindow(this);
+            auto w = new ProjectsWindow(this);
 
-                        /* auto w = createNewCleanWindow(); */
+            /* auto w = createNewCleanWindow(); */
 
-                        auto widget = w.getWindow();
-                        auto window = cast(Window) widget;
+            auto widget = w.getWindow();
+            auto window = cast(Window) widget;
 
-                        window.showAll();
+            window.showAll();
 
-                        app.addWindow(window);
-                    }
-                );
+            app.addWindow(window);
+        });
 
-            return app.run(args);
+        return app.run(args);
     }
 
     /* EditorWindow createNewCleanWindow() {
@@ -102,7 +99,5 @@ class Controller {
     EditorWindow createIfNotExistsAndReturnWindowForProject(string project_name) {
             return null;
     } */
-
-
 
 }

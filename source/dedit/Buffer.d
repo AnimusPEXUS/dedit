@@ -5,32 +5,36 @@ import std.stdio;
 import gtk.TextBuffer;
 import gtk.TextTagTable;
 
-class Buffer {
+class Buffer
+{
 
-private {
-     TextBuffer textBuffer;
-     string originalFileName;
+    private
+    {
+        TextBuffer textBuffer;
+        string originalFileName;
 
-     
-}
+    }
 
-     this(string filename) {
+    this(string filename)
+    {
 
-          auto f = new std.stdio.File(filename);
+        auto f = new std.stdio.File(filename);
 
-          char[] buff;
-          buff.length = f.size;
+        char[] buff;
+        buff.length = f.size;
 
-          f.rawRead(buff);
+        f.rawRead(buff);
 
-          textBuffer = new TextBuffer(cast(TextTagTable)null);
-          textBuffer.setText(cast(string)buff.idup);
+        textBuffer = new TextBuffer(cast(TextTagTable) null);
+        textBuffer.setText(cast(string) buff.idup);
     };
 
-    TextBuffer getTextBuffer() {
+    TextBuffer getTextBuffer()
+    {
         return textBuffer;
     }
 
-
-        void close() {};
+    void close()
+    {
+    };
 }

@@ -25,7 +25,8 @@ import dutils.gtkcollection.FileTreeView;
 class EditorWindow
 {
 
-    private {
+    private
+    {
 
         Window window;
 
@@ -54,20 +55,19 @@ class EditorWindow
 
         FileTreeView filebrowser;
 
-        }
+    }
 
     this()
     {
-        window = new Window ("Editor Window");
+        window = new Window("Editor Window");
 
-        main_menu= new EditorWindowMainMenu(this);
+        main_menu = new EditorWindowMainMenu(this);
 
         root_box = new Box(GtkOrientation.VERTICAL, 0);
         window.add(root_box);
 
         main_paned = new Paned(GtkOrientation.HORIZONTAL);
         left_paned = new Paned(GtkOrientation.VERTICAL);
-
 
         main_paned.add1(left_paned);
         main_paned.add2(new Label("todo 2"));
@@ -76,7 +76,9 @@ class EditorWindow
         root_box.packStart(main_paned, true, true, 0);
 
         // buffers
-        buffers_view_list_store = new ListStore(cast(GType[])[GType.STRING,GType.STRING]);
+        buffers_view_list_store = new ListStore(cast(GType[])[
+                GType.STRING, GType.STRING
+                ]);
         buffers_view = new TreeView();
         buffers_view.setModel(buffers_view_list_store);
         setupBufferView(buffers_view);
@@ -94,28 +96,28 @@ class EditorWindow
         buffers_view_list_store.set(itr, cast(int[]) [0,1], cast(string[]) [ "test1", "test2"]);
     } */
 
-
-
     }
 
-    private void setupBufferView(TreeView tw) {
+    private void setupBufferView(TreeView tw)
+    {
         {
             auto rend = new CellRendererText();
-            auto col = new TreeViewColumn("File Base Name",rend, "text",0);
+            auto col = new TreeViewColumn("File Base Name", rend, "text", 0);
             col.setResizable(true);
-            tw.insertColumn(col,0);
+            tw.insertColumn(col, 0);
         }
 
         {
             auto rend = new CellRendererText();
-            auto col = new TreeViewColumn("Changed?",rend, "text",1);
+            auto col = new TreeViewColumn("Changed?", rend, "text", 1);
             col.setResizable(true);
-            tw.insertColumn(col,1);
+            tw.insertColumn(col, 1);
         }
 
     }
 
-    Widget getWidget() {
+    Widget getWidget()
+    {
         return window;
     };
 

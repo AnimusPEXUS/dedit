@@ -16,12 +16,13 @@ import gtk.Entry;
 import gtk.Label;
 import gtk.FileChooserDialog;
 
-
 import dedit.Controller;
 
-class ProjectsWindow {
+class ProjectsWindow
+{
 
-    private {
+    private
+    {
         Window win;
         TreeView tw;
         ListStore tw_ls;
@@ -30,26 +31,27 @@ class ProjectsWindow {
 
     }
 
-    this(Controller controller) {
-        this.controller=controller;
+    this(Controller controller)
+    {
+        this.controller = controller;
 
         win = new Window("dedit :: project mgr");
 
-        tw_ls = new  ListStore(cast(GType[])[GType.STRING,GType.STRING]);
+        tw_ls = new ListStore(cast(GType[])[GType.STRING, GType.STRING]);
 
         tw = new TreeView();
         tw.setModel(tw_ls);
         {
             {
                 auto rend = new CellRendererText();
-                auto col = new TreeViewColumn("Project Name", rend, "text",0);
+                auto col = new TreeViewColumn("Project Name", rend, "text", 0);
                 col.setResizable(true);
                 tw.appendColumn(col);
             }
 
             {
                 auto rend = new CellRendererText();
-                auto col = new TreeViewColumn("Path (Directory)",rend, "text",1);
+                auto col = new TreeViewColumn("Path (Directory)", rend, "text", 1);
                 col.setResizable(true);
                 tw.appendColumn(col);
             }
@@ -66,15 +68,14 @@ class ProjectsWindow {
         box.setMarginRight(5);
         win.add(box);
 
-        box.packStart(
-                new Label("Closing this window - will save the state, close all editor windows and exit application"),
-false, true, 0
-                );
+        box.packStart(new Label(
+                "Closing this window - will save the state, close all editor windows and exit application"),
+                false, true, 0);
 
-                box.packStart(sw, true,true,0);
+        box.packStart(sw, true, true, 0);
 
         auto hb = new Box(GtkOrientation.HORIZONTAL, 0);
-        box.packStart(hb, false,true,0);
+        box.packStart(hb, false, true, 0);
         hb.setSpacing(5);
 
         auto btn_delete = new Button("Remove from List");
@@ -98,28 +99,27 @@ false, true, 0
 
     }
 
-    Window getWindow() {
+    Window getWindow()
+    {
         return win;
     }
 
-    void onClickedBrowse(Button btn) {
-            auto d = new FileChooserDialog(
-                "Select Project Directory",
-                win,
-                FileChooserAction.SELECT_FOLDER,
-                ["Confirm", "Cancel"],
-                cast(ResponseType[])[ResponseType.OK, ResponseType.CANCEL]
-                );
+    void onClickedBrowse(Button btn)
+    {
+        auto d = new FileChooserDialog("Select Project Directory", win, FileChooserAction.SELECT_FOLDER, [
+                "Confirm", "Cancel"
+                ], cast(ResponseType[])[ResponseType.OK, ResponseType.CANCEL]);
 
-                auto res= d.run();
+        auto res = d.run();
 
-                if (res == ResponseType.OK) {
-                    auto filename = d.getFilename();
-                    entry_name.setText(baseName(filename));
-                    entry_path.setText(absolutePath(filename));
-                }
+        if (res == ResponseType.OK)
+        {
+            auto filename = d.getFilename();
+            entry_name.setText(baseName(filename));
+            entry_path.setText(absolutePath(filename));
+        }
 
-                d.destroy();
+        d.destroy();
     }
 
     /* void show() {
