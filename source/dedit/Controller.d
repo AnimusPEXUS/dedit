@@ -3,6 +3,7 @@ module dedit.Controller;
 import std.json;
 import std.file;
 import std.path;
+import std.stdio;
 
 import gtk.Application;
 import gio.Application;
@@ -35,17 +36,24 @@ class Controller
     void saveState()
     {
 
-        JSONValue v = JSONType.object;
+        string[string] root;
 
-        v.object["projects"] = project_paths;
-        /* v.object["buffers"] = JSONValue([]); */
-        /* v.object["open_projects"] = JSONValue([]); */
+        JSONValue v = JSONValue(root);
 
-        string j = toJSON(v);
+        v["projects"] = JSONValue(project_paths);
 
-        mkdir(dirName(settingsPath));
+        string j = toJSON(v, true);
 
-        File of = new File(settingsPath, "w");
+        try
+        {
+            mkdir(dirName(settingsPath));
+        }
+        catch (Exception)
+        {
+
+        }
+
+        File of = File(settingsPath, "w");
 
         of.rawWrite(j);
     }
@@ -55,12 +63,15 @@ class Controller
 
         if (isFile(settingsPath))
         {
-            auto f = new File(settingsPath);
+
+            auto f = File(settingsPath);
             char[] buf;
             buf.length = f.size;
-            string data = f.rawRead(buf);
+            string data = cast(string) f.rawRead(buf);
 
-            this.projects = v.object["projects"];
+            JSONValue v = parseJSON(data);
+
+            this.project_paths = cast(string[string]) v["projects"].object;
         }
     }
 
@@ -68,6 +79,8 @@ class Controller
     {
 
         settingsPath = expandTilde("~/.config/dedit/settings.json");
+
+        loadState();
 
         auto app = new gtk.Application.Application("dedit.wayround.i2p",
                 gio.Application.GApplicationFlags.FLAGS_NONE);

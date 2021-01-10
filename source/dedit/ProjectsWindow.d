@@ -94,6 +94,7 @@ class ProjectsWindow
 
         auto btn_delete = new Button("Remove from List");
         hb.packStart(btn_delete, false, true, 0);
+        btn_delete.addOnClicked(&onClickedRemove);
 
         entry_name = new Entry();
         hb.packStart(entry_name, false, true, 0);
@@ -112,6 +113,15 @@ class ProjectsWindow
         auto btn_open = new Button("Open Editor Window for Project..");
         hb.packStart(btn_open, false, true, 0);
         btn_open.addOnClicked(&onClickedOpen);
+
+        {
+            foreach (string k, string v; controller.project_paths)
+            {
+                TreeIter ti = new TreeIter();
+                tv_ls.append(ti);
+                tv_ls.set(ti, [0, 1], [k, v]);
+            }
+        }
 
     }
 
@@ -148,20 +158,38 @@ class ProjectsWindow
         tv_ls.set(iter, [0, 1], [name, path]);
 
         controller.project_paths[name] = path;
+
+        controller.saveState();
     }
 
     void onClickedRemove(Button btn)
     {
         // TODO: add checks
         string name = entry_name.getText();
-        auto iter = new TreeIter();
 
-        // TODO: todo
+        {
+            auto m = tv.getModel();
+            TreeIter chi;
+            bool res = m.iterChildren(chi, null);
+            while (res)
+            {
+
+                auto v = m.getValue(chi, 0, null);
+                if (v.getString() == name)
+                {
+                    tv_ls.remove(chi);
+                    break;
+                }
+                res = m.iterNext(chi);
+            }
+        }
 
         if (name in controller.project_paths)
         {
             controller.project_paths.remove(name);
         }
+
+        controller.saveState();
     }
 
     void onClickedOpen(Button btn)
@@ -207,7 +235,6 @@ class ProjectsWindow
 
             entry_name.setText(tv0.getString());
             entry_path.setText(tv1.getString());
-
         }
     }
 
