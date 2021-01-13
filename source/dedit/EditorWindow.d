@@ -261,11 +261,20 @@ class EditorWindow
 
         auto b = buffers[itr_name];
 
+        writeln("setting up view");
+
         current_view = b.createView();
 
         auto w = current_view.getWidget();
 
+        auto c2 = main_paned.getChild2();
+        if (c2 !is null) {
+            c2.destroy();
+        }
         main_paned.add2(w);
+        w.showAll();
+
+
     }
 
     void refreshBuffersView()

@@ -2,6 +2,7 @@ module dedit.modules.d.mod;
 
 import std.path;
 import std.algorithm;
+import std.stdio;
 
 import gtk.TextBuffer;
 import gtk.TextView;
@@ -47,6 +48,7 @@ class View : ModuleBufferView
 
     Widget getWidget()
     {
+        writeln("returning buffer widget");
         return sw;
     }
 
@@ -97,7 +99,7 @@ class Buffer : ModuleDataBuffer
 
         f.rawRead(buff);
 
-        textBuffer = new TextBuffer(cast(TextTagTable) null);
+        textBuffer = new SourceBuffer(cast(TextTagTable) null);
         textBuffer.setText(cast(string) buff.idup);
     }
 
@@ -108,6 +110,7 @@ class Buffer : ModuleDataBuffer
 
     TextBuffer getTextBuffer()
     {
+        writeln("returning text buffer");
         return textBuffer;
     }
 
