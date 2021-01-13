@@ -26,5 +26,5 @@ interface ModuleBufferView
 
 interface ModuleDataBuffer
 {
-    ModuleBufferView createView(Controller c, EditorWindow w, ModuleDataBuffer b);
+    ModuleBufferView createView(ModuleDataBuffer b = null, EditorWindow w = null, Controller c = null);
 }

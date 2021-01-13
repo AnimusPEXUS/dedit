@@ -57,7 +57,6 @@ class EditorWindow
         Box root_box;
 
         Paned main_paned;
-        Paned secondary_paned;
         Paned left_paned;
 
         Frame left_upper_frame;
@@ -92,7 +91,7 @@ class EditorWindow
         left_paned = new Paned(GtkOrientation.VERTICAL);
 
         main_paned.add1(left_paned);
-        main_paned.add2(new Label("todo 2"));
+        main_paned.add2(new Label("Open some file and activate it's buffer"));
 
         root_box.packStart(main_menu.getWidget(), false, true, 0);
         root_box.packStart(main_paned, true, true, 0);
@@ -243,6 +242,34 @@ class EditorWindow
         {
             current_view.close();
         }
+
+        TreeIter itr;
+        auto ok = buffers_view_list_store.getIter(itr, tp);
+        if (!ok)
+        {
+            return;
+        }
+
+        Value val;
+
+        itr.getValue(0, val);
+
+        string itr_name = val.getString();
+
+        string joined = dutils.path.join([project_path, itr_name]);
+
+        if (joined !in buffers)
+        {
+            return;
+        }
+
+        auto b = buffers[joined];
+
+        current_view = b.createView();
+
+        auto w = current_view.getWidget();
+
+        main_paned.add2(w);
     }
 
     void refreshBuffersView()

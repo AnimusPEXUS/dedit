@@ -65,11 +65,16 @@ class Buffer : ModuleDataBuffer
     {
         TextBuffer textBuffer;
         string filename;
+
+        Controller c;
+        EditorWindow w;
     }
 
     this(Controller c, EditorWindow w, string uri)
     {
         // TODO: better uri handling required
+        this.c = c;
+        this.w = w;
 
         if (uri.startsWith("file://"))
         {
@@ -101,8 +106,23 @@ class Buffer : ModuleDataBuffer
         return textBuffer;
     }
 
-    ModuleBufferView createView(Controller c, EditorWindow w, ModuleDataBuffer b)
+    ModuleBufferView createView(ModuleDataBuffer b = null, EditorWindow w = null, Controller c = null)
     {
+        if (c is null)
+        {
+            c = this.c;
+        }
+
+        if (w is null)
+        {
+            w = this.w;
+        }
+
+        if (b is null)
+        {
+            b = this;
+        }
+
         return new View(c, w, b);
     }
 
