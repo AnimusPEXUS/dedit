@@ -1,8 +1,8 @@
 module dedit.builtinmodules;
 
-import dedit.ModuleInformation;
+import dedit.moduleinterface;
 
 import dedit.modules.d.mod;
 
-static const dedit.ModuleInformation.ModuleInformation[] builtinModules
+static const dedit.moduleinterface.ModuleInformation[] builtinModules
     = [dedit.modules.d.mod.ModuleInformation];

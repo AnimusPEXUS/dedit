@@ -20,9 +20,6 @@ class Controller
 
     private
     {
-        Buffer[] buffers;
-        /* string[string] projects; */
-
         string settingsPath;
 
         EditorWindow[string] windows;
@@ -31,48 +28,6 @@ class Controller
     public
     {
         string[string] project_paths;
-    }
-
-    void saveState()
-    {
-
-        string[string] root;
-
-        JSONValue v = JSONValue(root);
-
-        v["projects"] = JSONValue(project_paths);
-
-        string j = toJSON(v, true);
-
-        try
-        {
-            mkdir(dirName(settingsPath));
-        }
-        catch (Exception)
-        {
-
-        }
-
-        File of = File(settingsPath, "w");
-
-        of.rawWrite(j);
-    }
-
-    void loadState()
-    {
-
-        if (isFile(settingsPath))
-        {
-
-            auto f = File(settingsPath);
-            char[] buf;
-            buf.length = f.size;
-            string data = cast(string) f.rawRead(buf);
-
-            JSONValue v = parseJSON(data);
-
-            this.project_paths = cast(string[string]) v["projects"].object;
-        }
     }
 
     int main(string[] args)
@@ -100,6 +55,47 @@ class Controller
         });
 
         return app.run(args);
+    }
+
+    void saveState()
+    {
+
+        string[string] root;
+
+        JSONValue v = JSONValue(root);
+
+        v["projects"] = JSONValue(project_paths);
+
+        string j = toJSON(v, true);
+
+        try
+        {
+            mkdir(dirName(settingsPath));
+        }
+        catch (Exception)
+        {
+            // do nothing
+        }
+
+        File of = File(settingsPath, "w");
+
+        of.rawWrite(j);
+    }
+
+    void loadState()
+    {
+        if (isFile(settingsPath))
+        {
+
+            auto f = File(settingsPath);
+            char[] buf;
+            buf.length = f.size;
+            string data = cast(string) f.rawRead(buf);
+
+            JSONValue v = parseJSON(data);
+
+            this.project_paths = cast(string[string]) v["projects"].object;
+        }
     }
 
     EditorWindow createNewEditorWindow(string project_name)

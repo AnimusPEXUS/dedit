@@ -1,11 +1,14 @@
 module dedit.EditorWindow;
 
 import std.stdio;
+import std.path;
 
 import gtk.Window;
 import gtk.Label;
 import gtk.Box;
 import gtk.TreeView;
+import gtk.TreeIter;
+import gtk.TreePath;
 import gtk.Frame;
 import gtk.ScrolledWindow;
 import gtk.Paned;
@@ -15,8 +18,11 @@ import gtk.TreeViewColumn;
 import gtk.ListStore;
 import gtk.TreeIter;
 
+import gobject.Value;
+
 import gtk.c.types;
 
+import dutils.path;
 import dutils.gtkcollection.FileTreeView;
 
 import dedit.EditorWindowMainMenu;
@@ -31,8 +37,15 @@ class EditorWindow
     private
     {
         Controller controller;
-        string project_name;
 
+        string project_name;
+        string project_path;
+
+        Buffer[string] buffers;
+    }
+
+    private
+    {
         Window window;
 
         EditorWindowMainMenu main_menu;
@@ -56,18 +69,14 @@ class EditorWindow
         TreeView files_view;
         ScrolledWindow files_view_sw;
 
-        Buffer[] buffers;
-
         FileTreeView filebrowser;
-
     }
 
     this(Controller controller, string project_name)
     {
         this.controller = controller;
-        this.project_name = project_name;
 
-        window = new Window(project_name ~ ":: dedit");
+        window = new Window("dedit");
         window.addOnDestroy(&windowOnDestroy);
 
         main_menu = new EditorWindowMainMenu(this);
@@ -91,13 +100,18 @@ class EditorWindow
         buffers_view = new TreeView();
         buffers_view.setModel(buffers_view_list_store);
         setupBufferView(buffers_view);
+        buffers_view.addOnRowActivated(&onBufferViewActivated);
+
         buffers_view_sw = new ScrolledWindow();
         buffers_view_sw.add(buffers_view);
 
         filebrowser = new FileTreeView();
+        filebrowser.addOnRowActivated(&onFileListViewActivated);
 
         left_paned.add1(buffers_view_sw);
         left_paned.add2(filebrowser.getWidget());
+
+        setProject(project_name);
 
         /* {
         auto itr = new TreeIter();
@@ -116,7 +130,7 @@ class EditorWindow
     {
         {
             auto rend = new CellRendererText();
-            auto col = new TreeViewColumn("File Base Name", rend, "text", 0);
+            auto col = new TreeViewColumn("File Name", rend, "text", 0);
             col.setResizable(true);
             tw.insertColumn(col, 0);
         }
@@ -129,9 +143,12 @@ class EditorWindow
         }
     }
 
-    void setProject(string name)
+    void setProject(string project_name)
     {
-        // TODO: todo
+        this.project_name = project_name;
+        project_path = controller.project_paths[project_name];
+        filebrowser.setRootDirectory(project_path);
+        window.setTitle(project_name ~ " :: dedit");
     }
 
     Widget getWidget()
@@ -144,15 +161,104 @@ class EditorWindow
         window.showAll();
     }
 
-    void pop()
+    void present()
     {
         window.present();
     }
 
-    void showAndPop()
+    void showAndPresent()
     {
         show();
-        pop();
+        present();
+    }
+
+    void onFileListViewActivated(TreePath tp, TreeViewColumn tvc, TreeView tv)
+    {
+
+        if (filebrowser.isDir(tp))
+        {
+            filebrowser.expandByTreePath(tp);
+        }
+        else
+        {
+            auto fp = dutils.path.join([
+                    project_path, filebrowser.convertTreePathToFilePath(tp)
+                    ]);
+            ensureBufferForFile(fp);
+            refreshBuffersView();
+        }
+
+        /* ;
+        ; */
+    }
+
+    Buffer ensureBufferForFile(string filename)
+    {
+        filename = absolutePath(filename);
+        if (filename !in buffers)
+        {
+            auto b = new Buffer(filename);
+            buffers[filename] = b;
+        }
+        return buffers[filename];
+    }
+
+    void onBufferViewActivated(TreePath tp, TreeViewColumn tvc, TreeView tv)
+    {
+        /* refreshBuffersView(); */
+    }
+
+    void refreshBuffersView()
+    {
+        // add absent in view list
+        foreach (string k, Buffer v; buffers)
+        {
+            bool found = false;
+
+            TreeIter iter;
+            bool ok = buffers_view_list_store.getIterFirst(iter);
+
+            while (ok)
+            {
+                Value val = buffers_view_list_store.getValue(iter, 0);
+                if (dutils.path.join(cast(string[])[
+                            project_path, val.getString()
+                        ]) == k)
+                {
+                    found = true;
+                    break;
+                }
+                ok = buffers_view_list_store.iterNext(iter);
+            }
+
+            if (!found)
+            {
+                TreeIter new_iter = new TreeIter;
+                buffers_view_list_store.append(new_iter);
+                buffers_view_list_store.set(new_iter, [0], [k]);
+            }
+        }
+
+        // remove from list actually absent items
+        {
+            TreeIter iter;
+            bool ok = buffers_view_list_store.getIterFirst(iter);
+
+            while (ok)
+            {
+                Value val = buffers_view_list_store.getValue(iter, 0);
+                if (dutils.path.join(cast(string[])[
+                            project_path, val.getString()
+                        ]) !in buffers)
+                {
+                    ok = buffers_view_list_store.remove(iter);
+                }
+                else
+                {
+                    ok = buffers_view_list_store.iterNext(iter);
+                }
+            }
+        }
     }
 
 }

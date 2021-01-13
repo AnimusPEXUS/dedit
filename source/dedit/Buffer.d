@@ -1,6 +1,7 @@
 module dedit.Buffer;
 
 import std.stdio;
+import std.path;
 
 import gtk.TextBuffer;
 import gtk.TextTagTable;
@@ -11,12 +12,13 @@ class Buffer
     private
     {
         TextBuffer textBuffer;
-        string originalFileName;
-
+        string filename;
     }
 
     this(string filename)
     {
+        filename = absolutePath(filename);
+        this.filename = filename;
 
         auto f = new std.stdio.File(filename);
 
@@ -29,12 +31,18 @@ class Buffer
         textBuffer.setText(cast(string) buff.idup);
     }
 
+    string getFileName()
+    {
+        return filename;
+    }
+
     TextBuffer getTextBuffer()
     {
         return textBuffer;
     }
 
-    void close()
+    /* void close()
     {
-    }
+        textBuffer.destroy();
+    } */
 }

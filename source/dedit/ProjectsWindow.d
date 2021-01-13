@@ -219,7 +219,7 @@ class ProjectsWindow
             return;
         }
         auto w = controller.createNewOrGetExistingEditorWindow(name);
-        w.showAndPop();
+        w.showAndPresent();
     }
 
     void onSelectionChanged(TreeSelection ts)
