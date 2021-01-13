@@ -184,9 +184,9 @@ class EditorWindow
         }
         else
         {
-            auto fp = dutils.path.join([
-                    project_path, filebrowser.convertTreePathToFilePath(tp)
-                    ]);
+            auto cr = filebrowser.convertTreePathToFilePath(tp);
+            auto fp = dutils.path.join([project_path, cr]);
+            writeln("ensureBufferForFile", fp);
             ensureBufferForFile(fp, "");
             refreshBuffersView();
         }
@@ -230,8 +230,10 @@ class EditorWindow
                     throw new Exception("extension not supported");
                 }
             }
-            auto b = mi.createDataBufferForURI(controller, this, "file://" ~ filename);
+            string uri = "file://" ~ filename;
+            auto b = mi.createDataBufferForURI(controller, this, uri);
             buffers[filename] = b;
+            writeln("added new buffer");
         }
         return buffers[filename];
     }
@@ -243,27 +245,21 @@ class EditorWindow
             current_view.close();
         }
 
-        TreeIter itr;
+        TreeIter itr = new TreeIter;
         auto ok = buffers_view_list_store.getIter(itr, tp);
         if (!ok)
         {
             return;
         }
 
-        Value val;
+        string itr_name = buffers_view_list_store.getValue(itr, 0).getString();
 
-        itr.getValue(0, val);
-
-        string itr_name = val.getString();
-
-        string joined = dutils.path.join([project_path, itr_name]);
-
-        if (joined !in buffers)
+        if (itr_name !in buffers)
         {
             return;
         }
 
-        auto b = buffers[joined];
+        auto b = buffers[itr_name];
 
         current_view = b.createView();
 
@@ -279,15 +275,16 @@ class EditorWindow
         {
             bool found = false;
 
-            TreeIter iter;
+            TreeIter iter = new TreeIter;
             bool ok = buffers_view_list_store.getIterFirst(iter);
 
             while (ok)
             {
                 Value val = buffers_view_list_store.getValue(iter, 0);
-                if (dutils.path.join(cast(string[])[
-                            project_path, val.getString()
-                        ]) == k)
+                string joined = dutils.path.join(cast(string[])[
+                        project_path, val.getString()
+                        ]);
+                if (joined == k)
                 {
                     found = true;
                     break;
@@ -297,6 +294,7 @@ class EditorWindow
 
             if (!found)
             {
+                writeln("adding ", k, " to buffer list");
                 TreeIter new_iter = new TreeIter;
                 buffers_view_list_store.append(new_iter);
                 buffers_view_list_store.set(new_iter, [0], [k]);
@@ -305,16 +303,16 @@ class EditorWindow
 
         // remove from list actually absent items
         {
-            TreeIter iter;
+            TreeIter iter = new TreeIter;
             bool ok = buffers_view_list_store.getIterFirst(iter);
 
             while (ok)
             {
                 Value val = buffers_view_list_store.getValue(iter, 0);
-                if (dutils.path.join(cast(string[])[
-                            project_path, val.getString()
-                        ]) !in buffers)
+                string target = val.getString();
+                if (target !in buffers)
                 {
+                    writeln("removing ", target, " from buffer list");
                     ok = buffers_view_list_store.remove(iter);
                 }
                 else
@@ -322,6 +320,12 @@ class EditorWindow
                     ok = buffers_view_list_store.iterNext(iter);
                 }
             }
+        }
+
+        writeln("buffers:");
+        foreach (k, v; buffers)
+        {
+            writeln("   ", k);
         }
     }
 

@@ -8,6 +8,7 @@ import gtk.TextView;
 import gtk.TextTagTable;
 import gtk.Menu;
 import gtk.Widget;
+import gtk.ScrolledWindow;
 
 import gsv.SourceView;
 import gsv.SourceBuffer;
@@ -26,6 +27,7 @@ class View : ModuleBufferView
 
         SourceView sv;
         SourceBuffer sb;
+        ScrolledWindow sw;
 
         bool close_already_called;
     }
@@ -37,12 +39,15 @@ class View : ModuleBufferView
         this.b = b;
 
         /* sb = new SourceBuffer(cast(GtkSourceBuffer*) null); */
-        sv = new SourceView(sb);
+        sv = new SourceView();
+        sv.setBuffer((cast(Buffer) b).getTextBuffer());
+        sw = new ScrolledWindow();
+        sw.add(sv);
     }
 
     Widget getWidget()
     {
-        return sv;
+        return sw;
     }
 
     void close()
