@@ -13,7 +13,6 @@ import gtk.Window;
 
 import dedit.EditorWindow;
 import dedit.ProjectsWindow;
-import dedit.Buffer;
 
 class Controller
 {

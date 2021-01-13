@@ -26,8 +26,9 @@ import dutils.path;
 import dutils.gtkcollection.FileTreeView;
 
 import dedit.EditorWindowMainMenu;
-import dedit.Buffer;
 import dedit.Controller;
+import dedit.moduleinterface;
+import dedit.builtinmodules;
 
 // TODO: ensure window destroyed on close
 
@@ -41,7 +42,9 @@ class EditorWindow
         string project_name;
         string project_path;
 
-        Buffer[string] buffers;
+        ModuleDataBuffer[string] buffers;
+
+        ModuleBufferView current_view;
     }
 
     private
@@ -184,20 +187,34 @@ class EditorWindow
             auto fp = dutils.path.join([
                     project_path, filebrowser.convertTreePathToFilePath(tp)
                     ]);
-            ensureBufferForFile(fp);
+            ensureBufferForFile(fp, "");
             refreshBuffersView();
         }
 
-        /* ;
-        ; */
     }
 
-    Buffer ensureBufferForFile(string filename)
+    ModuleDataBuffer ensureBufferForFile(string filename, string module_to_use)
     {
         filename = absolutePath(filename);
         if (filename !in buffers)
         {
-            auto b = new Buffer(filename);
+            ModuleInformation mi;
+            if (module_to_use != "")
+            {
+                foreach (i, mii; builtinModules)
+                {
+                    if (mii.moduleName == module_to_use)
+                    {
+                        mi = cast(ModuleInformation) mii;
+                        break;
+                    }
+                }
+                if (mi is cast(ModuleInformation) null)
+                {
+                    throw new Exception("nodule not found");
+                }
+            }
+            auto b = mi.createDataBufferForURI(controller, this, "file://" ~ filename);
             buffers[filename] = b;
         }
         return buffers[filename];
@@ -205,13 +222,16 @@ class EditorWindow
 
     void onBufferViewActivated(TreePath tp, TreeViewColumn tvc, TreeView tv)
     {
-        /* refreshBuffersView(); */
+        if (current_view !is null)
+        {
+            current_view.close();
+        }
     }
 
     void refreshBuffersView()
     {
         // add absent in view list
-        foreach (string k, Buffer v; buffers)
+        foreach (string k, ModuleDataBuffer v; buffers)
         {
             bool found = false;
 
