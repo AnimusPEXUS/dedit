@@ -2,6 +2,7 @@ module dedit.EditorWindow;
 
 import std.stdio;
 import std.path;
+import std.algorithm;
 
 import gtk.Window;
 import gtk.Label;
@@ -211,7 +212,23 @@ class EditorWindow
                 }
                 if (mi is cast(ModuleInformation) null)
                 {
-                    throw new Exception("nodule not found");
+                    throw new Exception("module not found");
+                }
+            }
+            else
+            {
+                string ext = extension(filename);
+                foreach (i, mii; builtinModules)
+                {
+                    if (mii.supportedExtensions.canFind(ext))
+                    {
+                        mi = cast(ModuleInformation) mii;
+                        break;
+                    }
+                }
+                if (mi is cast(ModuleInformation) null)
+                {
+                    throw new Exception("extension not supported");
                 }
             }
             auto b = mi.createDataBufferForURI(controller, this, "file://" ~ filename);

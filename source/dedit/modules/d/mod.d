@@ -109,7 +109,7 @@ class Buffer : ModuleDataBuffer
 }
 
 const dedit.moduleinterface.ModuleInformation ModuleInformation = {
-    moduleName: "D", supportedExtensions: ["d"], createDataBufferForURI: function ModuleDataBuffer(
+    moduleName: "D", supportedExtensions: [".d"], createDataBufferForURI: function ModuleDataBuffer(
             Controller c, EditorWindow w, string uri) {
         return new Buffer(c, w, uri);
     },};
