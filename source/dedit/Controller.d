@@ -13,6 +13,7 @@ import gtk.Window;
 
 import dedit.EditorWindow;
 import dedit.ProjectsWindow;
+import dedit.Settings;
 
 class Controller
 {
@@ -27,10 +28,13 @@ class Controller
     public
     {
         string[string] project_paths;
+        WindowSettings[string] window_settings;
+        string font;
     }
 
     int main(string[] args)
     {
+        font = "Go Mono 10";
 
         settingsPath = expandTilde("~/.config/dedit/settings.json");
 
@@ -61,11 +65,22 @@ class Controller
 
         string[string] root;
 
-        JSONValue v = JSONValue(root);
+        JSONValue x = JSONValue(root);
 
-        v["projects"] = JSONValue(project_paths);
+        x["font"] = JSONValue(font);
 
-        string j = toJSON(v, true);
+        x["projects"] = JSONValue(project_paths);
+
+        {
+            JSONValue windowsettingsarray = JSONValue(cast(string[string]) null);
+            foreach (k, v; window_settings)
+            {
+                windowsettingsarray[k] = v.toJSONValue();
+            }
+            x["window_settings"] = windowsettingsarray;
+        }
+
+        string j = x.toJSON(true);
 
         try
         {
@@ -91,9 +106,27 @@ class Controller
             buf.length = f.size;
             string data = cast(string) f.rawRead(buf);
 
-            JSONValue v = parseJSON(data);
+            JSONValue x = parseJSON(data);
 
-            this.project_paths = cast(string[string]) v["projects"].object;
+            if ("font" in x)
+            {
+                font = x.object["font"].str;
+            }
+
+            if ("projects" in x)
+            {
+                this.project_paths = cast(string[string]) x["projects"].object;
+            }
+
+            if ("window_settings" in x)
+            {
+                window_settings.clear;
+                foreach (string k, v; x["window_settings"])
+                {
+                    window_settings[k] = new WindowSettings(v);
+                }
+            }
+
         }
     }
 

@@ -11,12 +11,37 @@ import gtk.Menu;
 import gtk.Widget;
 import gtk.ScrolledWindow;
 
+import pango.PgFontDescription;
+
 import gsv.SourceView;
 import gsv.SourceBuffer;
+import gsv.SourceLanguageManager;
+import gsv.c.types;
 
 import dedit.moduleinterface;
 import dedit.Controller;
 import dedit.EditorWindow;
+
+void applyLanguageSettingsToSourceView(SourceView sv)
+{
+    sv.setAutoIndent(true);
+    /* sv.setDrawSpaces(DrawSpacesFlags.ALL); */
+    sv.setHighlightCurrentLine(true);
+    sv.setIndentOnTab(true);
+    sv.setIndentWidth(4);
+    sv.setInsertSpacesInsteadOfTabs(false);
+    sv.setRightMarginPosition(80);
+    sv.setShowRightMargin(true);
+    sv.setTabWidth(4);
+    sv.setShowLineMarks(true);
+    sv.setShowLineNumbers(true);
+    sv.setSmartHomeEnd(GtkSourceSmartHomeEndType.ALWAYS);
+}
+
+void applyLanguageSettingsToSourceBuffer(SourceBuffer sb)
+{
+    sb.setLanguage(SourceLanguageManager.getDefault().getLanguage("d"));
+}
 
 class View : ModuleBufferView
 {
@@ -41,7 +66,15 @@ class View : ModuleBufferView
 
         /* sb = new SourceBuffer(cast(GtkSourceBuffer*) null); */
         sv = new SourceView();
-        sv.setBuffer((cast(Buffer) b).getTextBuffer());
+        applyLanguageSettingsToSourceView(sv);
+        {
+            auto fd = PgFontDescription.fromString(c.font);
+            sv.overrideFont(fd);
+        }
+        auto sb = (cast(Buffer) b).getSourceBuffer();
+        applyLanguageSettingsToSourceBuffer(sb);
+        sv.setBuffer(sb);
+
         sw = new ScrolledWindow();
         sw.add(sv);
     }
@@ -70,7 +103,7 @@ class Buffer : ModuleDataBuffer
 
     private
     {
-        TextBuffer textBuffer;
+        SourceBuffer buff;
         string filename;
 
         Controller c;
@@ -99,8 +132,8 @@ class Buffer : ModuleDataBuffer
 
         f.rawRead(buff);
 
-        textBuffer = new SourceBuffer(cast(TextTagTable) null);
-        textBuffer.setText(cast(string) buff.idup);
+        this.buff = new SourceBuffer(cast(TextTagTable) null);
+        this.buff.setText(cast(string) buff.idup);
     }
 
     string getFileName()
@@ -108,10 +141,9 @@ class Buffer : ModuleDataBuffer
         return filename;
     }
 
-    TextBuffer getTextBuffer()
+    SourceBuffer getSourceBuffer()
     {
-        writeln("returning text buffer");
-        return textBuffer;
+        return buff;
     }
 
     ModuleBufferView createView(ModuleDataBuffer b = null, EditorWindow w = null, Controller c = null)

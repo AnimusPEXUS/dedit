@@ -4,6 +4,7 @@ import std.stdio;
 import std.path;
 
 import gtk.Window;
+import gtk.Widget;
 import gtk.TreeModelIF;
 import gtk.ListStore;
 import gtk.TreeView;
@@ -19,6 +20,9 @@ import gtk.Box;
 import gtk.Entry;
 import gtk.Label;
 import gtk.FileChooserDialog;
+import gdk.Event;
+
+import gdk.c.types;
 
 import dedit.Controller;
 import dedit.EditorWindow;
@@ -45,6 +49,8 @@ class ProjectsWindow
         this.controller = controller;
 
         win = new Window("dedit :: project mgr");
+        /* win.addOnDestroy(&onWindowDestroy); */
+        win.addOnDelete(&onDeleteEvent);
 
         tv_ls = new ListStore(cast(GType[])[GType.STRING, GType.STRING]);
 
@@ -128,6 +134,20 @@ class ProjectsWindow
     Window getWindow()
     {
         return win;
+    }
+
+    /* void onWindowDestroy(Widget w)
+    {
+        writeln("ProjectsWindow destroy");
+        controller.saveState();
+    } */
+
+    bool onDeleteEvent(Event event, Widget w)
+    {
+        writeln("ProjectsWindow delete");
+        controller.saveState();
+        // TODO: check all files are saved
+        return false;
     }
 
     void onClickedBrowse(Button btn)
