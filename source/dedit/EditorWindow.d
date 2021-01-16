@@ -364,7 +364,7 @@ class EditorWindow
         }
         main_paned.add2(w);
         w.showAll();
-        w.checkResize();
+        main_paned.checkResize();
 
         {
             if (project_name in controller.window_settings

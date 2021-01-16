@@ -5,6 +5,7 @@ import std.algorithm;
 import std.stdio;
 import std.json;
 
+import glib.Idle;
 import gtk.Scrollbar;
 import gtk.TextBuffer;
 import gtk.TextView;
@@ -100,9 +101,14 @@ class View : ModuleBufferView
     void setSettings(string value)
     {
         // TODO: 'values' variable have type of void - I don't know what this variable is - I should get to gnow.
-        auto x = new BufferViewSettings(value);
-        writeln("x.scroll_position (setting to) ", x.scroll_position);
-        (cast(Scrollbar)(sw.getVscrollbar())).setValue(x.scroll_position);
+
+        new Idle(delegate bool() {
+            auto x = new BufferViewSettings(value);
+            writeln("x.scroll_position (setting to) ", x.scroll_position);
+            (cast(Scrollbar)(sw.getVscrollbar())).setValue(x.scroll_position);
+            return false;
+        });
+
     }
 
     void close()
