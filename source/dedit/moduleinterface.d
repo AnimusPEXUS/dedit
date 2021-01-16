@@ -14,6 +14,7 @@ struct ModuleInformation
     string[] supportedExtensions;
     string[] supportedMIMETypes;
     ModuleDataBuffer function(Controller c, EditorWindow w, string uri) createDataBufferForURI;
+    /* void function(ModuleDataBuffer b, string uri) saveBufferToURI; */
     /* ModuleBufferView function(Controller c, EditorWindow w, ModuleDataBuffer b) createView; */
     /* Menu createMenuForBuffer(Buffer buff); */
 }
@@ -21,10 +22,13 @@ struct ModuleInformation
 interface ModuleBufferView
 {
     Widget getWidget();
+    string getSettings();
+    void setSettings(string value);
     void close();
 }
 
 interface ModuleDataBuffer
 {
     ModuleBufferView createView(ModuleDataBuffer b = null, EditorWindow w = null, Controller c = null);
+    void save(string uri);
 }

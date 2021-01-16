@@ -20,6 +20,8 @@ import gtk.TreeViewColumn;
 import gtk.ListStore;
 import gtk.TreeIter;
 import gdk.Event;
+import gtk.AccelGroup;
+import gtk.MenuItem;
 
 import gobject.Value;
 
@@ -41,44 +43,42 @@ import dedit.Settings;
 class EditorWindow
 {
 
-    private
-    {
-        Controller controller;
+    string project_name;
+    string project_path;
 
-        string project_name;
-        string project_path;
+    Controller controller;
 
-        ModuleDataBuffer[string] buffers;
+    ModuleDataBuffer[string] buffers;
 
-        ModuleBufferView current_view;
-    }
+    ModuleBufferView current_view;
+    ModuleDataBuffer current_buffer;
+    string current_buffer_filename_rtr;
 
-    private
-    {
-        Window window;
+    AccelGroup accel_group;
 
-        EditorWindowMainMenu main_menu;
+    Window window;
 
-        Box root_box;
+    EditorWindowMainMenu main_menu;
 
-        Paned main_paned;
-        Paned left_paned;
+    Box root_box;
 
-        Frame left_upper_frame;
-        Frame left_lower_frame;
+    Paned main_paned;
+    Paned left_paned;
 
-        Frame main_frame;
-        Box main_view_box;
+    Frame left_upper_frame;
+    Frame left_lower_frame;
 
-        TreeView buffers_view;
-        ScrolledWindow buffers_view_sw;
-        ListStore buffers_view_list_store;
+    Frame main_frame;
+    Box main_view_box;
 
-        TreeView files_view;
-        ScrolledWindow files_view_sw;
+    TreeView buffers_view;
+    ScrolledWindow buffers_view_sw;
+    ListStore buffers_view_list_store;
 
-        FileTreeView filebrowser;
-    }
+    TreeView files_view;
+    ScrolledWindow files_view_sw;
+
+    FileTreeView filebrowser;
 
     this(Controller controller, string project_name)
     {
@@ -88,6 +88,8 @@ class EditorWindow
         /* window.setGravity(Gravity.STATIC); */
         /* window.addOnDestroy(&windowOnDestroy); */
         window.addOnDelete(&onDeleteEvent);
+        accel_group = new AccelGroup();
+        window.addAccelGroup(accel_group);
 
         main_menu = new EditorWindowMainMenu(this);
 
@@ -98,7 +100,7 @@ class EditorWindow
         left_paned = new Paned(GtkOrientation.VERTICAL);
 
         main_paned.add1(left_paned);
-        main_paned.add2(new Label("Open some file and activate it's buffer"));
+        main_paned.add2(new Label("Open file and activate it's buffer"));
 
         root_box.packStart(main_menu.getWidget(), false, true, 0);
         root_box.packStart(main_paned, true, true, 0);
@@ -113,6 +115,7 @@ class EditorWindow
         buffers_view.addOnRowActivated(&onBufferViewActivated);
 
         buffers_view_sw = new ScrolledWindow();
+        buffers_view_sw.setOverlayScrolling(false);
         buffers_view_sw.add(buffers_view);
 
         filebrowser = new FileTreeView();
@@ -124,20 +127,7 @@ class EditorWindow
         setProject(project_name);
         loadSettings();
 
-        /* {
-        auto itr = new TreeIter();
-        buffers_view_list_store.append( itr);
-        buffers_view_list_store.set(itr, cast(int[]) [0,1], cast(string[]) [ "test1", "test2"]);
-    } */
-
     }
-
-    /* void windowOnDestroy(Widget w)
-    {
-        /* writeln("EditorWindow destroy"); */ /*
-        saveSettings();
-        controller.editorWindowIsClosed(project_name);
-    } */
 
     bool onDeleteEvent(Event event, Widget w)
     {
@@ -207,7 +197,7 @@ class EditorWindow
         x.p1pos = main_paned.getPosition();
         x.p2pos = left_paned.getPosition();
         auto y = x.toJSONValue();
-        writeln("save\n", y.toJSON(true));
+        // writeln("save\n", y.toJSON(true));
     }
 
     void loadSettings()
@@ -218,14 +208,14 @@ class EditorWindow
         }
         WindowSettings x = controller.window_settings[project_name];
 
-        {
+        /*{
             auto y = x.toJSONValue();
             writeln("load\n", y.toJSON(true));
-        }
+        }*/
 
         window.move(x.x, x.y);
-        window.setDefaultSize(x.width, x.height);
-        /* window.resize(x.width, x.height); */
+        /* window.setDefaultSize(x.width, x.height);*/
+        window.resize(x.width, x.height);
         if (x.maximized)
         {
             window.maximize();
@@ -236,6 +226,24 @@ class EditorWindow
         }
         main_paned.setPosition(x.p1pos);
         left_paned.setPosition(x.p2pos);
+
+        //if (project_name in )
+        foreach (size_t k, v; x.window_buffers)
+        {
+            ensureBufferForFile(dutils.path.join([project_path, v]), "");
+        }
+        refreshBuffersView();
+    }
+
+    void saveBufferSettings()
+    {
+        if (project_name !in controller.window_settings)
+        {
+            controller.window_settings[project_name] = new WindowSettings;
+        }
+        WindowSettings x = controller.window_settings[project_name];
+
+        x.window_buffers = buffers.keys().dup;
     }
 
     void onFileListViewActivated(TreePath tp, TreeViewColumn tvc, TreeView tv)
@@ -250,9 +258,9 @@ class EditorWindow
         {
             auto cr = filebrowser.convertTreePathToFilePath(tp);
             auto fp = dutils.path.join([project_path, cr]);
-            writeln("ensureBufferForFile", fp);
             ensureBufferForFile(fp, "");
             refreshBuffersView();
+            saveBufferSettings();
         }
 
     }
@@ -260,7 +268,8 @@ class EditorWindow
     ModuleDataBuffer ensureBufferForFile(string filename, string module_to_use)
     {
         filename = absolutePath(filename);
-        if (filename !in buffers)
+        string filename_rtr = relativePath(filename, project_path);
+        if (filename_rtr !in buffers)
         {
             ModuleInformation mi;
             if (module_to_use != "")
@@ -280,7 +289,7 @@ class EditorWindow
             }
             else
             {
-                string ext = extension(filename);
+                string ext = extension(filename_rtr);
                 foreach (i, mii; builtinModules)
                 {
                     if (mii.supportedExtensions.canFind(ext))
@@ -294,16 +303,33 @@ class EditorWindow
                     throw new Exception("extension not supported");
                 }
             }
-            string uri = "file://" ~ filename;
+            string uri = "file://" ~ dutils.path.join([
+                    project_path, filename_rtr
+                    ]);
             auto b = mi.createDataBufferForURI(controller, this, uri);
-            buffers[filename] = b;
-            writeln("added new buffer");
+            buffers[filename_rtr] = b;
+            // writeln("added new buffer");
         }
-        return buffers[filename];
+
+        return buffers[filename_rtr];
     }
 
     void onBufferViewActivated(TreePath tp, TreeViewColumn tvc, TreeView tv)
     {
+
+        if (current_view !is null)
+        {
+            auto st = current_view.getSettings();
+            WindowSettings xx;
+            if (project_name !in controller.window_settings)
+            {
+                controller.window_settings[project_name] = new WindowSettings;
+            }
+            xx = controller.window_settings[project_name];
+
+            xx.window_buffer_view_settings[current_buffer_filename_rtr] = st;
+        }
+
         if (current_view !is null)
         {
             current_view.close();
@@ -325,8 +351,8 @@ class EditorWindow
 
         auto b = buffers[itr_name];
 
-        writeln("setting up view");
-
+        current_buffer = b;
+        current_buffer_filename_rtr = itr_name;
         current_view = b.createView();
 
         auto w = current_view.getWidget();
@@ -338,7 +364,26 @@ class EditorWindow
         }
         main_paned.add2(w);
         w.showAll();
+        w.checkResize();
 
+        {
+            if (project_name in controller.window_settings
+                    && current_buffer_filename_rtr in controller
+                    .window_settings[project_name].window_buffer_view_settings)
+            {
+                auto st = controller.window_settings[project_name]
+                    .window_buffer_view_settings[current_buffer_filename_rtr];
+                current_view.setSettings(st);
+            }
+        }
+
+    }
+
+    void onMISaveActivate(MenuItem mi)
+    {
+        current_buffer.save("file://" ~ dutils.path.join([
+                    project_path, current_buffer_filename_rtr
+                ]));
     }
 
     void refreshBuffersView()
@@ -354,8 +399,9 @@ class EditorWindow
             while (ok)
             {
                 Value val = buffers_view_list_store.getValue(iter, 0);
-                string target = val.getString();
-                if (target == k)
+                auto filename_rtr = val.getString();
+                /* auto filename = dutils.path.join([project_path, filename_rtr]); */
+                if (filename_rtr == k)
                 {
                     found = true;
                     break;
@@ -380,10 +426,10 @@ class EditorWindow
             while (ok)
             {
                 Value val = buffers_view_list_store.getValue(iter, 0);
-                string target = val.getString();
-                if (target !in buffers)
+                string filename_rtr = val.getString();
+                if (filename_rtr !in buffers)
                 {
-                    writeln("removing ", target, " from buffer list");
+                    writeln("removing ", filename_rtr, " from buffer list");
                     ok = buffers_view_list_store.remove(iter);
                 }
                 else
@@ -393,11 +439,11 @@ class EditorWindow
             }
         }
 
-        writeln("buffers:");
+        /*writeln("buffers:");
         foreach (k, v; buffers)
         {
             writeln("   ", k);
-        }
+        }*/
     }
 
 }

@@ -3,7 +3,9 @@ module dedit.modules.d.mod;
 import std.path;
 import std.algorithm;
 import std.stdio;
+import std.json;
 
+import gtk.Scrollbar;
 import gtk.TextBuffer;
 import gtk.TextView;
 import gtk.TextTagTable;
@@ -76,6 +78,7 @@ class View : ModuleBufferView
         sv.setBuffer(sb);
 
         sw = new ScrolledWindow();
+        sw.setOverlayScrolling(false);
         sw.add(sv);
     }
 
@@ -83,6 +86,23 @@ class View : ModuleBufferView
     {
         writeln("returning buffer widget");
         return sw;
+    }
+
+    string getSettings()
+    {
+        auto x = new BufferViewSettings();
+        x.scroll_position = (cast(Scrollbar)(sw.getVscrollbar())).getValue();
+        writeln("x.scroll_position ", x.scroll_position);
+        auto y = x.toJSONValue();
+        return y.toJSON();
+    }
+
+    void setSettings(string value)
+    {
+        // TODO: 'values' variable have type of void - I don't know what this variable is - I should get to gnow.
+        auto x = new BufferViewSettings(value);
+        writeln("x.scroll_position (setting to) ", x.scroll_position);
+        (cast(Scrollbar)(sw.getVscrollbar())).setValue(x.scroll_position);
     }
 
     void close()
@@ -104,7 +124,10 @@ class Buffer : ModuleDataBuffer
     private
     {
         SourceBuffer buff;
-        string filename;
+
+        // it is better to leave knowlage of filenames to EditorWindow itself
+        /* string original_filename;
+        string filename_rtr; // relative to project root */
 
         Controller c;
         EditorWindow w;
@@ -123,7 +146,7 @@ class Buffer : ModuleDataBuffer
         auto filename = uri;
 
         filename = absolutePath(filename);
-        this.filename = filename;
+        /* this.filename = filename; */
 
         auto f = new std.stdio.File(filename);
 
@@ -136,14 +159,27 @@ class Buffer : ModuleDataBuffer
         this.buff.setText(cast(string) buff.idup);
     }
 
-    string getFileName()
+    /* string getFileName()
     {
         return filename;
-    }
+    } */
 
     SourceBuffer getSourceBuffer()
     {
         return buff;
+    }
+
+    void save(string uri)
+    {
+        if (uri.startsWith("file://"))
+        {
+            uri = uri["file://".length .. $];
+        }
+        auto filename = uri;
+
+        string txt = buff.getText();
+
+        toFile(txt, filename);
     }
 
     ModuleBufferView createView(ModuleDataBuffer b = null, EditorWindow w = null, Controller c = null)
@@ -168,8 +204,76 @@ class Buffer : ModuleDataBuffer
 
 }
 
+class BufferViewSettings
+{
+    int cursor_line, cursor_column;
+    double scroll_position;
+
+    this()
+    {
+    }
+
+    this(JSONValue v)
+    {
+        fromJSONValue(v);
+    }
+
+    this(string v)
+    {
+        fromJSONValue(parseJSON(v));
+    }
+
+    JSONValue toJSONValue()
+    {
+        JSONValue ret = JSONValue(cast(string[string]) null);
+        ret.object["cursor_line"] = JSONValue(cursor_line);
+        ret.object["cursor_column"] = JSONValue(cursor_column);
+        ret.object["scroll_position"] = JSONValue(scroll_position);
+        return ret;
+    }
+
+    bool fromJSONValue(JSONValue v)
+    {
+        if (v.type != JSONType.object)
+        {
+            return false;
+        }
+
+        if ("cursor_line" in v.object)
+        {
+            cursor_line = cast(int) v.object["cursor_line"].integer;
+        }
+
+        if ("cursor_column" in v.object)
+        {
+            cursor_column = cast(int) v.object["cursor_column"].integer;
+        }
+
+        if ("scroll_position" in v.object)
+        {
+            writeln("scroll_position type ", v.object["scroll_position"].type);
+            switch (v.object["scroll_position"].type)
+            {
+            default:
+                break;
+            case JSONType.integer:
+                scroll_position = cast(double) v.object["scroll_position"].integer;
+                break;
+            case JSONType.float_:
+                scroll_position = v.object["scroll_position"].floating;
+                break;
+
+            }
+
+        }
+
+        return true;
+    }
+
+}
+
 const dedit.moduleinterface.ModuleInformation ModuleInformation = {
     moduleName: "D", supportedExtensions: [".d"], createDataBufferForURI: function ModuleDataBuffer(
             Controller c, EditorWindow w, string uri) {
         return new Buffer(c, w, uri);
-    },};
+    }};
