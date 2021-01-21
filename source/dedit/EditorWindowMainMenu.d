@@ -14,15 +14,12 @@ import dedit.EditorWindow;
 
 class EditorWindowMainMenu
 {
-    private
-    {
 
-        MenuBar menuBar;
+    MenuBar menuBar;
 
-        EditorWindow main_window;
+    EditorWindow main_window;
 
-        MenuItem menu_special;
-    }
+    MenuItem menu_special;
 
     this(EditorWindow main_window)
     {
@@ -40,11 +37,18 @@ class EditorWindowMainMenu
 
         auto menu_file_menu = new Menu();
         menu_file.setSubmenu(menu_file_menu);
+
         auto menu_file_menu_save = new MenuItem("Save");
         menu_file_menu_save.addAccelerator("activate", main_window.accel_group,
                 's', GdkModifierType.CONTROL_MASK, GtkAccelFlags.VISIBLE);
         menu_file_menu_save.addOnActivate(&main_window.onMISaveActivate);
         menu_file_menu.append(menu_file_menu_save);
+
+        auto menu_file_menu_close = new MenuItem("Close");
+        menu_file_menu_close.addAccelerator("activate", main_window.accel_group,
+                'w', GdkModifierType.CONTROL_MASK, GtkAccelFlags.VISIBLE);
+        menu_file_menu_close.addOnActivate(&main_window.onMICloseActivate);
+        menu_file_menu.append(menu_file_menu_close);
 
         menuBar.append(menu_file);
         menuBar.append(menu_edit);

@@ -4,6 +4,7 @@ import std.path;
 import std.algorithm;
 import std.stdio;
 import std.json;
+import std.process;
 
 import glib.Idle;
 import gtk.Scrollbar;
@@ -11,6 +12,7 @@ import gtk.TextBuffer;
 import gtk.TextView;
 import gtk.TextTagTable;
 import gtk.Menu;
+import gtk.MenuItem;
 import gtk.Widget;
 import gtk.ScrolledWindow;
 
@@ -46,22 +48,59 @@ void applyLanguageSettingsToSourceBuffer(SourceBuffer sb)
     sb.setLanguage(SourceLanguageManager.getDefault().getLanguage("d"));
 }
 
-class View : ModuleBufferView
+class MainMenu : ModuleBufferMainMenu
 {
-    private
+
+    View view;
+    Menu mm;
+
+    this(View view)
     {
-        Controller c;
-        EditorWindow w;
-        ModuleDataBuffer b;
 
-        SourceView sv;
-        SourceBuffer sb;
-        ScrolledWindow sw;
+        this.view = view;
 
-        bool close_already_called;
+        mm = new Menu();
+
+        auto mm_menu_format = new MenuItem("Format");
+        mm_menu_format.addAccelerator("activate", this.view.w.accel_group, 'f',
+                GdkModifierType.CONTROL_MASK, GtkAccelFlags.VISIBLE);
+        mm_menu_format.addOnActivate(&onMIFormatActivate);
+        mm.append(mm_menu_format);
+
     }
 
-    this(Controller c, EditorWindow w, ModuleDataBuffer b)
+    Menu getWidget()
+    {
+        return mm;
+    }
+
+    void onMIFormatActivate(MenuItem mi)
+    {
+        this.view.b.format();
+    }
+
+    /* ref dedit.moduleinterface.ModuleInformation getModInfo() {
+    	return ModuleInformation;
+    	} */
+
+}
+
+class View : ModuleBufferView
+{
+
+    Controller c;
+    EditorWindow w;
+    Buffer b;
+
+    SourceView sv;
+    SourceBuffer sb;
+    ScrolledWindow sw;
+
+    bool close_already_called;
+
+    ModuleBufferMainMenu mm;
+
+    this(Buffer b)
     {
         this.c = c;
         this.w = w;
@@ -71,8 +110,13 @@ class View : ModuleBufferView
         sv = new SourceView();
         applyLanguageSettingsToSourceView(sv);
         {
+        new Idle(delegate bool() {
             auto fd = PgFontDescription.fromString(c.font);
-            sv.overrideFont(fd);
+             sv.overrideFont(fd);
+            return false;
+        });
+
+            
         }
         auto sb = (cast(Buffer) b).getSourceBuffer();
         applyLanguageSettingsToSourceBuffer(sb);
@@ -87,6 +131,15 @@ class View : ModuleBufferView
     {
         writeln("returning buffer widget");
         return sw;
+    }
+
+    ModuleBufferMainMenu getMainMenu()
+    {
+        if (mm is null)
+        {
+            mm = new MainMenu(this);
+        }
+        return mm;
     }
 
     string getSettings()
@@ -122,22 +175,25 @@ class View : ModuleBufferView
         sv.destroy();
         sb.destroy();
     }
+
+    ref const dedit.moduleinterface.ModuleInformation getModInfo()
+    {
+        return cast(dedit.moduleinterface.ModuleInformation) ModuleInformation;
+    }
+
 }
 
 class Buffer : ModuleDataBuffer
 {
 
-    private
-    {
-        SourceBuffer buff;
+    SourceBuffer buff;
 
-        // it is better to leave knowlage of filenames to EditorWindow itself
-        /* string original_filename;
+    // it is better to leave knowlage of filenames to EditorWindow itself
+    /* string original_filename;
         string filename_rtr; // relative to project root */
 
-        Controller c;
-        EditorWindow w;
-    }
+    Controller c;
+    EditorWindow w;
 
     this(Controller c, EditorWindow w, string uri)
     {
@@ -165,10 +221,15 @@ class Buffer : ModuleDataBuffer
         this.buff.setText(cast(string) buff.idup);
     }
 
-    /* string getFileName()
+    /* ref const dedit.moduleinterface.ModuleInformation getModInfo() {
+    	return ModuleInformation;
+    	} */
+
+    void close()
     {
-        return filename;
-    } */
+        buff.destroy();
+        buff = null;
+    }
 
     SourceBuffer getSourceBuffer()
     {
@@ -188,24 +249,29 @@ class Buffer : ModuleDataBuffer
         toFile(txt, filename);
     }
 
-    ModuleBufferView createView(ModuleDataBuffer b = null, EditorWindow w = null, Controller c = null)
+    ModuleBufferView createView()
     {
-        if (c is null)
+        return new View(this);
+    }
+
+    void format()
+    {
+
+        Pipe p1 = Pipe();
+        Pipe p2 = Pipe();
+
+        auto bt = buff.getText();
+
+        p1.write(bt);
+
+        auto p = spawnProcess(["dfmt"], p1.readEnd(), p2.writeEnd());
+        auto wec = wait(p);
+
+        if (wec == 0)
         {
-            c = this.c;
+            buff.setText(bt);
         }
 
-        if (w is null)
-        {
-            w = this.w;
-        }
-
-        if (b is null)
-        {
-            b = this;
-        }
-
-        return new View(c, w, b);
     }
 
 }

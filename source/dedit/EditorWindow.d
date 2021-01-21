@@ -56,9 +56,9 @@ class EditorWindow
 
     AccelGroup accel_group;
 
-    Window window;
-
     EditorWindowMainMenu main_menu;
+
+    Window window;
 
     Box root_box;
 
@@ -80,6 +80,8 @@ class EditorWindow
 
     FileTreeView filebrowser;
 
+    Label main_view_label;
+
     this(Controller controller, string project_name)
     {
         this.controller = controller;
@@ -100,7 +102,8 @@ class EditorWindow
         left_paned = new Paned(GtkOrientation.VERTICAL);
 
         main_paned.add1(left_paned);
-        main_paned.add2(new Label("Open file and activate it's buffer"));
+        main_view_label = new Label("Open file and activate it's buffer");
+        main_paned.add2(main_view_label);
 
         root_box.packStart(main_menu.getWidget(), false, true, 0);
         root_box.packStart(main_paned, true, true, 0);
@@ -364,7 +367,15 @@ class EditorWindow
         }
         main_paned.add2(w);
         w.showAll();
-        main_paned.checkResize();
+
+        // auto module_info = current_view.getModInfo();
+
+        // writeln("module_info name ", module_info.moduleName);
+
+        // main_menu.menu_special.setLabel(module_info.moduleName);
+        // main_menu.menu_special.setSubmenu(current_view.getMainMenu().getWidget());
+
+        // main_paned.checkResize();
 
         {
             if (project_name in controller.window_settings
@@ -384,6 +395,27 @@ class EditorWindow
         current_buffer.save("file://" ~ dutils.path.join([
                     project_path, current_buffer_filename_rtr
                 ]));
+    }
+
+    void onMICloseActivate(MenuItem mi)
+    {
+        // auto x = current_buffer;
+        // current_buffer.close();
+        current_buffer = null;
+        buffers.remove(current_buffer_filename_rtr);
+        current_view = null;
+        refreshBuffersView();
+
+        auto c2 = main_paned.getChild2();
+        if (c2 !is null)
+        {
+            if (c2 != main_view_label)
+            {
+                c2.destroy();
+            }
+        }
+        main_paned.add2(main_view_label);
+        main_view_label.showAll();
     }
 
     void refreshBuffersView()

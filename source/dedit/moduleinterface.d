@@ -19,9 +19,17 @@ struct ModuleInformation
     /* Menu createMenuForBuffer(Buffer buff); */
 }
 
+interface ModuleBufferMainMenu
+{
+    // ref ModuleInformation getModInfo()  ;
+    Menu getWidget();
+}
+
 interface ModuleBufferView
 {
+    ref const ModuleInformation getModInfo();
     Widget getWidget();
+    ModuleBufferMainMenu getMainMenu(); // each view must have own main menu attached to language mode
     string getSettings();
     void setSettings(string value);
     void close();
@@ -29,6 +37,8 @@ interface ModuleBufferView
 
 interface ModuleDataBuffer
 {
-    ModuleBufferView createView(ModuleDataBuffer b = null, EditorWindow w = null, Controller c = null);
+    // ref const ModuleInformation getModInfo();
+    ModuleBufferView createView();
     void save(string uri);
+    void close();
 }
