@@ -102,17 +102,17 @@ class View : ModuleBufferView
 
     this(Buffer b)
     {
-        this.c = c;
-        this.w = w;
+        this.c = b.c;
+        this.w = b.w;
         this.b = b;
 
         /* sb = new SourceBuffer(cast(GtkSourceBuffer*) null); */
         sv = new SourceView();
         applyLanguageSettingsToSourceView(sv);
         {
-        auto fd = PgFontDescription.fromString(c.font);
-             sv.overrideFont(fd);
-            
+            auto fd = PgFontDescription.fromString(c.font);
+            sv.overrideFont(fd);
+
         }
         auto sb = (cast(Buffer) b).getSourceBuffer();
         applyLanguageSettingsToSourceBuffer(sb);

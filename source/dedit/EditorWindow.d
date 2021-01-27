@@ -40,6 +40,8 @@ import dedit.Settings;
 
 // TODO: ensure window destroyed on close
 
+const MAIN_VIEW_LABEL_TEXT = "Open file and activate it's buffer";
+
 class EditorWindow
 {
 
@@ -80,8 +82,6 @@ class EditorWindow
 
     FileTreeView filebrowser;
 
-    Label main_view_label;
-
     this(Controller controller, string project_name)
     {
         this.controller = controller;
@@ -102,8 +102,7 @@ class EditorWindow
         left_paned = new Paned(GtkOrientation.VERTICAL);
 
         main_paned.add1(left_paned);
-        main_view_label = new Label("Open file and activate it's buffer");
-        main_paned.add2(main_view_label);
+        main_paned.add2(new Label(MAIN_VIEW_LABEL_TEXT));
 
         root_box.packStart(main_menu.getWidget(), false, true, 0);
         root_box.packStart(main_paned, true, true, 0);
@@ -360,9 +359,7 @@ class EditorWindow
 
         auto w = current_view.getWidget();
 
-		setMainViewWidget(cast(Widget)w);
-
-
+        setMainViewWidget(cast(Widget) w);
 
         // auto module_info = current_view.getModInfo();
 
@@ -385,28 +382,24 @@ class EditorWindow
         }
 
     }
-    
-    private void setMainViewWidget(Widget w) {
-    	if (w is null) {
-    		w = main_view_label;
-    	}
-    	
-    	  auto c2 = main_paned.getChild2();
-    	 if (c2 !is null)
+
+    private void setMainViewWidget(Widget w)
+    {
+        if (w is null)
         {
-            if (c2 != main_view_label)
-            {
-            	writeln("child is not main_view_label - deleting");
-                c2.destroy();
-            } else {
-            writeln("main_view_label is child - not deleting");
-            }
+            w = new Label(MAIN_VIEW_LABEL_TEXT);
         }
-        
+
+        auto c2 = main_paned.getChild2();
+        if (c2 !is null)
+        {
+            c2.destroy();
+        }
+
         main_paned.add2(w);
         w.showAll();
-    
-    } 
+
+    }
 
     void onMISaveActivate(MenuItem mi)
     {
@@ -424,7 +417,7 @@ class EditorWindow
         current_view = null;
         refreshBuffersView();
 
-		setMainViewWidget(cast(Widget)null);
+        setMainViewWidget(cast(Widget) null);
     }
 
     void refreshBuffersView()
