@@ -360,13 +360,9 @@ class EditorWindow
 
         auto w = current_view.getWidget();
 
-        auto c2 = main_paned.getChild2();
-        if (c2 !is null)
-        {
-            c2.destroy();
-        }
-        main_paned.add2(w);
-        w.showAll();
+		setMainViewWidget(cast(Widget)w);
+
+
 
         // auto module_info = current_view.getModInfo();
 
@@ -389,6 +385,28 @@ class EditorWindow
         }
 
     }
+    
+    private void setMainViewWidget(Widget w) {
+    	if (w is null) {
+    		w = main_view_label;
+    	}
+    	
+    	  auto c2 = main_paned.getChild2();
+    	 if (c2 !is null)
+        {
+            if (c2 != main_view_label)
+            {
+            	writeln("child is not main_view_label - deleting");
+                c2.destroy();
+            } else {
+            writeln("main_view_label is child - not deleting");
+            }
+        }
+        
+        main_paned.add2(w);
+        w.showAll();
+    
+    } 
 
     void onMISaveActivate(MenuItem mi)
     {
@@ -406,16 +424,7 @@ class EditorWindow
         current_view = null;
         refreshBuffersView();
 
-        auto c2 = main_paned.getChild2();
-        if (c2 !is null)
-        {
-            if (c2 != main_view_label)
-            {
-                c2.destroy();
-            }
-        }
-        main_paned.add2(main_view_label);
-        main_view_label.showAll();
+		setMainViewWidget(cast(Widget)null);
     }
 
     void refreshBuffersView()

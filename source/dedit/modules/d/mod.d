@@ -110,12 +110,8 @@ class View : ModuleBufferView
         sv = new SourceView();
         applyLanguageSettingsToSourceView(sv);
         {
-        new Idle(delegate bool() {
-            auto fd = PgFontDescription.fromString(c.font);
+        auto fd = PgFontDescription.fromString(c.font);
              sv.overrideFont(fd);
-            return false;
-        });
-
             
         }
         auto sb = (cast(Buffer) b).getSourceBuffer();
@@ -227,8 +223,8 @@ class Buffer : ModuleDataBuffer
 
     void close()
     {
-        buff.destroy();
-        buff = null;
+        // buff.destroy();
+        // buff = null;
     }
 
     SourceBuffer getSourceBuffer()
