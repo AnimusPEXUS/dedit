@@ -84,14 +84,16 @@ class MainMenu : ModuleBufferMainMenu
     	return ModuleInformation;
     	} */
 
-	~this() {
-		writeln("d : MainMenu : ModuleBufferMainMenu - is being destroyed");
-	}
-	
-	void destroy() {
-		writeln("d : MainMenu : ModuleBufferMainMenu - destroy() is called");
-		mm.destroy();
-	}
+    ~this()
+    {
+        writeln("d : MainMenu : ModuleBufferMainMenu - is being destroyed");
+    }
+
+    void destroy()
+    {
+        writeln("d : MainMenu : ModuleBufferMainMenu - destroy() is called");
+        mm.destroy();
+    }
 
 }
 
@@ -174,9 +176,8 @@ class View : ModuleBufferView
             return;
         }
         close_already_called = true;
-        
-		
-		mm.destroy();
+
+        mm.destroy();
         sv.destroy();
         sb.destroy();
     }
@@ -261,13 +262,11 @@ class Buffer : ModuleDataBuffer
 
     void format()
     {
-    
-    
-	import std.array;    
-    import dfmt.config : Config;
-    	import dfmt.formatter : format;
 
-        
+        import std.array;
+        import dfmt.config : Config;
+        import dfmt.formatter : format;
+
         ubyte[] bt = cast(ubyte[]) buff.getText();
 
         // p1.write(bt);
@@ -279,13 +278,11 @@ class Buffer : ModuleDataBuffer
         {
             buff.setText(bt);
         }*/
-        
-        
-        
-         Config config;
-            config.initializeWithDefaults();
-            
-            /*if (explicitConfigDir != "")
+
+        Config config;
+        config.initializeWithDefaults();
+
+        /*if (explicitConfigDir != "")
             {
                 config.merge(explicitConfig, buildPath(explicitConfigDir, "dummy.d"));
             }
@@ -296,25 +293,28 @@ class Buffer : ModuleDataBuffer
                 config.merge(fileConfig, cwdDummyPath);
             }
             config.merge(optConfig, cwdDummyPath);*/
-            
-            if (!config.isValid()) {
-            	writeln("dfmt config error");
-                return;
-                }
-                
-                auto output = appender!string;
-                
-            immutable bool formatSuccess = format("stdin", bt,
-                output, &config);
-               
-               if (!formatSuccess) {
-               writeln("dfmt:format() returned error");
-               return;
-               }
-               
-               writeln("dfmt out:", output);
-               
-               buff.setText(output.toString());
+
+        if (!config.isValid())
+        {
+            writeln("dfmt config error");
+            return;
+        }
+
+        auto output = appender!string;
+
+        immutable bool formatSuccess = format("stdin", bt, output, &config);
+
+        if (!formatSuccess)
+        {
+            writeln("dfmt:format() returned error");
+            return;
+        }
+
+        string x = cast(string) output[];
+
+        writeln("dfmt out:", x);
+
+        buff.setText(x);
 
     }
 

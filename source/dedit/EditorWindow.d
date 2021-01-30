@@ -232,7 +232,6 @@ class EditorWindow
         main_paned.setPosition(x.p1pos);
         left_paned.setPosition(x.p2pos);
         fileNameTreeViewColumn.setFixedWidth(x.buffer_view_filename_column_width);
-         
 
         //if (project_name in )
         foreach (size_t k, v; x.window_buffers)
@@ -366,13 +365,13 @@ class EditorWindow
 
         setMainViewWidget(cast(Widget) w);
 
-         auto module_info = current_view.getModInfo();
+        auto module_info = current_view.getModInfo();
 
-         writeln("module_info name ", module_info.moduleName);
+        writeln("module_info name ", module_info.moduleName);
 
-         main_menu.menu_special.setLabel(module_info.moduleName);
-         main_menu.menu_special.setSubmenu(current_view.getMainMenu().getWidget());
-         main_menu.menu_special.showAll();
+        main_menu.menu_special.setLabel(module_info.moduleName);
+        main_menu.menu_special.setSubmenu(current_view.getMainMenu().getWidget());
+        main_menu.menu_special.showAll();
 
         // main_paned.checkResize();
 
