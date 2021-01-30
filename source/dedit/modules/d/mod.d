@@ -5,6 +5,7 @@ import std.algorithm;
 import std.stdio;
 import std.json;
 import std.process;
+import std.range;
 
 import glib.Idle;
 import gtk.Scrollbar;
@@ -260,21 +261,60 @@ class Buffer : ModuleDataBuffer
 
     void format()
     {
+    
+    
+	import std.array;    
+    import dfmt.config : Config;
+    	import dfmt.formatter : format;
 
-        Pipe p1 = Pipe();
-        Pipe p2 = Pipe();
+        
+        ubyte[] bt = cast(ubyte[]) buff.getText();
 
-        auto bt = buff.getText();
+        // p1.write(bt);
 
-        p1.write(bt);
-
-        auto p = spawnProcess(["dfmt"], p1.readEnd(), p2.writeEnd());
+        /*auto p = spawnProcess(["dfmt"], p1.readEnd(), p2.writeEnd());
         auto wec = wait(p);
 
         if (wec == 0)
         {
             buff.setText(bt);
-        }
+        }*/
+        
+        
+        
+         Config config;
+            config.initializeWithDefaults();
+            
+            /*if (explicitConfigDir != "")
+            {
+                config.merge(explicitConfig, buildPath(explicitConfigDir, "dummy.d"));
+            }
+            else
+            {
+                Config fileConfig = getConfigFor!Config(getcwd());
+                fileConfig.pattern = "*.d";
+                config.merge(fileConfig, cwdDummyPath);
+            }
+            config.merge(optConfig, cwdDummyPath);*/
+            
+            if (!config.isValid()) {
+            	writeln("dfmt config error");
+                return;
+                }
+                
+                auto output = appender!string;
+                
+            immutable bool formatSuccess = format("stdin", bt,
+                output, &config);
+               
+               if (!formatSuccess) {
+               writeln("dfmt:format() returned error");
+               return;
+               }
+               
+               writeln("dfmt out:", output);
+               
+               buff.setText(output.toString());
 
     }
 

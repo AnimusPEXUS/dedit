@@ -1,7 +1,10 @@
-
 {
-    "fileVersion" : 1, "versions" : 
-    {
-        "gtk-d" : "3.9.0", "dutils" : "~master"
-    }
+	"fileVersion": 1,
+	"versions": {
+		"dfmt": "0.13.2",
+		"dutils": "~master",
+		"gtk-d": "3.9.0",
+		"libdparse": "0.15.4",
+		"stdx-allocator": "2.77.5"
+	}
 }
