@@ -76,6 +76,7 @@ class EditorWindow
     TreeView buffers_view;
     ScrolledWindow buffers_view_sw;
     ListStore buffers_view_list_store;
+    TreeViewColumn fileNameTreeViewColumn;
 
     TreeView files_view;
     ScrolledWindow files_view_sw;
@@ -144,6 +145,7 @@ class EditorWindow
             auto rend = new CellRendererText();
             rend.setProperty("ellipsize", PangoEllipsizeMode.START);
             auto col = new TreeViewColumn("File Name", rend, "text", 0);
+            this.fileNameTreeViewColumn = col;
             col.setResizable(true);
             tw.insertColumn(col, 0);
         }
@@ -198,6 +200,7 @@ class EditorWindow
         x.maximized = window.isMaximized();
         x.p1pos = main_paned.getPosition();
         x.p2pos = left_paned.getPosition();
+        x.buffer_view_filename_column_width = fileNameTreeViewColumn.getWidth();
         auto y = x.toJSONValue();
         // writeln("save\n", y.toJSON(true));
     }
@@ -228,6 +231,8 @@ class EditorWindow
         }
         main_paned.setPosition(x.p1pos);
         left_paned.setPosition(x.p2pos);
+        fileNameTreeViewColumn.setFixedWidth(x.buffer_view_filename_column_width);
+         
 
         //if (project_name in )
         foreach (size_t k, v; x.window_buffers)
@@ -361,12 +366,13 @@ class EditorWindow
 
         setMainViewWidget(cast(Widget) w);
 
-        // auto module_info = current_view.getModInfo();
+         auto module_info = current_view.getModInfo();
 
-        // writeln("module_info name ", module_info.moduleName);
+         writeln("module_info name ", module_info.moduleName);
 
-        // main_menu.menu_special.setLabel(module_info.moduleName);
-        // main_menu.menu_special.setSubmenu(current_view.getMainMenu().getWidget());
+         main_menu.menu_special.setLabel(module_info.moduleName);
+         main_menu.menu_special.setSubmenu(current_view.getMainMenu().getWidget());
+         main_menu.menu_special.showAll();
 
         // main_paned.checkResize();
 

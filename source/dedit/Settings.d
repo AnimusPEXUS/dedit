@@ -10,6 +10,7 @@ class WindowSettings
     int width, height;
     int p1pos, p2pos;
     int filename_column_width; // TODO: todo
+    int buffer_view_filename_column_width;
 
     string[] window_buffers;
     string[string] window_buffer_view_settings;
@@ -34,6 +35,7 @@ class WindowSettings
         ret.object["height"] = JSONValue(height);
         ret.object["p1pos"] = JSONValue(p1pos);
         ret.object["p2pos"] = JSONValue(p2pos);
+        ret.object["buffer_view_filename_column_width"] =JSONValue(buffer_view_filename_column_width); 
         ret.object["window_buffers"] = JSONValue(window_buffers);
 
         //auto window_buffer_view_settings_jv = JSONValue(cast(string[string]) null);
@@ -94,6 +96,11 @@ class WindowSettings
         if ("p2pos" in x.object)
         {
             p2pos = cast(int) x.object["p2pos"].integer;
+        }
+        
+        if ("buffer_view_filename_column_width" in x.object)
+        {
+            buffer_view_filename_column_width = cast(int) x.object["buffer_view_filename_column_width"].integer;
         }
 
         if ("window_buffers" in x.object)

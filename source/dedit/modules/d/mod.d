@@ -83,6 +83,15 @@ class MainMenu : ModuleBufferMainMenu
     	return ModuleInformation;
     	} */
 
+	~this() {
+		writeln("d : MainMenu : ModuleBufferMainMenu - is being destroyed");
+	}
+	
+	void destroy() {
+		writeln("d : MainMenu : ModuleBufferMainMenu - destroy() is called");
+		mm.destroy();
+	}
+
 }
 
 class View : ModuleBufferView
@@ -121,6 +130,7 @@ class View : ModuleBufferView
         sw = new ScrolledWindow();
         sw.setOverlayScrolling(false);
         sw.add(sv);
+        mm = new MainMenu(this);
     }
 
     Widget getWidget()
@@ -131,10 +141,6 @@ class View : ModuleBufferView
 
     ModuleBufferMainMenu getMainMenu()
     {
-        if (mm is null)
-        {
-            mm = new MainMenu(this);
-        }
         return mm;
     }
 
@@ -167,7 +173,9 @@ class View : ModuleBufferView
             return;
         }
         close_already_called = true;
-
+        
+		
+		mm.destroy();
         sv.destroy();
         sb.destroy();
     }

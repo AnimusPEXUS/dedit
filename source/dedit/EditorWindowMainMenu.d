@@ -32,9 +32,8 @@ class EditorWindowMainMenu
 
         auto menu_file = new MenuItem("File");
         auto menu_edit = new MenuItem("Edit");
-        auto menu_special = new MenuItem("[Special]");
-        menu_special = menu_special;
-
+        menu_special = new MenuItem("[Special]");
+        
         auto menu_file_menu = new Menu();
         menu_file.setSubmenu(menu_file_menu);
 
