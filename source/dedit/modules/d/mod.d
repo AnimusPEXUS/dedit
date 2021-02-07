@@ -107,9 +107,9 @@ class MainMenu : ModuleBufferMainMenu
     void onMIFormatActivate(MenuItem mi)
     {
 
-        // auto s = this.view.getSettings();
-        this.view.format();
-        // this.view.setSettings(s);
+        auto s = this.view.getSettings();
+        this.view.b.format();
+        this.view.setSettings(s);
 
     }
 
@@ -236,49 +236,6 @@ class View : ModuleBufferView
     {
     }
 
-    void format()
-    {
-
-        import std.array;
-        import dfmt.config : Config;
-        import dfmt.formatter : format;
-        import dfmt.editorconfig : OptionalBoolean;
-
-        ubyte[] bt = cast(ubyte[]) this.b.buff.getText();
-
-        Config config;
-        config.initializeWithDefaults();
-        config.dfmt_keep_line_breaks = OptionalBoolean.t;
-
-        if (!config.isValid())
-        {
-            writeln("dfmt config error");
-            return;
-        }
-
-        auto output = appender!string;
-
-        immutable bool formatSuccess = format("stdin", bt, output, &config);
-
-        if (!formatSuccess)
-        {
-            writeln("dfmt:format() returned error");
-            return;
-        }
-
-        string x = cast(string) output[];
-
-        auto s = this.getSettings();
-
-        //buff.setText(x);
-        new Idle(delegate bool() {
-            this.b.buff.setText(x);
-            this.setSettings(s);
-            return false;
-        });
-
-    }
-
 }
 
 class Buffer : ModuleDataBuffer
@@ -359,6 +316,48 @@ class Buffer : ModuleDataBuffer
     ModuleBufferView createView()
     {
         return new View(this);
+    }
+
+    void format()
+    {
+
+        import std.array;
+        import dfmt.config : Config;
+        import dfmt.formatter : format;
+        import dfmt.editorconfig : OptionalBoolean;
+
+        ubyte[] bt = cast(ubyte[]) buff.getText();
+
+        Config config;
+        config.initializeWithDefaults();
+        config.dfmt_keep_line_breaks = OptionalBoolean.t;
+
+        if (!config.isValid())
+        {
+            writeln("dfmt config error");
+            return;
+        }
+
+        auto output = appender!string;
+
+        immutable bool formatSuccess = format("stdin", bt, output, &config);
+
+        if (!formatSuccess)
+        {
+            writeln("dfmt:format() returned error");
+            return;
+        }
+
+        string x = cast(string) output[];
+
+        buff.setText(x.idup);
+
+        //buff.setText(x);
+        /* new Idle(delegate bool() {
+            this.setSettings(s);
+            return false;
+        }); */
+
     }
 
 }
