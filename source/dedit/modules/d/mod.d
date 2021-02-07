@@ -89,13 +89,21 @@ class MainMenu : ModuleBufferMainMenu
     {
         if (!uninstall)
         {
-            mm_menu_format.addAccelerator("activate", this.view.w.accel_group,
-                    'f', GdkModifierType.CONTROL_MASK, GtkAccelFlags.VISIBLE);
+            mm_menu_format.addAccelerator(
+                    "activate",
+                    this.view.w.accel_group,
+                    'f',
+                    GdkModifierType.CONTROL_MASK | GdkModifierType.SHIFT_MASK,
+                    GtkAccelFlags.VISIBLE
+            );
         }
         else
         {
-            this.mm_menu_format.removeAccelerator(this.view.w.accel_group, 'f',
-                    GdkModifierType.CONTROL_MASK);
+            this.mm_menu_format.removeAccelerator(
+                    this.view.w.accel_group,
+                    'f',
+                    GdkModifierType.CONTROL_MASK | GdkModifierType.SHIFT_MASK
+            );
         }
     }
 
@@ -421,7 +429,7 @@ class ViewSettings
 
         if ("scroll_position" in v.object)
         {
-            writeln("scroll_position type ", v.object["scroll_position"].type);
+            // writeln("scroll_position type ", v.object["scroll_position"].type);
             switch (v.object["scroll_position"].type)
             {
             default:
