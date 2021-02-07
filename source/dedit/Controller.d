@@ -13,7 +13,6 @@ import gtk.Window;
 
 import dedit.EditorWindow;
 import dedit.ProjectsWindow;
-import dedit.Settings;
 
 class Controller
 {
@@ -28,7 +27,9 @@ class Controller
     public
     {
         string[string] project_paths;
-        WindowSettings[string] window_settings;
+        EditorWindowSettings[string] window_settings;
+        ProjectsWindow projects_window;
+        JSONValue projects_window_settings;
         string font;
     }
 
@@ -45,11 +46,13 @@ class Controller
 
         app.addOnActivate(delegate void(gio.Application.Application gioapp) {
 
-            auto w = new ProjectsWindow(this);
+            projects_window = new ProjectsWindow(this);
+
+            projects_window.setSettings(projects_window_settings);
 
             /* auto w = createNewCleanWindow(); */
 
-            auto widget = w.getWindow();
+            auto widget = projects_window.getWindow();
             auto window = cast(Window) widget;
 
             window.showAll();
@@ -79,6 +82,8 @@ class Controller
             }
             x["window_settings"] = windowsettingsarray;
         }
+
+        x["projects_window_settings"] = projects_window_settings;
 
         string j = x.toJSON(true);
 
@@ -123,8 +128,13 @@ class Controller
                 window_settings.clear;
                 foreach (string k, v; x["window_settings"])
                 {
-                    window_settings[k] = new WindowSettings(v);
+                    window_settings[k] = new EditorWindowSettings(v);
                 }
+            }
+
+            if ("projects_window_settings" in x)
+            {
+                projects_window_settings = x.object["projects_window_settings"];
             }
 
         }

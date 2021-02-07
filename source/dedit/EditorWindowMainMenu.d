@@ -12,6 +12,8 @@ import gtk.c.types;
 
 import dedit.EditorWindow;
 
+const string SPECIAL_MENU_ITEM_LABEL = "[Special]";
+
 class EditorWindowMainMenu
 {
 
@@ -32,7 +34,7 @@ class EditorWindowMainMenu
 
         auto menu_file = new MenuItem("File");
         auto menu_edit = new MenuItem("Edit");
-        menu_special = new MenuItem("[Special]");
+        menu_special = new MenuItem(SPECIAL_MENU_ITEM_LABEL);
 
         auto menu_file_menu = new Menu();
         menu_file.setSubmenu(menu_file_menu);
@@ -64,5 +66,13 @@ class EditorWindowMainMenu
     {
         menu_special.setLabel(label);
         menu_special.setSubmenu(newSubmenu);
+        if (newSubmenu !is null) {
+        	menu_special.showAll();
+        }
+    }
+
+    void removeSpecialMenuItem()
+    {
+        setSpecialMenuItem(SPECIAL_MENU_ITEM_LABEL, null);
     }
 }

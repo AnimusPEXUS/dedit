@@ -2,6 +2,7 @@ module dedit.ProjectsWindow;
 
 import std.stdio;
 import std.path;
+import std.json;
 
 import gtk.Window;
 import gtk.Widget;
@@ -136,6 +137,35 @@ class ProjectsWindow
         return win;
     }
 
+    JSONValue getSettings()
+    {
+        auto x = new ProjectsWindowSettings();
+
+        win.getPosition(x.x, x.y);
+        win.getSize(x.width, x.height);
+        x.maximized = win.isMaximized();
+
+        return x.toJSONValue();
+    }
+
+    void setSettings(JSONValue value)
+    {
+
+        auto x = new ProjectsWindowSettings(value);
+
+        win.move(x.x, x.y);
+        win.resize(x.width, x.height);
+        if (x.maximized)
+        {
+            win.maximize();
+        }
+        else
+        {
+            win.unmaximize();
+        }
+
+    }
+
     /* void onWindowDestroy(Widget w)
     {
         writeln("ProjectsWindow destroy");
@@ -144,7 +174,8 @@ class ProjectsWindow
 
     bool onDeleteEvent(Event event, Widget w)
     {
-        writeln("ProjectsWindow delete");
+        // writeln("ProjectsWindow delete");
+        controller.projects_window_settings = getSettings();
         controller.saveState();
         // TODO: check all files are saved
         return false;
@@ -264,4 +295,74 @@ class ProjectsWindow
         onClickedOpen(null);
     }
 
+}
+
+class ProjectsWindowSettings
+{
+    bool maximized;
+    bool minimized;
+    int x, y;
+    int width, height;
+
+    this()
+    {
+    }
+
+    this(JSONValue v)
+    {
+        fromJSONValue(v);
+    }
+
+    JSONValue toJSONValue()
+    {
+        JSONValue ret = JSONValue(cast(string[string]) null);
+        ret.object["maximized"] = JSONValue(maximized);
+        ret.object["minimized"] = JSONValue(minimized);
+        ret.object["x"] = JSONValue(x);
+        ret.object["y"] = JSONValue(y);
+        ret.object["width"] = JSONValue(width);
+        ret.object["height"] = JSONValue(height);
+
+        return ret;
+    }
+
+    bool fromJSONValue(JSONValue x)
+    {
+        if (x.type != JSONType.object)
+        {
+            return false;
+        }
+
+        if ("maximized" in x.object)
+        {
+            maximized = x.object["maximized"].boolean;
+        }
+
+        if ("minimized" in x.object)
+        {
+            minimized = x.object["minimized"].boolean;
+        }
+
+        if ("x" in x.object)
+        {
+            this.x = cast(int) x.object["x"].integer;
+        }
+
+        if ("y" in x.object)
+        {
+            y = cast(int) x.object["y"].integer;
+        }
+
+        if ("width" in x.object)
+        {
+            width = cast(int) x.object["width"].integer;
+        }
+
+        if ("height" in x.object)
+        {
+            height = cast(int) x.object["height"].integer;
+        }
+
+        return true;
+    }
 }

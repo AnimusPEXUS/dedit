@@ -8,6 +8,8 @@ import std.process;
 import std.range;
 
 import glib.Idle;
+
+import gtk.Paned;
 import gtk.Scrollbar;
 import gtk.TextBuffer;
 import gtk.TextView;
@@ -16,6 +18,7 @@ import gtk.Menu;
 import gtk.MenuItem;
 import gtk.Widget;
 import gtk.ScrolledWindow;
+import gtk.c.types;
 
 import pango.PgFontDescription;
 
@@ -27,6 +30,7 @@ import gsv.c.types;
 import dedit.moduleinterface;
 import dedit.Controller;
 import dedit.EditorWindow;
+import dedit.OutlineTool;
 
 void applyLanguageSettingsToSourceView(SourceView sv)
 {
@@ -41,7 +45,7 @@ void applyLanguageSettingsToSourceView(SourceView sv)
     sv.setTabWidth(4);
     sv.setShowLineMarks(true);
     sv.setShowLineNumbers(true);
-    sv.setSmartHomeEnd(GtkSourceSmartHomeEndType.ALWAYS);
+    // sv.setSmartHomeEnd(GtkSourceSmartHomeEndType.ALWAYS);
 }
 
 void applyLanguageSettingsToSourceBuffer(SourceBuffer sb)
@@ -55,17 +59,23 @@ class MainMenu : ModuleBufferMainMenu
     View view;
     Menu mm;
 
-    this(View view)
+    private MenuItem mm_menu_format;
+    private string buffer_id;
+
+    this(View view, string buffer_id)
     {
 
+        this.buffer_id = buffer_id;
+
+        assert(view !is null);
         this.view = view;
 
         mm = new Menu();
 
         auto mm_menu_format = new MenuItem("Format");
-        mm_menu_format.addAccelerator("activate", this.view.w.accel_group, 'f',
-                GdkModifierType.CONTROL_MASK, GtkAccelFlags.VISIBLE);
+        this.mm_menu_format = mm_menu_format;
         mm_menu_format.addOnActivate(&onMIFormatActivate);
+
         mm.append(mm_menu_format);
 
     }
@@ -75,23 +85,38 @@ class MainMenu : ModuleBufferMainMenu
         return mm;
     }
 
-    void onMIFormatActivate(MenuItem mi)
+    void installAccelerators(bool uninstall = false)
     {
-        this.view.b.format();
+        if (!uninstall)
+        {
+            mm_menu_format.addAccelerator("activate", this.view.w.accel_group,
+                    'f', GdkModifierType.CONTROL_MASK, GtkAccelFlags.VISIBLE);
+        }
+        else
+        {
+            this.mm_menu_format.removeAccelerator(this.view.w.accel_group, 'f',
+                    GdkModifierType.CONTROL_MASK);
+        }
     }
 
-    /* ref dedit.moduleinterface.ModuleInformation getModInfo() {
-    	return ModuleInformation;
-    	} */
-
-    ~this()
+    void uninstallAccelerators()
     {
-        writeln("d : MainMenu : ModuleBufferMainMenu - is being destroyed");
+        installAccelerators(true);
+    }
+
+    void onMIFormatActivate(MenuItem mi)
+    {
+
+        // auto s = this.view.getSettings();
+        this.view.format();
+        // this.view.setSettings(s);
+
     }
 
     void destroy()
     {
-        writeln("d : MainMenu : ModuleBufferMainMenu - destroy() is called");
+        // writeln("d : MainMenu : ModuleBufferMainMenu - destroy() is called");
+        uninstallAccelerators();
         mm.destroy();
     }
 
@@ -104,6 +129,8 @@ class View : ModuleBufferView
     EditorWindow w;
     Buffer b;
 
+    Paned paned;
+
     SourceView sv;
     SourceBuffer sb;
     ScrolledWindow sw;
@@ -112,11 +139,15 @@ class View : ModuleBufferView
 
     ModuleBufferMainMenu mm;
 
+    OutlineTool outlineTool;
+
     this(Buffer b)
     {
         this.c = b.c;
         this.w = b.w;
         this.b = b;
+
+        paned = new Paned(GtkOrientation.HORIZONTAL);
 
         /* sb = new SourceBuffer(cast(GtkSourceBuffer*) null); */
         sv = new SourceView();
@@ -132,14 +163,22 @@ class View : ModuleBufferView
 
         sw = new ScrolledWindow();
         sw.setOverlayScrolling(false);
+        sw.setKineticScrolling(false);
+        sw.setCaptureButtonPress(false);
         sw.add(sv);
-        mm = new MainMenu(this);
+        mm = new MainMenu(this, this.b.uri);
+
+        OutlineToolOptions* oto = new OutlineToolOptions(&outlineToolUserWishesToGoToLine);
+
+        outlineTool = new OutlineTool(oto);
+
+        paned.add1(sw);
+        paned.add2(outlineTool.getWidget());
     }
 
     Widget getWidget()
     {
-        writeln("returning buffer widget");
-        return sw;
+        return paned;
     }
 
     ModuleBufferMainMenu getMainMenu()
@@ -147,26 +186,27 @@ class View : ModuleBufferView
         return mm;
     }
 
-    string getSettings()
+    JSONValue getSettings()
     {
-        auto x = new BufferViewSettings();
+        auto x = new ViewSettings();
         x.scroll_position = (cast(Scrollbar)(sw.getVscrollbar())).getValue();
-        writeln("x.scroll_position ", x.scroll_position);
-        auto y = x.toJSONValue();
-        return y.toJSON();
+        x.right_paned_position = paned.getPosition();
+        return x.toJSONValue();
     }
 
-    void setSettings(string value)
+    void setSettings(JSONValue value)
     {
-        // TODO: 'values' variable have type of void - I don't know what this variable is - I should get to gnow.
+
+        auto x = new ViewSettings(value);
+
+        paned.setPosition(x.right_paned_position);
 
         new Idle(delegate bool() {
-            auto x = new BufferViewSettings(value);
-            writeln("x.scroll_position (setting to) ", x.scroll_position);
+
             (cast(Scrollbar)(sw.getVscrollbar())).setValue(x.scroll_position);
+
             return false;
         });
-
     }
 
     void close()
@@ -179,12 +219,64 @@ class View : ModuleBufferView
 
         mm.destroy();
         sv.destroy();
-        sb.destroy();
+        outlineTool.destroy();
     }
 
     ref const dedit.moduleinterface.ModuleInformation getModInfo()
     {
         return cast(dedit.moduleinterface.ModuleInformation) ModuleInformation;
+    }
+
+    ModuleDataBuffer getBuffer()
+    {
+        return b;
+    }
+
+    void outlineToolUserWishesToGoToLine(int new_line_number)
+    {
+    }
+
+    void format()
+    {
+
+        import std.array;
+        import dfmt.config : Config;
+        import dfmt.formatter : format;
+        import dfmt.editorconfig : OptionalBoolean;
+
+        ubyte[] bt = cast(ubyte[]) this.b.buff.getText();
+
+        Config config;
+        config.initializeWithDefaults();
+        config.dfmt_keep_line_breaks = OptionalBoolean.t;
+
+        if (!config.isValid())
+        {
+            writeln("dfmt config error");
+            return;
+        }
+
+        auto output = appender!string;
+
+        immutable bool formatSuccess = format("stdin", bt, output, &config);
+
+        if (!formatSuccess)
+        {
+            writeln("dfmt:format() returned error");
+            return;
+        }
+
+        string x = cast(string) output[];
+
+        auto s = this.getSettings();
+
+        //buff.setText(x);
+        new Idle(delegate bool() {
+            this.b.buff.setText(x);
+            this.setSettings(s);
+            return false;
+        });
+
     }
 
 }
@@ -194,6 +286,7 @@ class Buffer : ModuleDataBuffer
 
     SourceBuffer buff;
 
+    // TODO:
     // it is better to leave knowlage of filenames to EditorWindow itself
     /* string original_filename;
         string filename_rtr; // relative to project root */
@@ -201,8 +294,13 @@ class Buffer : ModuleDataBuffer
     Controller c;
     EditorWindow w;
 
+    private string uri; // TODO: move this to EditorWindow
+
     this(Controller c, EditorWindow w, string uri)
     {
+
+        this.uri = uri;
+
         // TODO: better uri handling required
         this.c = c;
         this.w = w;
@@ -221,7 +319,10 @@ class Buffer : ModuleDataBuffer
         char[] buff;
         buff.length = f.size;
 
-        f.rawRead(buff);
+        if (f.size > 0)
+        {
+            f.rawRead(buff);
+        }
 
         this.buff = new SourceBuffer(cast(TextTagTable) null);
         this.buff.setText(cast(string) buff.idup);
@@ -260,70 +361,13 @@ class Buffer : ModuleDataBuffer
         return new View(this);
     }
 
-    void format()
-    {
-
-        import std.array;
-        import dfmt.config : Config;
-        import dfmt.formatter : format;
-
-        ubyte[] bt = cast(ubyte[]) buff.getText();
-
-        // p1.write(bt);
-
-        /*auto p = spawnProcess(["dfmt"], p1.readEnd(), p2.writeEnd());
-        auto wec = wait(p);
-
-        if (wec == 0)
-        {
-            buff.setText(bt);
-        }*/
-
-        Config config;
-        config.initializeWithDefaults();
-
-        /*if (explicitConfigDir != "")
-            {
-                config.merge(explicitConfig, buildPath(explicitConfigDir, "dummy.d"));
-            }
-            else
-            {
-                Config fileConfig = getConfigFor!Config(getcwd());
-                fileConfig.pattern = "*.d";
-                config.merge(fileConfig, cwdDummyPath);
-            }
-            config.merge(optConfig, cwdDummyPath);*/
-
-        if (!config.isValid())
-        {
-            writeln("dfmt config error");
-            return;
-        }
-
-        auto output = appender!string;
-
-        immutable bool formatSuccess = format("stdin", bt, output, &config);
-
-        if (!formatSuccess)
-        {
-            writeln("dfmt:format() returned error");
-            return;
-        }
-
-        string x = cast(string) output[];
-
-        writeln("dfmt out:", x);
-
-        buff.setText(x);
-
-    }
-
 }
 
-class BufferViewSettings
+class ViewSettings
 {
-    int cursor_line, cursor_column;
+    int cursor_line, cursor_column; // TODO:
     double scroll_position;
+    int right_paned_position;
 
     this()
     {
@@ -345,6 +389,7 @@ class BufferViewSettings
         ret.object["cursor_line"] = JSONValue(cursor_line);
         ret.object["cursor_column"] = JSONValue(cursor_column);
         ret.object["scroll_position"] = JSONValue(scroll_position);
+        ret.object["right_paned_position"] = JSONValue(right_paned_position);
         return ret;
     }
 
@@ -363,6 +408,16 @@ class BufferViewSettings
         if ("cursor_column" in v.object)
         {
             cursor_column = cast(int) v.object["cursor_column"].integer;
+        }
+
+        if ("right_paned_position" in v.object)
+        {
+            right_paned_position = cast(int) v.object["right_paned_position"].integer;
+        }
+
+        if (right_paned_position < 300)
+        {
+            right_paned_position = 300;
         }
 
         if ("scroll_position" in v.object)
@@ -389,7 +444,10 @@ class BufferViewSettings
 }
 
 const dedit.moduleinterface.ModuleInformation ModuleInformation = {
-    moduleName: "D", supportedExtensions: [".d"], createDataBufferForURI: function ModuleDataBuffer(
-            Controller c, EditorWindow w, string uri) {
-        return new Buffer(c, w, uri);
-    }};
+    moduleName: "D",
+    supportedExtensions: [".d"],
+    createDataBufferForURI: function ModuleDataBuffer(
+            Controller c,
+            EditorWindow w,
+            string uri
+    ) { return new Buffer(c, w, uri); }};

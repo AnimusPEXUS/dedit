@@ -36,7 +36,6 @@ import dedit.EditorWindowMainMenu;
 import dedit.Controller;
 import dedit.moduleinterface;
 import dedit.builtinmodules;
-import dedit.Settings;
 
 // TODO: ensure window destroyed on close
 
@@ -54,7 +53,7 @@ class EditorWindow
 
     ModuleBufferView current_view;
     ModuleDataBuffer current_buffer;
-    string current_buffer_filename_rtr;
+    string current_buffer_filename_rtr; // TODO: maybe it is better to remove this property
 
     AccelGroup accel_group;
 
@@ -109,9 +108,13 @@ class EditorWindow
         root_box.packStart(main_paned, true, true, 0);
 
         // buffers
-        buffers_view_list_store = new ListStore(cast(GType[])[
-                GType.STRING, GType.STRING
-                ]);
+        buffers_view_list_store = new ListStore(
+                cast(
+                GType[])[
+                GType.STRING,
+                GType.STRING
+                ]
+        );
         buffers_view = new TreeView();
         buffers_view.setModel(buffers_view_list_store);
         setupBufferView(buffers_view);
@@ -129,7 +132,7 @@ class EditorWindow
 
         setProject(project_name);
         loadSettings();
-
+        unsetMainView();
     }
 
     bool onDeleteEvent(Event event, Widget w)
@@ -187,13 +190,18 @@ class EditorWindow
         present();
     }
 
+    void close()
+    {
+        window.close();
+    }
+
     void saveSettings()
     {
         if (project_name !in controller.window_settings)
         {
-            controller.window_settings[project_name] = new WindowSettings;
+            controller.window_settings[project_name] = new EditorWindowSettings;
         }
-        WindowSettings x = controller.window_settings[project_name];
+        EditorWindowSettings x = controller.window_settings[project_name];
 
         window.getPosition(x.x, x.y);
         window.getSize(x.width, x.height);
@@ -211,15 +219,9 @@ class EditorWindow
         {
             return;
         }
-        WindowSettings x = controller.window_settings[project_name];
-
-        /*{
-            auto y = x.toJSONValue();
-            writeln("load\n", y.toJSON(true));
-        }*/
+        EditorWindowSettings x = controller.window_settings[project_name];
 
         window.move(x.x, x.y);
-        /* window.setDefaultSize(x.width, x.height);*/
         window.resize(x.width, x.height);
         if (x.maximized)
         {
@@ -231,6 +233,7 @@ class EditorWindow
         }
         main_paned.setPosition(x.p1pos);
         left_paned.setPosition(x.p2pos);
+
         fileNameTreeViewColumn.setFixedWidth(x.buffer_view_filename_column_width);
 
         //if (project_name in )
@@ -245,9 +248,9 @@ class EditorWindow
     {
         if (project_name !in controller.window_settings)
         {
-            controller.window_settings[project_name] = new WindowSettings;
+            controller.window_settings[project_name] = new EditorWindowSettings;
         }
-        WindowSettings x = controller.window_settings[project_name];
+        EditorWindowSettings x = controller.window_settings[project_name];
 
         x.window_buffers = buffers.keys().dup;
     }
@@ -322,25 +325,6 @@ class EditorWindow
 
     void onBufferViewActivated(TreePath tp, TreeViewColumn tvc, TreeView tv)
     {
-
-        if (current_view !is null)
-        {
-            auto st = current_view.getSettings();
-            WindowSettings xx;
-            if (project_name !in controller.window_settings)
-            {
-                controller.window_settings[project_name] = new WindowSettings;
-            }
-            xx = controller.window_settings[project_name];
-
-            xx.window_buffer_view_settings[current_buffer_filename_rtr] = st;
-        }
-
-        if (current_view !is null)
-        {
-            current_view.close();
-        }
-
         TreeIter itr = new TreeIter;
         auto ok = buffers_view_list_store.getIter(itr, tp);
         if (!ok)
@@ -355,44 +339,87 @@ class EditorWindow
             return;
         }
 
-        auto b = buffers[itr_name];
+        changeActivateBufferView(itr_name);
 
-        current_buffer = b;
-        current_buffer_filename_rtr = itr_name;
-        current_view = b.createView();
+    }
 
-        auto w = current_view.getWidget();
-
-        setMainViewWidget(cast(Widget) w);
-
-        auto module_info = current_view.getModInfo();
-
-        writeln("module_info name ", module_info.moduleName);
-
-        main_menu.menu_special.setLabel(module_info.moduleName);
-        main_menu.menu_special.setSubmenu(current_view.getMainMenu().getWidget());
-        main_menu.menu_special.showAll();
-
-        // main_paned.checkResize();
-
+    void changeActivateBufferView(string name)
+    {
+        if (name !in buffers)
         {
-            if (project_name in controller.window_settings
-                    && current_buffer_filename_rtr in controller
-                    .window_settings[project_name].window_buffer_view_settings)
-            {
-                auto st = controller.window_settings[project_name]
-                    .window_buffer_view_settings[current_buffer_filename_rtr];
-                current_view.setSettings(st);
-            }
+            return;
+        }
+
+        auto b = buffers[name];
+        auto new_view = b.createView();
+
+        saveCurrentViewSettings();
+        current_buffer_filename_rtr = name;
+        setMainView(new_view);
+        restoreCurrentViewSettings();
+    }
+
+    private void saveCurrentViewSettings()
+    {
+        if (current_view is null)
+        {
+            return;
+        }
+
+        auto st = current_view.getSettings();
+        EditorWindowSettings xx;
+        if (project_name !in controller.window_settings)
+        {
+            controller.window_settings[project_name] = new EditorWindowSettings;
+        }
+
+        xx = controller.window_settings[project_name];
+
+        if (xx.window_view_settings.type() != JSONType.object)
+        {
+            xx.window_view_settings = JSONValue(cast(string[string]) null);
+        }
+
+        xx.window_view_settings[current_buffer_filename_rtr] = st;
+
+    }
+
+    private void restoreCurrentViewSettings()
+    {
+        // restore view config
+        if (project_name in controller.window_settings
+                && current_buffer_filename_rtr in controller
+                .window_settings[project_name].window_view_settings)
+        {
+            auto st = controller.window_settings[project_name]
+                .window_view_settings[current_buffer_filename_rtr];
+            current_view.setSettings(st);
         }
 
     }
 
-    private void setMainViewWidget(Widget w)
+    private void unsetMainView()
     {
-        if (w is null)
+
+        if (current_view is null)
         {
-            w = new Label(MAIN_VIEW_LABEL_TEXT);
+            return;
+        }
+
+        // save view config 
+
+        current_buffer = null;
+
+        auto mm = current_view.getMainMenu();
+
+        mm.uninstallAccelerators();
+
+        main_menu.removeSpecialMenuItem();
+
+        if (current_view !is null)
+        {
+            current_view.close();
+            current_view = null;
         }
 
         auto c2 = main_paned.getChild2();
@@ -401,8 +428,48 @@ class EditorWindow
             c2.destroy();
         }
 
+        auto w = new Label(MAIN_VIEW_LABEL_TEXT);
         main_paned.add2(w);
         w.showAll();
+    }
+
+    private void setMainView(ModuleBufferView assumed_new_current_view)
+    {
+
+        unsetMainView();
+
+        if (assumed_new_current_view is null)
+        {
+            return;
+        }
+
+        auto assumed_new_current_buffer = assumed_new_current_view.getBuffer();
+        assert(assumed_new_current_buffer !is null);
+
+        auto c2 = main_paned.getChild2();
+        if (c2 !is null)
+        {
+            c2.destroy();
+        }
+
+        auto w = assumed_new_current_view.getWidget();
+        assert(w !is null);
+
+        main_paned.add2(w);
+        w.showAll();
+
+        auto module_info = assumed_new_current_view.getModInfo();
+
+        // writeln("module_info name ", module_info.moduleName);
+
+        auto mm = assumed_new_current_view.getMainMenu();
+
+        main_menu.setSpecialMenuItem(module_info.moduleName, mm.getWidget());
+
+        mm.installAccelerators();
+
+        current_buffer = assumed_new_current_buffer;
+        current_view = assumed_new_current_view;
 
     }
 
@@ -422,7 +489,7 @@ class EditorWindow
         current_view = null;
         refreshBuffersView();
 
-        setMainViewWidget(cast(Widget) null);
+        setMainView(cast(ModuleBufferView) null);
     }
 
     void refreshBuffersView()
@@ -450,10 +517,10 @@ class EditorWindow
 
             if (!found)
             {
-                writeln("adding ", k, " to buffer list");
-                TreeIter new_iter = new TreeIter;
-                buffers_view_list_store.append(new_iter);
-                buffers_view_list_store.set(new_iter, [0], [k]);
+                // writeln("adding ", k, " to buffer list");
+                iter = new TreeIter;
+                buffers_view_list_store.append(iter);
+                buffers_view_list_store.set(iter, [0], [k]);
             }
         }
 
@@ -468,7 +535,7 @@ class EditorWindow
                 string filename_rtr = val.getString();
                 if (filename_rtr !in buffers)
                 {
-                    writeln("removing ", filename_rtr, " from buffer list");
+                    // writeln("removing ", filename_rtr, " from buffer list");
                     ok = buffers_view_list_store.remove(iter);
                 }
                 else
@@ -485,4 +552,136 @@ class EditorWindow
         }*/
     }
 
+}
+
+class EditorWindowSettings
+{
+    bool maximized;
+    bool minimized;
+    int x, y;
+    int width, height;
+    int p1pos, p2pos;
+    // int filename_column_width; // TODO: todo
+    int buffer_view_filename_column_width;
+
+    string[] window_buffers;
+    JSONValue window_view_settings;
+
+    this()
+    {
+    }
+
+    this(JSONValue v)
+    {
+        fromJSONValue(v);
+    }
+
+    JSONValue toJSONValue()
+    {
+        JSONValue ret = JSONValue(cast(string[string]) null);
+        ret.object["maximized"] = JSONValue(maximized);
+        ret.object["minimized"] = JSONValue(minimized);
+        ret.object["x"] = JSONValue(x);
+        ret.object["y"] = JSONValue(y);
+        ret.object["width"] = JSONValue(width);
+        ret.object["height"] = JSONValue(height);
+        ret.object["p1pos"] = JSONValue(p1pos);
+        ret.object["p2pos"] = JSONValue(p2pos);
+        ret.object["buffer_view_filename_column_width"] = JSONValue(
+                buffer_view_filename_column_width);
+        ret.object["window_buffers"] = JSONValue(window_buffers);
+
+        
+
+        ret["window_view_settings"] = window_view_settings;
+
+        if (ret["window_view_settings"].type() != JSONType.object)
+        {
+            ret["window_view_settings"] = JSONValue(cast(string[string]) null);
+        }
+
+        return ret;
+    }
+
+    bool fromJSONValue(JSONValue x)
+    {
+        if (x.type != JSONType.object)
+        {
+            return false;
+        }
+
+        if ("maximized" in x.object)
+        {
+            maximized = x.object["maximized"].boolean;
+        }
+
+        if ("minimized" in x.object)
+        {
+            minimized = x.object["minimized"].boolean;
+        }
+
+        if ("x" in x.object)
+        {
+            this.x = cast(int) x.object["x"].integer;
+        }
+
+        if ("y" in x.object)
+        {
+            y = cast(int) x.object["y"].integer;
+        }
+
+        if ("width" in x.object)
+        {
+            width = cast(int) x.object["width"].integer;
+        }
+
+        if ("height" in x.object)
+        {
+            height = cast(int) x.object["height"].integer;
+        }
+
+        if ("p1pos" in x.object)
+        {
+            p1pos = cast(int) x.object["p1pos"].integer;
+        }
+
+        if ("p2pos" in x.object)
+        {
+            p2pos = cast(int) x.object["p2pos"].integer;
+        }
+
+        if ("buffer_view_filename_column_width" in x.object)
+        {
+            buffer_view_filename_column_width = cast(int) x
+                .object["buffer_view_filename_column_width"].integer;
+        }
+
+        if ("window_buffers" in x.object)
+        {
+            // window_buffers.clear;
+
+            window_buffers = window_buffers[];
+
+            foreach (k, v; x.object["window_buffers"].array)
+            {
+                window_buffers ~= v.str;
+            }
+            // window_buffers = v.object["window_buffers"].array;
+
+        }
+
+        if ("window_view_settings" in x.object)
+        {
+
+            if (x["window_view_settings"].type() != JSONType.object)
+            {
+                x["window_view_settings"] = JSONValue(cast(string[string]) null);
+            }
+
+            window_view_settings = x["window_view_settings"];
+
+        }
+
+        return true;
+    }
 }
