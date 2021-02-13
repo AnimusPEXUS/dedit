@@ -386,15 +386,42 @@ class EditorWindow
 
     private void restoreCurrentViewSettings()
     {
-        // restore view config
-        if (project_name in controller.window_settings
-                && current_buffer_filename_rtr in controller
+        if (controller is null)
+        {
+            return;
+        }
+
+        if (controller.window_settings is null)
+        {
+            return;
+        }
+
+        if (controller is null)
+        {
+            return;
+        }
+
+        if (project_name !in controller.window_settings)
+        {
+            return;
+        }
+
+        if (controller.window_settings[project_name].window_view_settings.type() != JSONType.object)
+        {
+            return;
+        }
+
+        if (
+            current_buffer_filename_rtr !in controller
                 .window_settings[project_name].window_view_settings)
         {
-            auto st = controller.window_settings[project_name]
-                .window_view_settings[current_buffer_filename_rtr];
-            current_view.setSettings(st);
+            return;
         }
+
+        // restore view config
+        auto st = controller.window_settings[project_name]
+            .window_view_settings[current_buffer_filename_rtr];
+        current_view.setSettings(st);
 
     }
 
@@ -590,8 +617,6 @@ class EditorWindowSettings
         ret.object["buffer_view_filename_column_width"] = JSONValue(
                 buffer_view_filename_column_width);
         ret.object["window_buffers"] = JSONValue(window_buffers);
-
-        
 
         ret["window_view_settings"] = window_view_settings;
 
