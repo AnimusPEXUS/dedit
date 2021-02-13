@@ -7,6 +7,8 @@ import gtk.TreeView;
 import gtk.TreeIter;
 import gtk.ListStore;
 import gtk.Widget;
+import gtk.CellRendererText;
+import gtk.TreeViewColumn;
 
 import gobject.Value;
 
@@ -49,6 +51,28 @@ class OutlineTool
         mainBox.packStart(sw, true, true, 0);
 
         tw.setModel(tw_ls);
+        
+        setupTableColumns(tw);
+    }
+
+    private void setupTableColumns(TreeView tw)
+    {
+        {
+            auto rend = new CellRendererText();
+            // rend.setProperty("ellipsize", PangoEllipsizeMode.START);
+            auto col = new TreeViewColumn("line", rend, "text", 0);
+            // this.fileNameTreeViewColumn = col;
+            // col.setResizable(true);
+            tw.insertColumn(col, 0);
+        }
+
+        {
+            auto rend = new CellRendererText();
+            rend.setProperty("ellipsize", PangoEllipsizeMode.END);
+            auto col = new TreeViewColumn("contents", rend, "text", 1);
+            // col.setResizable(true);
+            tw.insertColumn(col, 1);
+        }
     }
 
     void destroy()

@@ -31,7 +31,8 @@ interface ModuleBufferMainMenu
 
 interface ModuleBufferView
 {
-    ref const ModuleInformation getModInfo();
+    //ref const ModuleInformation getModInfo();    
+    ModuleInformation* getModInfo(); // TODO: ModuleInformation must be unmodifiable
     Widget getWidget();
     ModuleBufferMainMenu getMainMenu(); // each view must have own main menu attached to language mode
     ModuleDataBuffer getBuffer();

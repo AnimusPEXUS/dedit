@@ -1,4 +1,4 @@
-module dedit.modules.d.mod;
+module dedit.modules.python.mod;
 
 import std.path;
 import std.algorithm;
@@ -52,60 +52,18 @@ void applyLanguageSettingsToSourceView(SourceView sv)
 
 void applyLanguageSettingsToSourceBuffer(SourceBuffer sb)
 {
-    sb.setLanguage(SourceLanguageManager.getDefault().getLanguage("d"));
+    sb.setLanguage(SourceLanguageManager.getDefault().getLanguage("python"));
 }
 
 string formatWholeBufferText(string txt)
 {
-    import std.array;
-    import dfmt.config : Config;
-    import dfmt.formatter : format;
-    import dfmt.editorconfig : OptionalBoolean;
-
-    ubyte[] bt = cast(ubyte[]) txt;
-
-    Config config;
-    config.initializeWithDefaults();
-    config.dfmt_keep_line_breaks = OptionalBoolean.t;
-
-    if (!config.isValid())
-    {
-        string msg = "dfmt config error";
-        writeln(msg);
-        throw new Exception(msg);
-        // return "";
-    }
-
-    auto output = appender!string;
-
-    immutable bool formatSuccess = format("stdin", bt, output, &config);
-
-    if (!formatSuccess)
-    {
-        string msg = "dfmt:format() returned error";
-        writeln(msg);
-        throw new Exception(msg);
-        // return "";
-    }
-
-    string x = cast(string) output[];
-
-    //buff.setText(x);
-    /* new Idle(delegate bool() {
-            this.setSettings(s);
-            return false;
-        }); */
-
-    string ret = x.idup;
-
-    return ret;
-
+    return txt;
 }
 
 const dedit.moduleinterface.ModuleInformation ModuleInformation =
 {
-    moduleName: "D",
-    supportedExtensions: [".d"],
+    moduleName: "Python",
+    supportedExtensions: [".py"],
     createDataBufferForURI: function ModuleDataBuffer(
             Controller c,
             EditorWindow w,
