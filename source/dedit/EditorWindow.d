@@ -22,6 +22,7 @@ import gtk.TreeIter;
 import gdk.Event;
 import gtk.AccelGroup;
 import gtk.MenuItem;
+import gtk.MessageDialog;
 
 import gobject.Value;
 
@@ -166,7 +167,8 @@ class EditorWindow
         this.project_name = project_name;
         project_path = controller.project_paths[project_name];
         filebrowser.setRootDirectory(project_path);
-        window.setTitle(project_name ~ " :: dedit, The code editor");
+        // window.setTitle(project_name ~ " :: dedit, The code editor");
+        window.setTitle(project_name);
     }
 
     Widget getWidget()
@@ -267,7 +269,13 @@ class EditorWindow
         {
             auto cr = filebrowser.convertTreePathToFilePath(tp);
             auto fp = dutils.path.join([project_path, cr]);
-            ensureBufferForFile(fp, "");
+            writeln("going to open file", fp);
+            if (ensureBufferForFile(fp, "") is null)
+            {
+                // writeln("  ensure failed");
+                return;
+            }
+            // writeln("  ensure success");
             refreshBuffersView();
             saveBufferSettings();
         }
@@ -293,7 +301,19 @@ class EditorWindow
                 }
                 if (mi is cast(ModuleInformation) null)
                 {
-                    throw new Exception("module not found");
+                    auto d = new MessageDialog(
+                            window,
+                            DialogFlags.MODAL,
+                            MessageType.ERROR,
+                            ButtonsType.OK,
+                            false,
+                            "module not found",
+                    );
+
+                    d.run();
+                    d.destroy();
+
+                    return null;
                 }
             }
             else
@@ -309,7 +329,19 @@ class EditorWindow
                 }
                 if (mi is cast(ModuleInformation) null)
                 {
-                    throw new Exception("extension not supported");
+                    auto d = new MessageDialog(
+                            window,
+                            DialogFlags.MODAL,
+                            MessageType.ERROR,
+                            ButtonsType.OK,
+                            false,
+                            "extension not supported",
+                    );
+
+                    d.run();
+                    d.destroy();
+
+                    return null;
                 }
             }
             string uri = "file://" ~ dutils.path.join([

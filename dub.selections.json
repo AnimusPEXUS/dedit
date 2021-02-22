@@ -2,7 +2,7 @@
 	"fileVersion": 1,
 	"versions": {
 		"dfmt": "0.13.2",
-		"dutils": "~master",
+		"dutils": "0.1.0",
 		"gtk-d": "3.9.0",
 		"libdparse": "0.15.4",
 		"stdx-allocator": "2.77.5"

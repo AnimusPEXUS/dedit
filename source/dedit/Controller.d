@@ -17,21 +17,15 @@ import dedit.ProjectsWindow;
 class Controller
 {
 
-    private
-    {
-        string settingsPath;
+    string settingsPath;
 
-        EditorWindow[string] windows;
-    }
+    EditorWindow[string] windows;
 
-    public
-    {
-        string[string] project_paths;
-        EditorWindowSettings[string] window_settings;
-        ProjectsWindow projects_window;
-        JSONValue projects_window_settings;
-        string font;
-    }
+    string[string] project_paths;
+    EditorWindowSettings[string] window_settings;
+    ProjectsWindow projects_window;
+    JSONValue projects_window_settings;
+    string font;
 
     int main(string[] args)
     {

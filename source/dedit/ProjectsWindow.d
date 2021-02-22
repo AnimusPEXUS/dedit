@@ -175,6 +175,10 @@ class ProjectsWindow
     bool onDeleteEvent(Event event, Widget w)
     {
         // writeln("ProjectsWindow delete");
+        foreach (i, c; controller.windows)
+        {
+            c.close();
+        }
         controller.projects_window_settings = getSettings();
         controller.saveState();
         // TODO: check all files are saved
@@ -183,9 +187,18 @@ class ProjectsWindow
 
     void onClickedBrowse(Button btn)
     {
-        auto d = new FileChooserDialog("Select Project Directory", win, FileChooserAction.SELECT_FOLDER, [
-                "Confirm", "Cancel"
-                ], cast(ResponseType[])[ResponseType.OK, ResponseType.CANCEL]);
+        auto d = new FileChooserDialog(
+                "Select Project Directory",
+                win,
+                FileChooserAction.SELECT_FOLDER,
+                [
+                "Confirm",
+                "Cancel"
+                ],
+                cast(ResponseType[])[
+                ResponseType.OK,
+                ResponseType.CANCEL
+                ]);
 
         auto res = d.run();
 

@@ -7,6 +7,7 @@ import std.json;
 import std.process;
 import std.range;
 import std.functional;
+import std.regex;
 
 import glib.Idle;
 
@@ -34,6 +35,8 @@ import dedit.EditorWindow;
 import dedit.OutlineTool;
 import dedit.TypicalCodeEditorMod;
 
+import dutils.regex;
+
 void applyLanguageSettingsToSourceView(SourceView sv)
 {
     sv.setAutoIndent(true);
@@ -55,9 +58,24 @@ void applyLanguageSettingsToSourceBuffer(SourceBuffer sb)
     sb.setLanguage(SourceLanguageManager.getDefault().getLanguage("go"));
 }
 
+const SYMBOL_REGEXP = ctRegex!(`^[ \t]*(func|var|const|type|import) .*$`, "m");
+
+// const SYMBOL2_REGEXP = ctRegex!(`^([ \t]*[a-zA-Z_][a-zA-Z0-9_\.]*?)[ \t]*\=.*$`);
+
 string formatWholeBufferText(string txt)
 {
     return txt;
+}
+
+OutlineToolInputData* prepareDataForOutlineTool(string txt)
+{
+    auto lstarts = lineStarts(txt);
+
+    OutlineToolInputData* ret = new OutlineToolInputData();
+
+    outlineToolDataInsertMatchedLines(ret, txt, SYMBOL_REGEXP, lstarts);
+
+    return ret;
 }
 
 const dedit.moduleinterface.ModuleInformation ModuleInformation =
@@ -73,10 +91,13 @@ const dedit.moduleinterface.ModuleInformation ModuleInformation =
         options.module_information = cast(
                 dedit.moduleinterface.ModuleInformation*)&ModuleInformation;
         // options.module_information = cast(dedit.moduleinterface.ModuleInformation*)&ModuleInformation;
-        options.applyLanguageSettingsToSourceView = toDelegate(&applyLanguageSettingsToSourceView);
-        options.applyLanguageSettingsToSourceBuffer = toDelegate(
-                &applyLanguageSettingsToSourceBuffer);
+        options.applyLanguageSettingsToSourceView =
+            toDelegate(&applyLanguageSettingsToSourceView);
+        options.applyLanguageSettingsToSourceBuffer =
+            toDelegate(
+                    &applyLanguageSettingsToSourceBuffer);
         options.formatWholeBufferText = toDelegate(&formatWholeBufferText);
+        options.prepareDataForOutlineTool = toDelegate(&prepareDataForOutlineTool);
 
         auto tem = new TypicalCodeEditorMod(options);
         return tem.createDataBufferForURI(c, w, uri);

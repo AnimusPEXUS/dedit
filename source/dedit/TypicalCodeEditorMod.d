@@ -6,6 +6,8 @@ import std.stdio;
 import std.json;
 import std.process;
 import std.range;
+import std.regex;
+import std.string;
 
 import glib.Idle;
 
@@ -31,6 +33,55 @@ import dedit.moduleinterface;
 import dedit.Controller;
 import dedit.EditorWindow;
 import dedit.OutlineTool;
+
+import dutils.regex;
+
+void outlineToolDataInsertMatchedLines(OutlineToolInputData* ret, string txt, Regex!char re, ulong[] lstarts)
+{
+
+    auto positions = matchPositions(txt, re, lstarts);
+
+    debug
+    {
+        writeln("positions");
+        foreach (k, v; positions)
+        {
+            writeln("  ", k, " : ", v);
+        }
+    }
+
+    // ret.data = [];
+    // ret.data.length = 0;
+    // assert(ret.data !is null);
+
+    foreach (k, v; positions)
+    {
+        ulong start_index = lstarts[v];
+        ulong end_index = 0;
+
+        if (v == lstarts.length)
+        {
+            end_index = txt.length;
+        }
+        else
+        {
+            end_index = lstarts[v + 1]; // TODO: substuct \n (or, maybe, all whitespaces)
+        }
+
+        auto xx = new OutlineToolInputDataUnit(
+                v,
+                txt[start_index .. end_index].stripRight()
+        );
+
+        debug
+        {
+            writeln(" adding to ret.data : ", xx.line, " : ", xx.text);
+        }
+
+        ret.data ~= xx;
+    }
+
+}
 
 class MainMenu : ModuleBufferMainMenu
 {
@@ -155,7 +206,9 @@ class View : ModuleBufferView
         sw.add(sv);
         mm = new MainMenu(this, this.b.uri);
 
-        OutlineToolOptions* oto = new OutlineToolOptions(&outlineToolUserWishesToGoToLine);
+        OutlineToolOptions* oto = new OutlineToolOptions();
+        oto.userWishesToGoToLine = &outlineToolUserWishesToGoToLine;
+        oto.userWishesToRefreshData = &outlineToolUserWishesToRefreshData;
 
         outlineTool = new OutlineTool(oto);
 
@@ -221,6 +274,29 @@ class View : ModuleBufferView
 
     void outlineToolUserWishesToGoToLine(int new_line_number)
     {
+    }
+
+    void outlineToolUserWishesToRefreshData()
+    {
+        OutlineToolInputData* delegate(string txt) tt;
+
+        try
+        {
+            tt = this.b.tcem.options.prepareDataForOutlineTool;
+        }
+        catch (Exception e)
+        {
+            return;
+        }
+
+        if (tt is null)
+        {
+            return;
+        }
+
+        auto tt_res = tt(b.buff.getText());
+
+        outlineTool.setData(tt_res);
     }
 
 }

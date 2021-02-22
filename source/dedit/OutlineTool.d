@@ -1,6 +1,9 @@
 module dedit.OutlineTool;
 
+import std.stdio;
+
 import gtk.Box;
+import gtk.Button;
 import gtk.ScrolledWindow;
 import gtk.Scrollbar;
 import gtk.TreeView;
@@ -14,7 +17,7 @@ import gobject.Value;
 
 struct OutlineToolInputDataUnit
 {
-    uint line;
+    ulong line;
     // string type;
     string text;
 }
@@ -27,10 +30,14 @@ struct OutlineToolInputData
 struct OutlineToolOptions
 {
     void delegate(int new_line_number) userWishesToGoToLine;
+    void delegate() userWishesToRefreshData;
 }
 
 class OutlineTool
 {
+
+    OutlineToolOptions* options;
+
     Box mainBox;
 
     ScrolledWindow sw;
@@ -39,6 +46,9 @@ class OutlineTool
 
     this(OutlineToolOptions* options)
     {
+
+        this.options = options;
+
         sw = new ScrolledWindow();
         sw.setOverlayScrolling(false);
 
@@ -48,11 +58,30 @@ class OutlineTool
         tw_ls = new ListStore(cast(GType[])[GType.UINT, GType.STRING]);
 
         mainBox = new Box(GtkOrientation.VERTICAL, 0);
+
+        auto button_refresh = new Button("refresh");
+        button_refresh.addOnClicked(&buttonRefreshClicked);
+
+        mainBox.packStart(button_refresh, false, true, 0);
         mainBox.packStart(sw, true, true, 0);
 
         tw.setModel(tw_ls);
-        
+
         setupTableColumns(tw);
+    }
+
+    private void buttonRefreshClicked(Button b)
+    {
+
+        if (options.userWishesToRefreshData !is null)
+        {
+            debug
+            {
+                writeln("refresh button clicked");
+            }
+            options.userWishesToRefreshData();
+        }
+
     }
 
     private void setupTableColumns(TreeView tw)
@@ -88,7 +117,7 @@ class OutlineTool
     void setData(OutlineToolInputData* data)
     {
         assert(data !is null);
-        assert(data.data !is null);
+        // assert(data.data !is null);
 
         foreach (size_t k, OutlineToolInputDataUnit* v; data.data)
         {
