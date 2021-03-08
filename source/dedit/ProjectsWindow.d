@@ -26,7 +26,7 @@ import gdk.Event;
 import gdk.c.types;
 
 import dedit.Controller;
-import dedit.EditorWindow;
+import dedit.ViewWindow;
 
 class ProjectsWindow
 {
@@ -130,6 +130,21 @@ class ProjectsWindow
             }
         }
 
+        loadSettings();
+    }
+
+    void loadSettings()
+    {
+        if ("projects_window_settings" in controller.settings)
+        {
+            setSettings(controller.settings["projects_window_settings"]);
+        }
+    }
+
+    void saveSettings()
+    {
+        auto x = getSettings();
+        controller.settings["projects_window_settings"] = x;
     }
 
     Window getWindow()
@@ -172,16 +187,17 @@ class ProjectsWindow
         controller.saveState();
     } */
 
+
     bool onDeleteEvent(Event event, Widget w)
     {
         // writeln("ProjectsWindow delete");
-        foreach (i, c; controller.windows)
+        /*foreach (i, c; controller.windows)
         {
             c.close();
         }
         controller.projects_window_settings = getSettings();
         controller.saveState();
-        // TODO: check all files are saved
+        // TODO: check all files are saved*/
         return false;
     }
 
@@ -223,7 +239,7 @@ class ProjectsWindow
 
         controller.project_paths[name] = path;
 
-        controller.saveState();
+        // controller.saveState();
     }
 
     void onClickedRemove(Button btn)
@@ -253,7 +269,7 @@ class ProjectsWindow
             controller.project_paths.remove(name);
         }
 
-        controller.saveState();
+        // controller.saveState();
     }
 
     void onClickedOpen(Button btn)
@@ -282,8 +298,8 @@ class ProjectsWindow
             // TODO: show message
             return;
         }
-        auto w = controller.createNewOrGetExistingEditorWindow(name);
-        w.showAndPresent();
+        //auto w = controller.createNewOrGetExistingEditorWindow(name);
+        //w.showAndPresent();
     }
 
     void onSelectionChanged(TreeSelection ts)

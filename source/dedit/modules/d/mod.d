@@ -30,7 +30,7 @@ import gsv.c.types;
 
 import dedit.moduleinterface;
 import dedit.Controller;
-import dedit.EditorWindow;
+import dedit.ViewWindow;
 import dedit.OutlineTool;
 import dedit.TypicalCodeEditorMod;
 
@@ -108,7 +108,7 @@ const dedit.moduleinterface.ModuleInformation ModuleInformation =
     supportedExtensions: [".d"],
     createDataBufferForURI: function ModuleDataBuffer(
             Controller c,
-            EditorWindow w,
+            ViewWindow w,
             string uri
     ) {
         auto options = new TypicalCodeEditorModOptions();

@@ -31,7 +31,7 @@ import gsv.c.types;
 
 import dedit.moduleinterface;
 import dedit.Controller;
-import dedit.EditorWindow;
+import dedit.ViewWindow;
 import dedit.OutlineTool;
 
 import dutils.regex;
@@ -164,7 +164,7 @@ class View : ModuleBufferView
 {
 
     Controller c;
-    EditorWindow w;
+    ViewWindow w;
     Buffer b;
 
     Paned paned;
@@ -312,12 +312,12 @@ class Buffer : ModuleDataBuffer
         string filename_rtr; // relative to project root */
 
     Controller c;
-    EditorWindow w;
+    ViewWindow w;
     TypicalCodeEditorMod tcem;
 
     private string uri; // TODO: move this to EditorWindow
 
-    this(TypicalCodeEditorMod tcem, Controller c, EditorWindow w, string uri)
+    this(TypicalCodeEditorMod tcem, Controller c, ViewWindow w, string uri)
     {
 
         this.tcem = tcem;
@@ -493,7 +493,7 @@ class TypicalCodeEditorMod
         this.options = options;
     }
 
-    ModuleDataBuffer createDataBufferForURI(Controller c, EditorWindow w, string uri)
+    ModuleDataBuffer createDataBufferForURI(Controller c, ViewWindow w, string uri)
     {
         return new Buffer(this, c, w, uri);
     }

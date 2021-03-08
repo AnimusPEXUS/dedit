@@ -1,4 +1,4 @@
-module dedit.EditorWindowMainMenu;
+module dedit.ViewWindowMainMenu;
 
 import std.stdio;
 
@@ -10,25 +10,25 @@ import gtk.Menu;
 import gtk.MenuItem;
 import gtk.c.types;
 
-import dedit.EditorWindow;
+import dedit.ViewWindow;
 
 const string SPECIAL_MENU_ITEM_LABEL = "[Special]";
 
-class EditorWindowMainMenu
+class ViewWindowMainMenu
 {
 
     MenuBar menuBar;
 
-    EditorWindow main_window;
+    ViewWindow view_window;
 
     MenuItem menu_special;
 
-    this(EditorWindow main_window)
+    this(ViewWindow view_window)
     {
 
-        assert(main_window !is null);
+        assert(view_window !is null);
 
-        this.main_window = main_window;
+        this.view_window = view_window;
 
         menuBar = new MenuBar();
 
@@ -39,17 +39,19 @@ class EditorWindowMainMenu
         auto menu_file_menu = new Menu();
         menu_file.setSubmenu(menu_file_menu);
 
+        /*
         auto menu_file_menu_save = new MenuItem("Save");
-        menu_file_menu_save.addAccelerator("activate", main_window.accel_group,
+        menu_file_menu_save.addAccelerator("activate", view_window.accel_group,
                 's', GdkModifierType.CONTROL_MASK, GtkAccelFlags.VISIBLE);
-        menu_file_menu_save.addOnActivate(&main_window.onMISaveActivate);
+        menu_file_menu_save.addOnActivate(&view_window.onMISaveActivate);
         menu_file_menu.append(menu_file_menu_save);
 
         auto menu_file_menu_close = new MenuItem("Close");
-        menu_file_menu_close.addAccelerator("activate", main_window.accel_group,
+        menu_file_menu_close.addAccelerator("activate", view_window.accel_group,
                 'w', GdkModifierType.CONTROL_MASK, GtkAccelFlags.VISIBLE);
-        menu_file_menu_close.addOnActivate(&main_window.onMICloseActivate);
+        menu_file_menu_close.addOnActivate(&view_window.onMICloseActivate);
         menu_file_menu.append(menu_file_menu_close);
+        */
 
         menuBar.append(menu_file);
         menuBar.append(menu_edit);

@@ -7,7 +7,7 @@ import gtk.TextBuffer;
 import gtk.Menu;
 
 import dedit.Controller;
-import dedit.EditorWindow;
+import dedit.ViewWindow;
 
 struct ModuleInformation
 {
@@ -15,7 +15,7 @@ struct ModuleInformation
     string specialMenuName;
     string[] supportedExtensions;
     string[] supportedMIMETypes;
-    ModuleDataBuffer function(Controller c, EditorWindow w, string uri) createDataBufferForURI;
+    ModuleDataBuffer function(Controller c, ViewWindow w, string uri) createDataBufferForURI;
     /* void function(ModuleDataBuffer b, string uri) saveBufferToURI; */
     /* ModuleBufferView function(Controller c, EditorWindow w, ModuleDataBuffer b) createView; */
     /* Menu createMenuForBuffer(Buffer buff); */
