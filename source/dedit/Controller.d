@@ -39,20 +39,19 @@ class Controller
 
     int main(string[] args)
     {
-        font = "Go Mono 10";
-
         settingsPath = expandTilde("~/.config/dedit/settings.json");
 
         loadSettings();
 
-        auto app = new gtk.Application.Application("dedit.wayround.i2p",
-                gio.Application.GApplicationFlags.FLAGS_NONE);
+        auto app = new gtk.Application.Application(
+                "",
+                gio.Application.GApplicationFlags.FLAGS_NONE
+        );
 
-        app.addOnActivate(delegate void(gio.Application.Application gioapp) {
+        app.addOnActivate(
+                delegate void(gio.Application.Application gioapp) {
 
             projects_window = new ProjectsWindow(this);
-
-          
 
             /* auto w = createNewCleanWindow(); */
 
@@ -62,7 +61,8 @@ class Controller
             window.showAll();
 
             app.addWindow(window);
-        });
+        }
+        );
 
         return app.run(args);
     }
@@ -96,27 +96,34 @@ class Controller
             string data = cast(string) f.rawRead(buf);
 
             settings = parseJSON(data);
+            settings = sanitizeSettings(settings);
         }
     }
-    
-    string getProjectPath(string name) 
+
+    JSONValue sanitizeSettings(JSONValue settings)
     {
-        if (settings.type() != JSONType.object) 
+
+        if (settings.type() != JSONType.object)
         {
-            throw new Exception("dedit saved settings have invalid structure");
+            settings = JSONValue(cast(JSONValue[string]) null);
         }
-        
-        if ("projects" !in settings) 
+
+        if ("font" !in settings)
         {
-            throw new Exception("don't have saved projects");
+            settings["font"] = "Go Mono 10";
         }
-        
-        if (name !in settings["projects"])
+
+        if ("projects" !in settings || settings["projects"].type() != JSONType.object)
         {
-            throw new Exception("don't know named project's path");
+            settings["projects"] = JSONValue(cast(JSONValue[string]) null);
         }
-        
-        return settings["projects"]["name"].str();
+
+        return settings;
+    }
+
+    string getProjectPath(string name)
+    {
+        return settings["projects"][name].str();
     }
 
     /*
