@@ -4,6 +4,7 @@ import std.stdio;
 import std.path;
 import std.algorithm;
 import std.json;
+import std.typecons;
 
 import gtk.Window;
 import gtk.Label;
@@ -136,37 +137,21 @@ class ProjectWindow
         return false;
     }
 
-    string getPath()
+    Tuple!(string, Exception) getPath()
     {
         return controller.getProjectPath(project_name);
     }
 
-    /*
-    private void setupBufferView(TreeView tw)
-    {
-        {
-            auto rend = new CellRendererText();
-            rend.setProperty("ellipsize", PangoEllipsizeMode.START);
-            auto col = new TreeViewColumn("File Name", rend, "text", 0);
-            this.fileNameTreeViewColumn = col;
-            col.setResizable(true);
-            tw.insertColumn(col, 0);
-        }
-
-        {
-            auto rend = new CellRendererText();
-            auto col = new TreeViewColumn("Changed?", rend, "text", 1);
-            col.setResizable(true);
-            tw.insertColumn(col, 1);
-        }
-    }*/
-
-    void setProject(string project_name)
+    Exception setProject(string project_name)
     {
         this.project_name = project_name;
-        filebrowser.setRootDirectory(getPath());
-        // window.setTitle(project_name ~ " :: dedit, The code editor");
+        auto res = getPath();
+        if (res[1] !is null) {
+            return res[1];
+        }
+        filebrowser.setRootDirectory(res[0]);
         window.setTitle(project_name);
+        return null;
     }
 
     Widget getWidget()
@@ -186,8 +171,8 @@ class ProjectWindow
 
     void showAndPresent()
     {
-        show();
-        present();
+        window.showAll();
+        window.present();
     }
 
     void close()
@@ -197,36 +182,37 @@ class ProjectWindow
 
     void saveSettings()
     {
-        /*
-        if (project_name !in controller.window_settings)
-        {
-            controller.window_settings[project_name] = new EditorWindowSettings;
-        }
-        EditorWindowSettings x = controller.window_settings[project_name];
-
-        window.getPosition(x.x, x.y);
-        window.getSize(x.width, x.height);
-        x.maximized = window.isMaximized();
-        x.p1pos = main_paned.getPosition();
-        x.p2pos = left_paned.getPosition();
-        x.buffer_view_filename_column_width = fileNameTreeViewColumn.getWidth();
-        auto y = x.toJSONValue();
-        */
-        // writeln("save\n", y.toJSON(true));
+        auto settings = getSettings();
+        controller.setProjectWindowSettings(project_name, settings.toJSONValue());
     }
 
-    void loadSettings()
+    ProjectWindowSettings getSettings()
     {
-        /*
-        if (project_name !in controller.window_settings)
-        {
-            return;
-        }
-        EditorWindowSettings x = controller.window_settings[project_name];
+        auto ret = new ProjectWindowSettings;
+        window.getPosition(ret.x, ret.y);
+        window.getSize(ret.width, ret.height);
+        ret.maximized = window.isMaximized();
+        return ret;
+    }
 
-        window.move(x.x, x.y);
-        window.resize(x.width, x.height);
-        if (x.maximized)
+    Exception loadSettings()
+    {
+        auto res = controller.getProjectWindowSettings(project_name);
+        if (res[1]!is null)
+        {
+            return res[1];
+        }
+
+        auto settings = new ProjectWindowSettings(res[0]);
+        setSettings(settings);
+        return null;
+    }
+
+    void setSettings(ProjectWindowSettings settings)
+    {
+        window.move(settings.x, settings.y);
+        window.resize(settings.width, settings.height);
+        if (settings.maximized)
         {
             window.maximize();
         }
@@ -234,31 +220,6 @@ class ProjectWindow
         {
             window.unmaximize();
         }
-        main_paned.setPosition(x.p1pos);
-        left_paned.setPosition(x.p2pos);
-
-        fileNameTreeViewColumn.setFixedWidth(x.buffer_view_filename_column_width);
-
-        //if (project_name in )
-        foreach (size_t k, v; x.window_buffers)
-        {
-            ensureBufferForFile(dutils.path.join([project_path, v]), "");
-        }
-        refreshBuffersView();
-        */
-    }
-
-    void saveBufferSettings()
-    {
-        /*
-        if (project_name !in controller.window_settings)
-        {
-            controller.window_settings[project_name] = new EditorWindowSettings;
-        }
-        EditorWindowSettings x = controller.window_settings[project_name];
-
-        x.window_buffers = buffers.keys().dup;
-        */
     }
 
     void onFileListViewActivated(TreePath tp, TreeViewColumn tvc, TreeView tv)
@@ -272,11 +233,8 @@ class ProjectWindow
         else
         {
             auto cr = filebrowser.convertTreePathToFilePath(tp);
-
             openNewViewOrExisting(cr);
-
         }
-
     }
 
     void openNewViewOrExisting(string cr)
@@ -298,5 +256,75 @@ class ProjectWindow
         auto w = new ViewWindow(options);
 
         w.show();
+    }
+}
+
+class ProjectWindowSettings
+{
+    bool maximized;
+    bool minimized;
+    int x, y;
+    int width, height;
+
+    this()
+    {
+    }
+
+    this(JSONValue v)
+    {
+        fromJSONValue(v);
+    }
+
+    JSONValue toJSONValue()
+    {
+        JSONValue ret = JSONValue(cast(JSONValue[string]) null);
+        ret.object["maximized"] = JSONValue(maximized);
+        ret.object["minimized"] = JSONValue(minimized);
+        ret.object["x"] = JSONValue(x);
+        ret.object["y"] = JSONValue(y);
+        ret.object["width"] = JSONValue(width);
+        ret.object["height"] = JSONValue(height);
+
+        return ret;
+    }
+
+    bool fromJSONValue(JSONValue x)
+    {
+        if (x.type() != JSONType.object)
+        {
+            return false;
+        }
+
+        if ("maximized" in x.object)
+        {
+            maximized = x.object["maximized"].boolean;
+        }
+
+        if ("minimized" in x.object)
+        {
+            minimized = x.object["minimized"].boolean;
+        }
+
+        if ("x" in x.object)
+        {
+            this.x = cast(int) x.object["x"].integer;
+        }
+
+        if ("y" in x.object)
+        {
+            y = cast(int) x.object["y"].integer;
+        }
+
+        if ("width" in x.object)
+        {
+            width = cast(int) x.object["width"].integer;
+        }
+
+        if ("height" in x.object)
+        {
+            height = cast(int) x.object["height"].integer;
+        }
+
+        return true;
     }
 }

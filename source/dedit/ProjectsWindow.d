@@ -139,6 +139,13 @@ class ProjectsWindow
         {
             setSettings(controller.settings["projects_window_settings"]);
         }
+
+        foreach (string k, JSONValue v; controller.settings["projects"])
+        {
+            auto iter = new TreeIter;
+            tv_ls.append(iter);
+            tv_ls.set(iter, [0, 1], [k, v.str()]);
+        }
     }
 
     void saveSettings()
@@ -186,7 +193,6 @@ class ProjectsWindow
         writeln("ProjectsWindow destroy");
         controller.saveState();
     } */
-
 
     bool onDeleteEvent(Event event, Widget w)
     {
@@ -298,8 +304,9 @@ class ProjectsWindow
             // TODO: show message
             return;
         }
-        //auto w = controller.createNewOrGetExistingEditorWindow(name);
-        //w.showAndPresent();
+
+        auto w = controller.createNewOrGetExistingProjectWindow(name);
+        w.showAndPresent();
     }
 
     void onSelectionChanged(TreeSelection ts)
@@ -344,7 +351,7 @@ class ProjectsWindowSettings
 
     JSONValue toJSONValue()
     {
-        JSONValue ret = JSONValue(cast(string[string]) null);
+        JSONValue ret = JSONValue(cast(JSONValue[string]) null);
         ret.object["maximized"] = JSONValue(maximized);
         ret.object["minimized"] = JSONValue(minimized);
         ret.object["x"] = JSONValue(x);
@@ -357,7 +364,7 @@ class ProjectsWindowSettings
 
     bool fromJSONValue(JSONValue x)
     {
-        if (x.type != JSONType.object)
+        if (x.type() != JSONType.object)
         {
             return false;
         }

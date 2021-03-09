@@ -4,6 +4,7 @@ import std.json;
 import std.file;
 import std.path;
 import std.stdio;
+import std.typecons;
 
 import gtk.Application;
 import gio.Application;
@@ -44,7 +45,7 @@ class Controller
         loadSettings();
 
         auto app = new gtk.Application.Application(
-                "",
+                null,
                 gio.Application.GApplicationFlags.FLAGS_NONE
         );
 
@@ -113,38 +114,77 @@ class Controller
             settings["font"] = "Go Mono 10";
         }
 
-        if ("projects" !in settings || settings["projects"].type() != JSONType.object)
+        foreach (size_t index, v; ["projects", "projects_windows_settings"])
         {
-            settings["projects"] = JSONValue(cast(JSONValue[string]) null);
+            if (v !in settings || settings[v].type() != JSONType.object)
+            {
+                settings[v] = JSONValue(cast(JSONValue[string]) null);
+            }
         }
+
+        // TODO: make garbage removal
 
         return settings;
     }
 
-    string getProjectPath(string name)
+    Tuple!(string, Exception) getProjectPath(string name)
     {
-        return settings["projects"][name].str();
-    }
-
-    /*
-    EditorWindow createNewEditorWindow(string project_name)
-    {
-        auto w = new EditorWindow(this, project_name);
-        return w;
-    }
-
-    EditorWindow createNewOrGetExistingEditorWindow(string project_name)
-    {
-        EditorWindow ret;
-        if (project_name !in windows)
+        string ret;
+        try
         {
-            ret = createNewEditorWindow(project_name);
-            windows[project_name] = ret;
+            ret = settings["projects"][name].str();
         }
-        ret = windows[project_name];
+        catch (Exception e)
+        {
+            return tuple("", e);
+        }
+        return tuple(ret, cast(Exception) null);
+    }
+
+    Tuple!(JSONValue, Exception) getProjectWindowSettings(string name)
+    {
+        JSONValue ret;
+        try
+        {
+            ret = settings["projects_windows_settings"][name];
+        }
+        catch (Exception e)
+        {
+            return tuple(JSONValue(null), e);
+        }
+        return tuple(ret, cast(Exception) null);
+    }
+
+    void setProjectWindowSettings(string name, JSONValue value)
+    {
+        settings = sanitizeSettings(settings);
+        settings["projects_windows_settings"][name] = value;
+        return;
+    }
+
+    ProjectWindow createNewProjectWindow(string project_name)
+    {
+        return new ProjectWindow(this, project_name);
+    }
+
+    ProjectWindow createNewOrGetExistingProjectWindow(string project_name)
+    {
+        ProjectWindow ret;
+        foreach (size_t index, w; project_windows)
+        {
+            if (w.project_name == project_name)
+            {
+                ret = w;
+                break;
+            }
+        }
+        if (ret is null)
+        {
+            ret = createNewProjectWindow(project_name);
+            project_windows ~= ret;
+        }
         return ret;
     }
-    */
 
     /*
     void editorWindowIsClosed(string project_name)
