@@ -40,7 +40,7 @@ import dedit.builtinmodules;
 
 const LABEL_TEXT_FILE_NOT_OPENED = "< file and mode not selected >";
 
-enum ViewWindowMode
+enum ViewMode
 {
     PROJECT_FILE,
     PROJECT_URI,
@@ -57,17 +57,29 @@ enum ViewModeAutoMode
 
 struct ViewWindowSetup
 {
+    // select mode automatically? if not - use view_mode_to_use value
     bool view_mode_auto;
+
+    // how to determine module in automatic mode
     ViewModeAutoMode view_mode_auto_mode;
 
-    string view_mode_to_use;
+    string view_mode_to_use; // mode name if automatic mode selection disabled
 
-    ViewWindowMode file_mode;
+    // view opened as part of project or not 
+    // (this helps to rename project directory without closing editor windows)
+    ViewMode view_mode;
 
-    string project; // set this, if PROJECT_* mode selected
-    string project_filename; // set this to file name relative to project directory
-    string full_filename; // if not a project file - set full file path (and name)
-    string uri; // uri (TODO: not implemented yet)
+    // set this, if PROJECT_* mode selected
+    string project;
+
+    // set this to file name relative to project directory
+    string project_filename;
+
+    // if not a project file - set full file path (and name)
+    string full_filename;
+
+    // uri (TODO: not implemented yet)
+    string uri;
 }
 
 struct ViewWindowOptions
@@ -118,6 +130,7 @@ class ViewWindow
 
         // loadSettings();
         // unsetMainView();
+        
     }
 
     bool onDeleteEvent(Event event, Widget w)
@@ -187,15 +200,37 @@ class ViewWindow
         main_view_box.showAll();
     }
 
-    void setView(ViewWindowSetup* setup)
+    Exception setView(ViewWindowSetup* setup)
     {
 
         unsetView();
 
         if (setup is null)
         {
-            return;
+            return new Exception("programming error");
         }
+
+        dedit.moduleinterface.ModuleInformation* moduleinfo;
+
+        switch (setup.view_mode)
+        {
+        default:
+            return new Exception("mode not supported");
+        case ViewMode.PROJECT_FILE:
+            auto res = determineModuleByFileExtension(setup.project_filename);
+            if (res[1] !is null) {
+                return res[1];
+            }            
+            break;
+        case ViewMode.PROJECTLESS_FILE:
+            auto res = determineModuleByFileExtension(setup.full_filename);
+            if (res[1] !is null) {
+                return res[1];
+            }            
+            break;
+        }
+        
+        return null;
 
     }
 

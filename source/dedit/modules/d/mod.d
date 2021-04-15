@@ -112,8 +112,9 @@ const dedit.moduleinterface.ModuleInformation ModuleInformation =
             string uri
     ) {
         auto options = new TypicalCodeEditorModOptions();
-        options.module_information = cast(
-                dedit.moduleinterface.ModuleInformation*)&ModuleInformation;
+        options.module_information =
+            cast(
+                    dedit.moduleinterface.ModuleInformation*)&ModuleInformation;
         // options.module_information = cast(dedit.moduleinterface.ModuleInformation*)&ModuleInformation;
         options.applyLanguageSettingsToSourceView = toDelegate(&applyLanguageSettingsToSourceView);
         options.applyLanguageSettingsToSourceBuffer = toDelegate(

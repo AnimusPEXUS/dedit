@@ -127,6 +127,8 @@ class ProjectWindow
         filebrowser = new FileTreeView();
         filebrowser.addOnRowActivated(&onFileListViewActivated);
 
+        vertical_paned.add2(filebrowser.getWidget());
+
         setProject(project_name);
         loadSettings();
     }
@@ -146,7 +148,8 @@ class ProjectWindow
     {
         this.project_name = project_name;
         auto res = getPath();
-        if (res[1] !is null) {
+        if (res[1]!is null)
+        {
             return res[1];
         }
         filebrowser.setRootDirectory(res[0]);
@@ -233,10 +236,31 @@ class ProjectWindow
         else
         {
             auto cr = filebrowser.convertTreePathToFilePath(tp);
-            openNewViewOrExisting(cr);
+            openNewView(cr);
         }
     }
 
+    void openNewView(string cr)
+    {
+        ViewWindowSetup y = {
+            view_mode_auto: true,
+            view_mode_auto_mode: ViewModeAutoMode.BY_EXTENSION,
+            // file_mode: ViewWindowMode.PROJECT_FILE,
+            project: project_name,
+            project_filename: cr
+        };
+
+        ViewWindowOptions x = {controller: controller,
+        setup: &y};
+
+        ViewWindowOptions* options = &x;
+
+        auto w = new ViewWindow(options);
+
+        w.show();
+    }
+
+    /*
     void openNewViewOrExisting(string cr)
     {
 
@@ -257,6 +281,7 @@ class ProjectWindow
 
         w.show();
     }
+    */
 }
 
 class ProjectWindowSettings

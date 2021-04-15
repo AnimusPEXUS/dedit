@@ -13,7 +13,7 @@ struct ModuleInformation
 {
     string moduleName;
     string specialMenuName;
-    string[] supportedExtensions;
+    string[] supportedExtensions; // must start with point
     string[] supportedMIMETypes;
     ModuleDataBuffer function(Controller c, ViewWindow w, string uri) createDataBufferForURI;
     /* void function(ModuleDataBuffer b, string uri) saveBufferToURI; */
