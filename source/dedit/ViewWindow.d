@@ -99,7 +99,10 @@ class ViewWindow
     Window window;
 
     Box root_box;
-    Box main_view_box;
+    Box view_box;
+
+    Label view_module_project;
+    Label view_module_filename;
 
     ModuleFileController current_module_file_controller;
     // ModuleDataBuffer    current_module_file_controller;
@@ -122,21 +125,30 @@ class ViewWindow
         root_box = new Box(GtkOrientation.VERTICAL, 0);
         window.add(root_box);
 
-        main_view_box = new Box(GtkOrientation.VERTICAL, 0);
+        view_box = new Box(GtkOrientation.VERTICAL, 0);
 
         auto menu_box = new Box(GtkOrientation.HORIZONTAL, 0);
 
         auto view_module_box = new Box(GtkOrientation.HORIZONTAL, 0);
 
-        auto view_mode_apply = new Button("Apply");
+        view_module_project = new Label("project");
+        view_module_filename = new Label("filename");
+        auto view_module_data_load = new Button("Load Data");
+        auto view_module_data_save = new Button("Save Data");
+        auto view_module_change_name = new Button("Change Name..");
+        /* auto view_module_apply = new Button("Apply"); */
 
-        view_module_box.packStart(view_mode_apply, false, true, 0);
+        view_module_box.packStart(view_module_project, false, true, 0);
+        view_module_box.packStart(view_module_filename, false, true, 0);
+        view_module_box.packStart(view_module_data_load, false, true, 0);
+        view_module_box.packStart(view_module_data_save, false, true, 0);
+        view_module_box.packStart(view_module_change_name, false, true, 0);
 
         menu_box.packStart(main_menu.getWidget(), true, true, 0);
         menu_box.packStart(view_module_box, false, true, 0);
 
         root_box.packStart(menu_box, false, true, 0);
-        root_box.packStart(main_view_box, true, true, 0);
+        root_box.packStart(view_box, true, true, 0);
 
         if (settings.setup !is null)
         {
@@ -236,15 +248,15 @@ class ViewWindow
             current_module_file_controller = null;
         }
 
-        while (main_view_box.children.length != 0)
+        while (view_box.children.length != 0)
         {
-            auto x = main_view_box.children[0];
+            auto x = view_box.children[0];
             x.destroy();
         }
 
         auto x = new Label(LABEL_TEXT_FILE_NOT_OPENED);
-        main_view_box.packStart(x, true, true, 0);
-        main_view_box.showAll();
+        view_box.packStart(x, true, true, 0);
+        view_box.showAll();
     }
 
     Exception setModuleFileController(ModuleFileController mfc)
@@ -257,7 +269,7 @@ class ViewWindow
             return new Exception("programming error");
         }
 
-        dedit.moduleinterface.ModuleInformation* moduleinfo;
+        /* dedit.moduleinterface.ModuleInformation* moduleinfo; */
 
         auto view_res = mfc.getView();
 
@@ -266,6 +278,13 @@ class ViewWindow
         auto view_widget = view_res.getWidget();
 
         auto mm_widget = mm_res.getWidget();
+
+        view_box.packStart(view_widget, true, true, 0);
+
+        this.main_menu.setSpecialMenuItem(mfc.getModInfo().moduleName, mm_widget);
+
+        this.view_module_project.setText("project: " ~ mfc.getProject());
+        this.view_module_filename.setText("filename: " ~ mfc.getFilename());
 
         this.current_module_file_controller = mfc;
 

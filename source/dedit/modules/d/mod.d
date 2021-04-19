@@ -109,10 +109,12 @@ const dedit.moduleinterface.ModuleInformation ModuleInformation =
     supportedExtensions: [".d"],
     /* ModuleFileController function(Controller c, FileController file_controller) createModuleController; */
     createModuleController: function ModuleFileController(
-            Controller c,
+            Controller controller,
              FileController file_controller,
              ) {
         auto settings = new TypicalModuleFileControllerTextSettings;
+        settings.controller = controller;
+        settings.file_controller = file_controller;
         settings.module_information =
             cast(
                     dedit.moduleinterface.ModuleInformation*)&ModuleInformation;

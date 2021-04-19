@@ -66,7 +66,7 @@ class ViewWindowMainMenu
 
     void setSpecialMenuItem(string label, Menu newSubmenu)
     {
-        menu_special.setLabel(label);
+        menu_special.setLabel("module menu: " ~ label);
         menu_special.setSubmenu(newSubmenu);
         if (newSubmenu !is null)
         {

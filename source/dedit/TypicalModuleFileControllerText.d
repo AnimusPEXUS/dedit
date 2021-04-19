@@ -144,6 +144,44 @@ class TypicalModuleFileControllerText : ModuleFileController
         return this.mainmenu;
     }
 
+    Exception loadData()
+    {
+        auto txt = this.settings.file_controller.getString();
+        if (txt[1]!is null)
+        {
+            return txt[1];
+        }
+        this.buffer.buff.setText(txt[0]);
+        return cast(Exception) null;
+    }
+
+    Exception saveData()
+    {
+        auto txt = this.buffer.buff.getText();
+        auto res = this.settings.file_controller.setString(txt);
+        if (res !is null)
+        {
+            return res;
+        }
+        return cast(Exception) null;
+    }
+
+    string getProject()
+    {
+        return this.settings.file_controller.settings.project;
+    }
+
+    string getFilename()
+    {
+        return this.settings.file_controller.settings.filename;
+    }
+
+    void setFilename(string filename)
+    {
+        this.settings.file_controller.settings.filename = filename;
+        return;
+    }
+
     void close()
     {
         // TODO: is this needed?
