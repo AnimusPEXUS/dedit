@@ -16,6 +16,8 @@ import dedit.ProjectWindow;
 import dedit.ViewWindow;
 import dedit.ProjectsWindow;
 import dedit.FileController;
+import dedit.builtinmodules;
+import dedit.moduleinterface;
 
 class Controller
 {
@@ -201,7 +203,7 @@ class Controller
         w.show();
     }
 
-    Tuple!(FileController, Exception) getFileController(string project,
+    Tuple!(FileController, Exception) getOrCreateFileController(string project,
             string filename, string uri, bool create_if_absent = true,)
     {
         auto new_object = new FileController(this, project, filename, uri);
@@ -239,6 +241,35 @@ class Controller
         return tuple(ret, cast(Exception) null);
     }
 
+    Tuple!(ModuleFileController, Exception) createModuleFileController(
+            FileController file_controller)
+    {
+        assert(file_controller !is null);
+
+        auto m = determineModuleByFileExtension(file_controller.settings.filename);
+        if (m[1]!is null)
+        {
+            return tuple(cast(ModuleFileController) null, m[1]);
+        }
+
+        if (m[0].length == 0)
+        {
+            return tuple(cast(ModuleFileController) null,
+                    new Exception("couldn't determine module for file"));
+        }
+
+        auto minfo = getModuleInformation(m[0][0]); // TODO: todo
+
+        if (minfo is null)
+        {
+            return tuple(cast(ModuleFileController) null,
+                    new Exception("couldn't get module information"));
+        }
+
+        auto ret = minfo.createModuleController(this, file_controller);
+
+        return tuple(ret, cast(Exception) null);
+    }
     /*
       void openNewViewOrExisting(string cr)
      {

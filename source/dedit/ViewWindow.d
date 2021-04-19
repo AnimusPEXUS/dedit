@@ -138,8 +138,10 @@ class ViewWindow
         root_box.packStart(menu_box, false, true, 0);
         root_box.packStart(main_view_box, true, true, 0);
 
-        // loadSettings();
-        // unsetMainView();
+        if (settings.setup !is null)
+        {
+            this.setSetup(settings.setup);
+        }
     }
 
     bool onDeleteEvent(Event event, Widget w)
@@ -186,6 +188,28 @@ class ViewWindow
     {
         // load appropriate ModuleFileController and feed it to
         // setModuleFileController() function
+
+        auto fc = this.settings.controller.getOrCreateFileController(setup.project,
+                setup.filename, setup.uri, true,);
+        if (fc[1]!is null)
+        {
+            return fc[1];
+        }
+
+        auto mfc = this.settings.controller.createModuleFileController(fc[0]);
+        if (mfc[1]!is null)
+        {
+            return mfc[1];
+        }
+
+        auto smfc = this.setModuleFileController(mfc[0]);
+        if (smfc !is null)
+        {
+            return smfc;
+        }
+
+        /* this.setup = setup; */
+
         return cast(Exception) null;
     }
 
@@ -242,6 +266,8 @@ class ViewWindow
         auto view_widget = view_res.getWidget();
 
         auto mm_widget = mm_res.getWidget();
+
+        this.current_module_file_controller = mfc;
 
         return null;
     }

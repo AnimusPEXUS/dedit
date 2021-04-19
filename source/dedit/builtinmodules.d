@@ -56,3 +56,14 @@ dedit.moduleinterface.ModuleInformation* getModuleInformation(string name)
     }
     return null;
 }
+
+/* struct ModuleDeterminationSettings
+{
+
+}
+
+Tuple!(string[], Exception) determineModule(ModuleDeterminationSettings* settings)
+{
+    string[] ret;
+    return tuple(ret, cast(Exception) null);
+} */
