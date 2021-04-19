@@ -22,6 +22,7 @@ import gtk.TreeIter;
 import gdk.Event;
 import gtk.AccelGroup;
 import gtk.MenuItem;
+import gtk.Button;
 import gtk.MessageDialog;
 
 import gobject.Value;
@@ -40,58 +41,56 @@ import dedit.builtinmodules;
 
 const LABEL_TEXT_FILE_NOT_OPENED = "< file and mode not selected >";
 
-enum ViewMode
+/*
+enum ViewModule
 {
     PROJECT_FILE,
     PROJECT_URI,
 
     PROJECTLESS_FILE,
     PROJECTLESS_URI,
-}
+} */
 
-enum ViewModeAutoMode
+enum ViewModuleAutoMode
 {
     BY_EXTENSION,
     BY_MIME
 }
 
-struct ViewWindowSetup
+struct ViewWindowContentSetup
 {
-    // select mode automatically? if not - use view_mode_to_use value
-    bool view_mode_auto;
+    // select module automatically? if not - use view_mode_to_use value
+    bool view_module_auto;
 
     // how to determine module in automatic mode
-    ViewModeAutoMode view_mode_auto_mode;
+    ViewModuleAutoMode view_module_auto_mode;
 
-    string view_mode_to_use; // mode name if automatic mode selection disabled
+    string view_module_to_use; // module name if automatic mode selection disabled
 
-    // view opened as part of project or not 
+    // view opened as part of project or not
     // (this helps to rename project directory without closing editor windows)
-    ViewMode view_mode;
+    // ViewMode view_module;
 
     // set this, if PROJECT_* mode selected
     string project;
 
     // set this to file name relative to project directory
-    string project_filename;
-
-    // if not a project file - set full file path (and name)
-    string full_filename;
+    string filename;
 
     // uri (TODO: not implemented yet)
     string uri;
 }
 
-struct ViewWindowOptions
+struct ViewWindowSettings
 {
     Controller controller;
-    ViewWindowSetup* setup;
+    ViewWindowContentSetup* setup;
 }
 
 class ViewWindow
 {
 
-    ViewWindowOptions* options;
+    ViewWindowSettings* settings;
 
     AccelGroup accel_group;
 
@@ -102,12 +101,12 @@ class ViewWindow
     Box root_box;
     Box main_view_box;
 
-    ModuleBufferView current_view;
-    // ModuleDataBuffer    current_buffer; // NOTE: current_view.getBuffer() should be used
+    ModuleFileController current_module_file_controller;
+    // ModuleDataBuffer    current_module_file_controller;
 
-    this(ViewWindowOptions* options)
+    this(ViewWindowSettings* settings)
     {
-        this.options = options;
+        this.settings = settings;
 
         window = new Window("dedit");
         /* window.setGravity(Gravity.STATIC); */
@@ -125,18 +124,28 @@ class ViewWindow
 
         main_view_box = new Box(GtkOrientation.VERTICAL, 0);
 
-        root_box.packStart(main_menu.getWidget(), false, true, 0);
+        auto menu_box = new Box(GtkOrientation.HORIZONTAL, 0);
+
+        auto view_module_box = new Box(GtkOrientation.HORIZONTAL, 0);
+
+        auto view_mode_apply = new Button("Apply");
+
+        view_module_box.packStart(view_mode_apply, false, true, 0);
+
+        menu_box.packStart(main_menu.getWidget(), true, true, 0);
+        menu_box.packStart(view_module_box, false, true, 0);
+
+        root_box.packStart(menu_box, false, true, 0);
         root_box.packStart(main_view_box, true, true, 0);
 
         // loadSettings();
         // unsetMainView();
-        
     }
 
     bool onDeleteEvent(Event event, Widget w)
     {
         // saveSettings();
-        // controller.editorWindowIsClosed(project_name);
+        // controller.editorWindowIsClosed(project);
         return false;
     }
 
@@ -166,27 +175,41 @@ class ViewWindow
         window.close();
     }
 
-    void unsetView()
+    void unsetSetup()
+    {
+        // simply calling unsetModuleFileController(), but maybe something more
+        // should be done
+        unsetModuleFileController();
+    }
+
+    Exception setSetup(ViewWindowContentSetup* setup)
+    {
+        // load appropriate ModuleFileController and feed it to
+        // setModuleFileController() function
+        return cast(Exception) null;
+    }
+
+    void unsetModuleFileController()
     {
 
-        if (current_view is null)
+        if (current_module_file_controller is null)
         {
             return;
         }
 
-        // save view config 
+        // save view config
 
-        // current_buffer = null;
+        // current_module_file_controller = null;
 
-        if (current_view !is null)
+        if (current_module_file_controller !is null)
         {
-            auto mm = current_view.getMainMenu();
+            auto mm = current_module_file_controller.getMainMenu();
 
-            mm.uninstallAccelerators();
+            mm.uninstallAccelerators(this.accel_group);
 
             main_menu.removeSpecialMenuItem();
-            current_view.close();
-            current_view = null;
+            current_module_file_controller.close();
+            current_module_file_controller = null;
         }
 
         while (main_view_box.children.length != 0)
@@ -200,38 +223,27 @@ class ViewWindow
         main_view_box.showAll();
     }
 
-    Exception setView(ViewWindowSetup* setup)
+    Exception setModuleFileController(ModuleFileController mfc)
     {
 
-        unsetView();
+        unsetModuleFileController();
 
-        if (setup is null)
+        if (mfc is null)
         {
             return new Exception("programming error");
         }
 
         dedit.moduleinterface.ModuleInformation* moduleinfo;
 
-        switch (setup.view_mode)
-        {
-        default:
-            return new Exception("mode not supported");
-        case ViewMode.PROJECT_FILE:
-            auto res = determineModuleByFileExtension(setup.project_filename);
-            if (res[1] !is null) {
-                return res[1];
-            }            
-            break;
-        case ViewMode.PROJECTLESS_FILE:
-            auto res = determineModuleByFileExtension(setup.full_filename);
-            if (res[1] !is null) {
-                return res[1];
-            }            
-            break;
-        }
-        
-        return null;
+        auto view_res = mfc.getView();
 
+        auto mm_res = mfc.getMainMenu();
+
+        auto view_widget = view_res.getWidget();
+
+        auto mm_widget = mm_res.getWidget();
+
+        return null;
     }
 
 }

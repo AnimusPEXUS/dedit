@@ -15,6 +15,7 @@ import gtk.Window;
 import dedit.ProjectWindow;
 import dedit.ViewWindow;
 import dedit.ProjectsWindow;
+import dedit.FileController;
 
 class Controller
 {
@@ -26,6 +27,8 @@ class Controller
     ProjectWindow[] project_windows;
     ViewWindow[] view_windows;
 
+    FileController[] file_controllers;
+
     // TODO: leaving this for a future. for now, I'll will not implement buffer reusage.
     //       maybe in future..
     // ModuleDataBuffer[string] buffers;
@@ -34,7 +37,7 @@ class Controller
 
     ProjectsWindow projects_window;
     JSONValue projects_window_settings;
-    string font;
+    // string font;
 
     JSONValue settings;
 
@@ -44,13 +47,10 @@ class Controller
 
         loadSettings();
 
-        auto app = new gtk.Application.Application(
-                null,
-                gio.Application.GApplicationFlags.FLAGS_NONE
-        );
+        auto app = new gtk.Application.Application(null,
+                gio.Application.GApplicationFlags.FLAGS_NONE);
 
-        app.addOnActivate(
-                delegate void(gio.Application.Application gioapp) {
+        app.addOnActivate(delegate void(gio.Application.Application gioapp) {
 
             projects_window = new ProjectsWindow(this);
 
@@ -62,8 +62,7 @@ class Controller
             window.showAll();
 
             app.addWindow(window);
-        }
-        );
+        });
 
         return app.run(args);
     }
@@ -162,17 +161,17 @@ class Controller
         return;
     }
 
-    ProjectWindow createNewProjectWindow(string project_name)
+    ProjectWindow createNewProjectWindow(string project)
     {
-        return new ProjectWindow(this, project_name);
+        return new ProjectWindow(this, project);
     }
 
-    ProjectWindow createNewOrGetExistingProjectWindow(string project_name)
+    ProjectWindow createNewOrGetExistingProjectWindow(string project)
     {
         ProjectWindow ret;
         foreach (size_t index, w; project_windows)
         {
-            if (w.project_name == project_name)
+            if (w.project == project)
             {
                 ret = w;
                 break;
@@ -180,21 +179,87 @@ class Controller
         }
         if (ret is null)
         {
-            ret = createNewProjectWindow(project_name);
+            ret = createNewProjectWindow(project);
             project_windows ~= ret;
         }
         return ret;
     }
 
-    /*
-    void editorWindowIsClosed(string project_name)
+    void openNewView(string project, string filename, string uri)
     {
-        if (project_name in windows)
+        ViewWindowContentSetup y = {
+            view_module_auto: true, view_module_auto_mode: ViewModuleAutoMode.BY_EXTENSION,
+            project: project, filename: filename, uri: uri,};
+
+            ViewWindowSettings x = {controller: this, setup: &y
+        };
+
+        ViewWindowSettings* options = &x;
+
+        auto w = new ViewWindow(options);
+
+        w.show();
+    }
+
+    Tuple!(FileController, Exception) getFileController(string project,
+            string filename, string uri, bool create_if_absent = true,)
+    {
+        auto new_object = new FileController(this, project, filename, uri);
+
+        auto res = new_object.getFilename();
+        if (res[1]!is null)
         {
-            windows.remove(project_name);
+            return tuple(cast(FileController) null, res[1]);
         }
+
+        FileController ret;
+
+        foreach (k, FileController v; file_controllers)
+        {
+            auto res2 = v.getFilename();
+            if (res2[1]!is null)
+            {
+                // ignorring faulty object
+                continue;
+            }
+
+            if (res2[0] == res[0])
+            {
+                ret = v;
+                break;
+            }
+        }
+
+        if (ret is null && create_if_absent)
+        {
+            ret = new_object;
+            file_controllers ~= new_object;
+        }
+
+        return tuple(ret, cast(Exception) null);
+    }
+
+    /*
+      void openNewViewOrExisting(string cr)
+     {
+
+         ViewWindowContentSetup* y = {
+             view_module_auto: true,
+            view_mode_auto_mode: ViewModuleAutoMode.BY_EXTENSION,
+            file_mode: ViewWindowMode.PROJECT_FILE,
+            project: project,
+            filename: cr
+        };
+
+        ViewWindowSettings x = {controller: controller,
+        setup: &y};
+
+        ViewWindowSettings* options = &x;
+
+        auto w = new ViewWindow(options);
+
+        w.show();
     }
     */
-
 
 }

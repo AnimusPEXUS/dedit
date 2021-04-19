@@ -46,7 +46,7 @@ import dedit.builtinmodules;
 class ProjectWindow
 {
 
-    string project_name;
+    string project;
 
     Controller controller;
 
@@ -79,7 +79,7 @@ class ProjectWindow
 
     FileTreeView filebrowser;
 
-    this(Controller controller, string project_name)
+    this(Controller controller, string project)
     {
         this.controller = controller;
 
@@ -116,20 +116,16 @@ class ProjectWindow
 
         window.add(vertical_paned);
 
-        bookmarks_view_list_store = new ListStore(
-                cast(
-                GType[])[
-                GType.STRING,
-                GType.STRING
-                ]
-        );
+        bookmarks_view_list_store = new ListStore(cast(GType[])[
+                GType.STRING, GType.STRING
+                ]);
 
         filebrowser = new FileTreeView();
         filebrowser.addOnRowActivated(&onFileListViewActivated);
 
         vertical_paned.add2(filebrowser.getWidget());
 
-        setProject(project_name);
+        setProject(project);
         loadSettings();
     }
 
@@ -141,19 +137,19 @@ class ProjectWindow
 
     Tuple!(string, Exception) getPath()
     {
-        return controller.getProjectPath(project_name);
+        return controller.getProjectPath(project);
     }
 
-    Exception setProject(string project_name)
+    Exception setProject(string project)
     {
-        this.project_name = project_name;
+        this.project = project;
         auto res = getPath();
         if (res[1]!is null)
         {
             return res[1];
         }
         filebrowser.setRootDirectory(res[0]);
-        window.setTitle(project_name);
+        window.setTitle(project);
         return null;
     }
 
@@ -186,7 +182,7 @@ class ProjectWindow
     void saveSettings()
     {
         auto settings = getSettings();
-        controller.setProjectWindowSettings(project_name, settings.toJSONValue());
+        controller.setProjectWindowSettings(project, settings.toJSONValue());
     }
 
     ProjectWindowSettings getSettings()
@@ -200,7 +196,7 @@ class ProjectWindow
 
     Exception loadSettings()
     {
-        auto res = controller.getProjectWindowSettings(project_name);
+        auto res = controller.getProjectWindowSettings(project);
         if (res[1]!is null)
         {
             return res[1];
@@ -235,53 +231,11 @@ class ProjectWindow
         }
         else
         {
-            auto cr = filebrowser.convertTreePathToFilePath(tp);
-            openNewView(cr);
+            auto filename = filebrowser.convertTreePathToFilePath(tp);
+            this.controller.openNewView(this.project, filename, "");
         }
     }
 
-    void openNewView(string cr)
-    {
-        ViewWindowSetup y = {
-            view_mode_auto: true,
-            view_mode_auto_mode: ViewModeAutoMode.BY_EXTENSION,
-            // file_mode: ViewWindowMode.PROJECT_FILE,
-            project: project_name,
-            project_filename: cr
-        };
-
-        ViewWindowOptions x = {controller: controller,
-        setup: &y};
-
-        ViewWindowOptions* options = &x;
-
-        auto w = new ViewWindow(options);
-
-        w.show();
-    }
-
-    /*
-    void openNewViewOrExisting(string cr)
-    {
-
-        ViewWindowSetup y = {
-            view_mode_auto: true,
-            view_mode_auto_mode: ViewModeAutoMode.BY_EXTENSION,
-            file_mode: ViewWindowMode.PROJECT_FILE,
-            project: project_name,
-            project_filename: cr
-        };
-
-        ViewWindowOptions x = {controller: controller,
-        setup: &y};
-
-        ViewWindowOptions* options = &x;
-
-        auto w = new ViewWindow(options);
-
-        w.show();
-    }
-    */
 }
 
 class ProjectWindowSettings

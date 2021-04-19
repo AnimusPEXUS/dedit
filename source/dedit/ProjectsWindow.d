@@ -117,7 +117,7 @@ class ProjectsWindow
         hb.packStart(btn_add, false, true, 0);
         btn_add.addOnClicked(&onClickedAdd);
 
-        auto btn_open = new Button("Open Editor Window for Project..");
+        auto btn_open = new Button("Project View..");
         hb.packStart(btn_open, false, true, 0);
         btn_open.addOnClicked(&onClickedOpen);
 
@@ -209,18 +209,9 @@ class ProjectsWindow
 
     void onClickedBrowse(Button btn)
     {
-        auto d = new FileChooserDialog(
-                "Select Project Directory",
-                win,
-                FileChooserAction.SELECT_FOLDER,
-                [
-                "Confirm",
-                "Cancel"
-                ],
-                cast(ResponseType[])[
-                ResponseType.OK,
-                ResponseType.CANCEL
-                ]);
+        auto d = new FileChooserDialog("Select Project Directory", win, FileChooserAction.SELECT_FOLDER, [
+                "Confirm", "Cancel"
+                ], cast(ResponseType[])[ResponseType.OK, ResponseType.CANCEL]);
 
         auto res = d.run();
 

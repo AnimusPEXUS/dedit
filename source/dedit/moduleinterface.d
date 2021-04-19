@@ -5,8 +5,10 @@ import std.json;
 import gtk.Widget;
 import gtk.TextBuffer;
 import gtk.Menu;
+import gtk.AccelGroup;
 
 import dedit.Controller;
+import dedit.FileController;
 import dedit.ViewWindow;
 
 struct ModuleInformation
@@ -15,36 +17,44 @@ struct ModuleInformation
     string specialMenuName;
     string[] supportedExtensions; // must start with point
     string[] supportedMIMETypes;
-    ModuleDataBuffer function(Controller c, ViewWindow w, string uri) createDataBufferForURI;
-    /* void function(ModuleDataBuffer b, string uri) saveBufferToURI; */
-    /* ModuleBufferView function(Controller c, EditorWindow w, ModuleDataBuffer b) createView; */
-    /* Menu createMenuForBuffer(Buffer buff); */
+    ModuleFileController function(Controller c, FileController file_controller) createModuleController;
 }
 
-interface ModuleBufferMainMenu
+interface ModuleFileController
 {
+    ModuleInformation* getModInfo(); // TODO: ModuleInformation must be unmodifiable
+
+    Controller getController();
+    FileController getFileController();
+
+    ModuleControllerBuffer getBuffer();
+    ModuleControllerMainMenu getMainMenu();
+    ModuleControllerView getView();
+
+    void close();
+}
+
+interface ModuleControllerBuffer
+{
+    ModuleFileController getModuleFileController();
+}
+
+interface ModuleControllerMainMenu
+{
+    ModuleFileController getModuleFileController();
+
     // ref ModuleInformation getModInfo()  ;
     Menu getWidget();
-    void installAccelerators(bool uninstall=false);
-    void uninstallAccelerators();
+    void installAccelerators(AccelGroup ag, bool uninstall = false);
+    void uninstallAccelerators(AccelGroup ag);
 }
 
-interface ModuleBufferView
+interface ModuleControllerView
 {
-    //ref const ModuleInformation getModInfo();    
-    ModuleInformation* getModInfo(); // TODO: ModuleInformation must be unmodifiable
+    ModuleFileController getModuleFileController();
+
+    //ref const ModuleInformation getModInfo();
     Widget getWidget();
-    ModuleBufferMainMenu getMainMenu(); // each view must have own main menu attached to language mode
-    ModuleDataBuffer getBuffer();
     JSONValue getSettings();
     void setSettings(JSONValue value);
-    void close();
-}
-
-interface ModuleDataBuffer
-{
-    // ref const ModuleInformation getModInfo();
-    ModuleBufferView createView();
-    void save(string uri);
-    void close();
 }

@@ -51,7 +51,7 @@ dedit.moduleinterface.ModuleInformation* getModuleInformation(string name)
     {
         if (m.moduleName == name)
         {
-            return cast(dedit.moduleinterface.ModuleInformation*) &m;
+            return cast(dedit.moduleinterface.ModuleInformation*)&m;
         }
     }
     return null;

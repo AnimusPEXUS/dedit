@@ -1,4 +1,4 @@
-module dedit.TypicalCodeEditorMod;
+module dedit.TypicalModuleFileControllerText;
 
 import std.path;
 import std.algorithm;
@@ -16,6 +16,7 @@ import gtk.Scrollbar;
 import gtk.TextBuffer;
 import gtk.TextView;
 import gtk.TextTagTable;
+import gtk.AccelGroup;
 import gtk.Menu;
 import gtk.MenuItem;
 import gtk.Widget;
@@ -31,12 +32,14 @@ import gsv.c.types;
 
 import dedit.moduleinterface;
 import dedit.Controller;
+import dedit.FileController;
 import dedit.ViewWindow;
 import dedit.OutlineTool;
 
 import dutils.regex;
 
-void outlineToolDataInsertMatchedLines(OutlineToolInputData* ret, string txt, Regex!char re, ulong[] lstarts)
+void outlineToolDataInsertMatchedLines(OutlineToolInputData* ret, string txt,
+        Regex!char re, ulong[] lstarts)
 {
 
     auto positions = matchPositions(txt, re, lstarts);
@@ -68,10 +71,7 @@ void outlineToolDataInsertMatchedLines(OutlineToolInputData* ret, string txt, Re
             end_index = lstarts[v + 1]; // TODO: substuct \n (or, maybe, all whitespaces)
         }
 
-        auto xx = new OutlineToolInputDataUnit(
-                v,
-                txt[start_index .. end_index].stripRight()
-        );
+        auto xx = new OutlineToolInputDataUnit(v, txt[start_index .. end_index].stripRight());
 
         debug
         {
@@ -83,22 +83,176 @@ void outlineToolDataInsertMatchedLines(OutlineToolInputData* ret, string txt, Re
 
 }
 
-class MainMenu : ModuleBufferMainMenu
+struct TypicalModuleFileControllerTextSettings
+{
+    Controller controller;
+    FileController file_controller;
+
+    dedit.moduleinterface.ModuleInformation* module_information;
+    void delegate(SourceView sv) applyLanguageSettingsToSourceView;
+    void delegate(SourceBuffer sb) applyLanguageSettingsToSourceBuffer;
+    string delegate(string txt) formatWholeBufferText;
+    OutlineToolInputData* delegate(string txt) prepareDataForOutlineTool;
+    string delegate(string txt) comment;
+    string delegate(string txt) uncomment;
+}
+
+class TypicalModuleFileControllerText : ModuleFileController
+{
+    TypicalModuleFileControllerTextSettings* settings;
+
+    Buffer buffer;
+    View view;
+    MainMenu mainmenu;
+
+    this(TypicalModuleFileControllerTextSettings* settings)
+    {
+        this.settings = settings;
+
+        this.buffer = new Buffer(this);
+        this.view = new View(this);
+        this.mainmenu = new MainMenu(this);
+    }
+
+    ModuleInformation* getModInfo()
+    {
+        return this.settings.module_information; // TODO: ensure immutable
+    }
+
+    Controller getController()
+    {
+        return this.settings.controller;
+    }
+
+    FileController getFileController()
+    {
+        return this.settings.file_controller;
+    }
+
+    ModuleControllerBuffer getBuffer()
+    {
+        return this.buffer;
+    }
+
+    ModuleControllerView getView()
+    {
+        return this.view;
+    }
+
+    ModuleControllerMainMenu getMainMenu()
+    {
+        return this.mainmenu;
+    }
+
+    void close()
+    {
+        // TODO: is this needed?
+    }
+
+}
+
+class Buffer : ModuleControllerBuffer
 {
 
-    View view;
-    Menu mm;
+    TypicalModuleFileControllerText tmfct;
 
-    private MenuItem mm_menu_format;
-    private string buffer_id;
+    SourceBuffer buff;
 
-    this(View view, string buffer_id)
+    /* this(TypicalCodeEditorMod tcem, Controller c, ViewWindow w, string uri) */
+    this(TypicalModuleFileControllerText tmfct)
     {
 
-        this.buffer_id = buffer_id;
+        this.tmfct = tmfct;
+        /* this.uri = uri; */
 
-        assert(view !is null);
-        this.view = view;
+        // TODO: better uri handling required
+        /* this.c = c;
+        this.w = w; */
+
+        /* if (uri.startsWith("file://"))
+        {
+            uri = uri["file://".length .. $];
+        }
+        auto filename = uri;
+
+        filename = absolutePath(filename);
+
+
+        auto f = new std.stdio.File(filename);
+
+        char[] buff;
+        buff.length = f.size;
+
+        if (f.size > 0)
+        {
+            f.rawRead(buff);
+        }
+
+        this.buff = new SourceBuffer(cast(TextTagTable) null);
+        this.buff.setText(cast(string) buff.idup); */
+
+        this.buff = new SourceBuffer(cast(TextTagTable) null);
+        auto res = this.tmfct.settings.file_controller.getString();
+        if (res[1]!is null)
+        {
+            throw res[1];
+        }
+        this.buff.setText(res[0]);
+    }
+
+    /* ref const dedit.moduleinterface.ModuleInformation getModInfo() {
+    	return ModuleInformation;
+    	} */
+
+    TypicalModuleFileControllerText getModuleFileController()
+    {
+        return tmfct;
+    }
+
+    void close()
+    {
+        // buff.destroy();
+        // buff = null;
+    }
+
+    SourceBuffer getSourceBuffer()
+    {
+        return buff;
+    }
+
+    /* void save(string uri)
+    {
+        if (uri.startsWith("file://"))
+        {
+            uri = uri["file://".length .. $];
+        }
+        auto filename = uri;
+
+        string txt = buff.getText();
+
+        toFile(txt, filename);
+    } */
+
+    void format()
+    {
+        ubyte[] bt = cast(ubyte[]) buff.getText();
+        auto res = this.tmfct.settings.formatWholeBufferText(cast(string) bt);
+        buff.setText(res.idup);
+    }
+
+}
+
+class MainMenu : ModuleControllerMainMenu
+{
+
+    TypicalModuleFileControllerText tmfct;
+
+    private Menu mm;
+    private MenuItem mm_menu_format;
+
+    this(TypicalModuleFileControllerText tmfct)
+    {
+        this.tmfct = tmfct;
 
         mm = new Menu();
 
@@ -107,7 +261,11 @@ class MainMenu : ModuleBufferMainMenu
         mm_menu_format.addOnActivate(&onMIFormatActivate);
 
         mm.append(mm_menu_format);
+    }
 
+    TypicalModuleFileControllerText getModuleFileController()
+    {
+        return tmfct;
     }
 
     Menu getWidget()
@@ -115,57 +273,49 @@ class MainMenu : ModuleBufferMainMenu
         return mm;
     }
 
-    void installAccelerators(bool uninstall = false)
+    /* void installAccelerators(bool uninstall = false) */
+    void installAccelerators(AccelGroup ag, bool uninstall = false)
     {
         if (!uninstall)
         {
-            mm_menu_format.addAccelerator(
-                    "activate",
-                    this.view.w.accel_group,
-                    'f',
+            mm_menu_format.addAccelerator("activate", ag, 'f',
                     GdkModifierType.CONTROL_MASK | GdkModifierType.SHIFT_MASK,
-                    GtkAccelFlags.VISIBLE
-            );
+                    GtkAccelFlags.VISIBLE);
         }
         else
         {
-            this.mm_menu_format.removeAccelerator(
-                    this.view.w.accel_group,
-                    'f',
-                    GdkModifierType.CONTROL_MASK | GdkModifierType.SHIFT_MASK
-            );
+            this.mm_menu_format.removeAccelerator(ag, 'f',
+                    GdkModifierType.CONTROL_MASK | GdkModifierType.SHIFT_MASK);
         }
     }
 
-    void uninstallAccelerators()
+    void uninstallAccelerators(AccelGroup ag)
     {
-        installAccelerators(true);
+        installAccelerators(ag, true);
     }
 
     void onMIFormatActivate(MenuItem mi)
     {
 
-        auto s = this.view.getSettings();
-        this.view.b.format();
-        this.view.setSettings(s);
+        auto s = this.tmfct.getView().getSettings();
+        (cast(Buffer)(this.tmfct.getBuffer())).format();
+        this.tmfct.getView().setSettings(s);
 
     }
 
-    void destroy()
+    /* void destroy()
     {
         // writeln("d : MainMenu : ModuleBufferMainMenu - destroy() is called");
         uninstallAccelerators();
         mm.destroy();
-    }
+    } */
 
 }
 
-class View : ModuleBufferView
+class View : ModuleControllerView
 {
 
-    Controller c;
-    ViewWindow w;
-    Buffer b;
+    TypicalModuleFileControllerText tmfct;
 
     Paned paned;
 
@@ -175,28 +325,24 @@ class View : ModuleBufferView
 
     bool close_already_called;
 
-    ModuleBufferMainMenu mm;
-
     OutlineTool outlineTool;
 
-    this(Buffer b)
+    this(TypicalModuleFileControllerText tmfct)
     {
-        this.c = b.c;
-        this.w = b.w;
-        this.b = b;
+        this.tmfct = tmfct;
 
         paned = new Paned(GtkOrientation.HORIZONTAL);
 
         /* sb = new SourceBuffer(cast(GtkSourceBuffer*) null); */
         sv = new SourceView();
-        b.tcem.options.applyLanguageSettingsToSourceView(sv);
+        this.tmfct.settings.applyLanguageSettingsToSourceView(sv);
         {
-            auto fd = PgFontDescription.fromString(c.font);
+            auto fd = PgFontDescription.fromString(
+                    this.tmfct.settings.controller.settings["font"].str());
             sv.overrideFont(fd);
-
         }
-        auto sb = (cast(Buffer) b).getSourceBuffer();
-        b.tcem.options.applyLanguageSettingsToSourceBuffer(sb);
+        auto sb = (cast(Buffer)(this.tmfct.getBuffer())).getSourceBuffer();
+        this.tmfct.settings.applyLanguageSettingsToSourceBuffer(sb);
         sv.setBuffer(sb);
 
         sw = new ScrolledWindow();
@@ -204,7 +350,7 @@ class View : ModuleBufferView
         sw.setKineticScrolling(false);
         sw.setCaptureButtonPress(false);
         sw.add(sv);
-        mm = new MainMenu(this, this.b.uri);
+        // mm = new MainMenu(this, this.b.uri);
 
         OutlineToolOptions* oto = new OutlineToolOptions();
         oto.userWishesToGoToLine = &outlineToolUserWishesToGoToLine;
@@ -216,14 +362,14 @@ class View : ModuleBufferView
         paned.add2(outlineTool.getWidget());
     }
 
+    TypicalModuleFileControllerText getModuleFileController()
+    {
+        return tmfct;
+    }
+
     Widget getWidget()
     {
         return paned;
-    }
-
-    ModuleBufferMainMenu getMainMenu()
-    {
-        return mm;
     }
 
     JSONValue getSettings()
@@ -249,29 +395,6 @@ class View : ModuleBufferView
         });
     }
 
-    void close()
-    {
-        if (close_already_called)
-        {
-            return;
-        }
-        close_already_called = true;
-
-        mm.destroy();
-        sv.destroy();
-        outlineTool.destroy();
-    }
-
-    dedit.moduleinterface.ModuleInformation* getModInfo()
-    {
-        return b.tcem.options.module_information;
-    }
-
-    ModuleDataBuffer getBuffer()
-    {
-        return b;
-    }
-
     void outlineToolUserWishesToGoToLine(int new_line_number)
     {
     }
@@ -282,7 +405,7 @@ class View : ModuleBufferView
 
         try
         {
-            tt = this.b.tcem.options.prepareDataForOutlineTool;
+            tt = this.tmfct.settings.prepareDataForOutlineTool;
         }
         catch (Exception e)
         {
@@ -294,100 +417,9 @@ class View : ModuleBufferView
             return;
         }
 
-        auto tt_res = tt(b.buff.getText());
+        auto tt_res = tt((cast(Buffer)(this.tmfct.getBuffer())).buff.getText());
 
         outlineTool.setData(tt_res);
-    }
-
-}
-
-class Buffer : ModuleDataBuffer
-{
-
-    SourceBuffer buff;
-
-    // TODO:
-    // it is better to leave knowlage of filenames to EditorWindow itself
-    /* string original_filename;
-        string filename_rtr; // relative to project root */
-
-    Controller c;
-    ViewWindow w;
-    TypicalCodeEditorMod tcem;
-
-    private string uri; // TODO: move this to EditorWindow
-
-    this(TypicalCodeEditorMod tcem, Controller c, ViewWindow w, string uri)
-    {
-
-        this.tcem = tcem;
-        this.uri = uri;
-
-        // TODO: better uri handling required
-        this.c = c;
-        this.w = w;
-
-        if (uri.startsWith("file://"))
-        {
-            uri = uri["file://".length .. $];
-        }
-        auto filename = uri;
-
-        filename = absolutePath(filename);
-        /* this.filename = filename; */
-
-        auto f = new std.stdio.File(filename);
-
-        char[] buff;
-        buff.length = f.size;
-
-        if (f.size > 0)
-        {
-            f.rawRead(buff);
-        }
-
-        this.buff = new SourceBuffer(cast(TextTagTable) null);
-        this.buff.setText(cast(string) buff.idup);
-    }
-
-    /* ref const dedit.moduleinterface.ModuleInformation getModInfo() {
-    	return ModuleInformation;
-    	} */
-
-    void close()
-    {
-        // buff.destroy();
-        // buff = null;
-    }
-
-    SourceBuffer getSourceBuffer()
-    {
-        return buff;
-    }
-
-    void save(string uri)
-    {
-        if (uri.startsWith("file://"))
-        {
-            uri = uri["file://".length .. $];
-        }
-        auto filename = uri;
-
-        string txt = buff.getText();
-
-        toFile(txt, filename);
-    }
-
-    ModuleBufferView createView()
-    {
-        return new View(this);
-    }
-
-    void format()
-    {
-        ubyte[] bt = cast(ubyte[]) buff.getText();
-        auto res = this.tcem.options.formatWholeBufferText(cast(string) bt);
-        buff.setText(res.idup);
     }
 
 }
@@ -468,34 +500,6 @@ class ViewSettings
         }
 
         return true;
-    }
-
-}
-
-struct TypicalCodeEditorModOptions
-{
-    dedit.moduleinterface.ModuleInformation* module_information;
-    void delegate(SourceView sv) applyLanguageSettingsToSourceView;
-    void delegate(SourceBuffer sb) applyLanguageSettingsToSourceBuffer;
-    string delegate(string txt) formatWholeBufferText;
-    OutlineToolInputData* delegate(string txt) prepareDataForOutlineTool;
-    string delegate(string txt) comment;
-    string delegate(string txt) uncomment;
-}
-
-class TypicalCodeEditorMod
-{
-
-    TypicalCodeEditorModOptions* options;
-
-    this(TypicalCodeEditorModOptions* options)
-    {
-        this.options = options;
-    }
-
-    ModuleDataBuffer createDataBufferForURI(Controller c, ViewWindow w, string uri)
-    {
-        return new Buffer(this, c, w, uri);
     }
 
 }

@@ -68,8 +68,9 @@ class ViewWindowMainMenu
     {
         menu_special.setLabel(label);
         menu_special.setSubmenu(newSubmenu);
-        if (newSubmenu !is null) {
-        	menu_special.showAll();
+        if (newSubmenu !is null)
+        {
+            menu_special.showAll();
         }
     }
 

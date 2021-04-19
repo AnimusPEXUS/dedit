@@ -30,9 +30,10 @@ import gsv.c.types;
 
 import dedit.moduleinterface;
 import dedit.Controller;
+import dedit.FileController;
 import dedit.ViewWindow;
 import dedit.OutlineTool;
-import dedit.TypicalCodeEditorMod;
+import dedit.TypicalModuleFileControllerText;
 
 void applyLanguageSettingsToSourceView(SourceView sv)
 {
@@ -106,21 +107,21 @@ const dedit.moduleinterface.ModuleInformation ModuleInformation =
 {
     moduleName: "D",
     supportedExtensions: [".d"],
-    createDataBufferForURI: function ModuleDataBuffer(
+    /* ModuleFileController function(Controller c, FileController file_controller) createModuleController; */
+    createModuleController: function ModuleFileController(
             Controller c,
-            ViewWindow w,
-            string uri
-    ) {
-        auto options = new TypicalCodeEditorModOptions();
-        options.module_information =
+             FileController file_controller,
+             ) {
+        auto settings = new TypicalModuleFileControllerTextSettings;
+        settings.module_information =
             cast(
                     dedit.moduleinterface.ModuleInformation*)&ModuleInformation;
-        // options.module_information = cast(dedit.moduleinterface.ModuleInformation*)&ModuleInformation;
-        options.applyLanguageSettingsToSourceView = toDelegate(&applyLanguageSettingsToSourceView);
-        options.applyLanguageSettingsToSourceBuffer = toDelegate(
+        // settings.module_information = cast(dedit.moduleinterface.ModuleInformation*)&ModuleInformation;
+        settings.applyLanguageSettingsToSourceView = toDelegate(&applyLanguageSettingsToSourceView);
+        settings.applyLanguageSettingsToSourceBuffer = toDelegate(
                 &applyLanguageSettingsToSourceBuffer);
-        options.formatWholeBufferText = toDelegate(&formatWholeBufferText);
+        settings.formatWholeBufferText = toDelegate(&formatWholeBufferText);
 
-        auto tem = new TypicalCodeEditorMod(options);
-        return tem.createDataBufferForURI(c, w, uri);
+        auto ret = new TypicalModuleFileControllerText(settings);
+        return ret;
     }};
