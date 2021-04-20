@@ -191,7 +191,7 @@ class Controller
     {
         ViewWindowContentSetup y = {
             view_module_auto: true, view_module_auto_mode: ViewModuleAutoMode.BY_EXTENSION,
-            project: project, filename: filename, uri: uri,};
+            project: project, filename: filename};
 
             ViewWindowSettings x = {controller: this, setup: &y
         };
@@ -204,9 +204,9 @@ class Controller
     }
 
     Tuple!(FileController, Exception) getOrCreateFileController(string project,
-            string filename, string uri, bool create_if_absent = true,)
+            string filename, bool create_if_absent = true,)
     {
-        auto new_object = new FileController(this, project, filename, uri);
+        auto new_object = new FileController(this, project, filename);
 
         auto res = new_object.getFilename();
         if (res[1]!is null)

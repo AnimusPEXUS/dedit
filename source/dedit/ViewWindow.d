@@ -78,7 +78,7 @@ struct ViewWindowContentSetup
     string filename;
 
     // uri (TODO: not implemented yet)
-    string uri;
+    /* string uri; */
 }
 
 struct ViewWindowSettings
@@ -202,7 +202,7 @@ class ViewWindow
         // setModuleFileController() function
 
         auto fc = this.settings.controller.getOrCreateFileController(setup.project,
-                setup.filename, setup.uri, true,);
+                setup.filename, true,);
         if (fc[1]!is null)
         {
             return fc[1];

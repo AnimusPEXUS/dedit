@@ -1,19 +1,22 @@
 module dedit.FileController;
 
+import std.algorithm;
 import std.typecons;
 import std.path;
+import std.file;
+import std.stdio;
 
 import dutils.path;
 
 import dedit.Controller;
 
+// NOTE: no URI support for now
 struct FileControllerSettings
 {
     Controller controller;
 
     string project;
     string filename;
-    string uri;
 }
 
 class FileController
@@ -21,19 +24,48 @@ class FileController
 
     FileControllerSettings* settings;
 
-    this(Controller controller, string project, string filename, string uri)
+    this(Controller controller, string project, string filename)
     {
         auto settings = new FileControllerSettings;
         settings.controller = controller;
         settings.project = project;
         settings.filename = filename;
-        settings.uri = uri;
         this.settings = settings;
+        checkSettings();
     }
 
     this(FileControllerSettings* settings)
     {
         this.settings = settings;
+        checkSettings();
+    }
+
+    private void checkSettings()
+    {
+        if (settings.project == "")
+        {
+            if (!settings.filename.startsWith("/"))
+            {
+                settings.filename = dutils.path.join(cast(string[])[
+                        getcwd(), settings.filename
+                        ]).absolutePath();
+            }
+        }
+        else
+        {
+            if (settings.filename.startsWith("/"))
+            {
+                auto pp = this.settings.controller.getProjectPath(this.settings.project);
+                if (pp[1]!is null)
+                {
+                    throw pp[1];
+                }
+                if (!settings.filename.absolutePath().startsWith(pp[0] ~ "/"))
+                {
+                    throw new Exception("supplied filename is outside project's path");
+                }
+            }
+        }
     }
 
     Tuple!(string, Exception) getFilename()
@@ -65,21 +97,57 @@ class FileController
 
     Tuple!(string, Exception) getString()
     {
-        return tuple("", cast(Exception) null);
+        auto chars = getChars();
+        if (chars[1]!is null)
+        {
+            return tuple("", chars[1]);
+        }
+        return tuple(cast(string) chars[0], cast(Exception) null);
     }
 
     Exception setString(string text)
     {
+        auto res = setChars(cast(char[]) text);
+        if (res !is null)
+        {
+            return res;
+        }
         return cast(Exception) null;
     }
 
-    Tuple!(ubyte[], Exception) getBytes()
+    Tuple!(char[], Exception) getChars()
     {
-        return tuple(cast(ubyte[])[], cast(Exception) null);
+
+        auto filename = this.getFilename();
+        if (filename[1]!is null)
+        {
+            return tuple(cast(char[])[], filename[1]);
+        }
+
+        auto f = new std.stdio.File(filename[0]);
+
+        char[] buff;
+        buff.length = f.size;
+
+        if (f.size > 0)
+        {
+            f.rawRead(buff);
+        }
+
+        return tuple(cast(char[])[], cast(Exception) null);
     }
 
-    Exception setBytes(ubyte[] data)
+    Exception setChars(char[] data)
     {
+        try
+        {
+            toFile(data, this.settings.filename);
+        }
+        catch (Exception e)
+        {
+            return e;
+        }
+
         return cast(Exception) null;
     }
 
