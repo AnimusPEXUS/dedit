@@ -8,6 +8,7 @@ import gtk.Window;
 import gtk.MenuBar;
 import gtk.Menu;
 import gtk.MenuItem;
+import gtk.SeparatorMenuItem;
 import gtk.c.types;
 
 import dedit.ViewWindow;
@@ -33,29 +34,44 @@ class ViewWindowMainMenu
         menuBar = new MenuBar();
 
         auto menu_file = new MenuItem("File");
-        auto menu_edit = new MenuItem("Edit");
+        /* auto menu_edit = new MenuItem("Edit"); */
         menu_special = new MenuItem(SPECIAL_MENU_ITEM_LABEL);
 
         auto menu_file_menu = new Menu();
         menu_file.setSubmenu(menu_file_menu);
 
-        /*
+        auto menu_file_menu_reload = new MenuItem("(Re)Load");
+        /* menu_file_menu_save.addAccelerator("activate", view_window.accel_group,
+                's', GdkModifierType.CONTROL_MASK, GtkAccelFlags.VISIBLE); */
+        menu_file_menu_reload.addOnActivate(&view_window.onMIReloadActivate);
+        menu_file_menu.append(menu_file_menu_reload);
+
         auto menu_file_menu_save = new MenuItem("Save");
         menu_file_menu_save.addAccelerator("activate", view_window.accel_group,
                 's', GdkModifierType.CONTROL_MASK, GtkAccelFlags.VISIBLE);
         menu_file_menu_save.addOnActivate(&view_window.onMISaveActivate);
         menu_file_menu.append(menu_file_menu_save);
 
+        menu_file_menu.append(new SeparatorMenuItem);
+
+        auto menu_file_menu_rename = new MenuItem("Rename");
+        menu_file_menu_rename.addAccelerator("activate", view_window.accel_group, 's',
+                GdkModifierType.CONTROL_MASK | GdkModifierType.SHIFT_MASK, GtkAccelFlags.VISIBLE);
+        menu_file_menu_rename.addOnActivate(&view_window.onMIRenameActivate);
+        menu_file_menu.append(menu_file_menu_rename);
+
+        menu_file_menu.append(new SeparatorMenuItem);
+
         auto menu_file_menu_close = new MenuItem("Close");
         menu_file_menu_close.addAccelerator("activate", view_window.accel_group,
                 'w', GdkModifierType.CONTROL_MASK, GtkAccelFlags.VISIBLE);
         menu_file_menu_close.addOnActivate(&view_window.onMICloseActivate);
         menu_file_menu.append(menu_file_menu_close);
-        */
 
-        menuBar.append(menu_file);
-        menuBar.append(menu_edit);
         menuBar.append(menu_special);
+        menuBar.append(new SeparatorMenuItem);
+        /* menuBar.append(menu_edit); */
+        menuBar.append(menu_file);
 
     }
 
@@ -66,7 +82,7 @@ class ViewWindowMainMenu
 
     void setSpecialMenuItem(string label, Menu newSubmenu)
     {
-        menu_special.setLabel("module menu: " ~ label);
+        menu_special.setLabel(label);
         menu_special.setSubmenu(newSubmenu);
         if (newSubmenu !is null)
         {

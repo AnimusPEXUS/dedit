@@ -6,6 +6,7 @@ import std.algorithm;
 import std.json;
 
 import gtk.Window;
+import gtk.Grid;
 import gtk.Label;
 import gtk.Box;
 import gtk.TreeView;
@@ -129,23 +130,21 @@ class ViewWindow
 
         auto menu_box = new Box(GtkOrientation.HORIZONTAL, 0);
 
-        auto view_module_box = new Box(GtkOrientation.HORIZONTAL, 0);
-
         view_module_project = new Label("project");
         view_module_filename = new Label("filename");
-        auto view_module_data_load = new Button("Load Data");
-        auto view_module_data_save = new Button("Save Data");
-        auto view_module_change_name = new Button("Change Name..");
+        /* auto view_module_data_load = new Button("Load Data"); */
+        /* auto view_module_data_save = new Button("Save Data"); */
+        /* auto view_module_change_name = new Button("Change Name.."); */
         /* auto view_module_apply = new Button("Apply"); */
 
-        view_module_box.packStart(view_module_project, false, true, 0);
-        view_module_box.packStart(view_module_filename, false, true, 0);
-        view_module_box.packStart(view_module_data_load, false, true, 0);
-        view_module_box.packStart(view_module_data_save, false, true, 0);
-        view_module_box.packStart(view_module_change_name, false, true, 0);
+        auto view_module_grid = new Grid();
+        view_module_grid.attach(new Label("project:"), 0, 0, 1, 1);
+        view_module_grid.attach(view_module_project, 1, 0, 1, 1);
+        view_module_grid.attach(new Label("file:"), 0, 1, 1, 1);
+        view_module_grid.attach(view_module_filename, 1, 1, 1, 1);
 
         menu_box.packStart(main_menu.getWidget(), true, true, 0);
-        menu_box.packStart(view_module_box, false, true, 0);
+        menu_box.packStart(view_module_grid, false, true, 0);
 
         root_box.packStart(menu_box, false, true, 0);
         root_box.packStart(view_box, true, true, 0);
@@ -283,12 +282,40 @@ class ViewWindow
 
         this.main_menu.setSpecialMenuItem(mfc.getModInfo().moduleName, mm_widget);
 
-        this.view_module_project.setText("project: " ~ mfc.getProject());
-        this.view_module_filename.setText("filename: " ~ mfc.getFilename());
+        this.view_module_project.setText(mfc.getProject());
+        this.view_module_filename.setText(mfc.getFilename());
 
         this.current_module_file_controller = mfc;
 
         return null;
+    }
+
+    void onMIReloadActivate(MenuItem mi )
+    {
+        if (this.current_module_file_controller !is null)
+        {
+            auto res = this.current_module_file_controller.loadData();
+        }
+        return;
+    }
+
+    void onMISaveActivate(MenuItem mi )
+    {
+        if (this.current_module_file_controller !is null)
+        {
+            auto res = this.current_module_file_controller.saveData();
+        }
+        return;
+    }
+
+    void onMIRenameActivate(MenuItem mi )
+    {
+        return;
+    }
+
+    void onMICloseActivate(MenuItem mi )
+    {
+        return;
     }
 
 }

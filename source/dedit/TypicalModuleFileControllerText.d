@@ -10,6 +10,7 @@ import std.regex;
 import std.string;
 
 import glib.Idle;
+import gobject.Value;
 
 import gtk.Paned;
 import gtk.Scrollbar;
@@ -395,9 +396,13 @@ class View : ModuleControllerView
         oto.userWishesToRefreshData = &outlineToolUserWishesToRefreshData;
 
         outlineTool = new OutlineTool(oto);
+        auto outlinetool_widget = outlineTool.getWidget();
 
         paned.add1(sw);
-        paned.add2(outlineTool.getWidget());
+        paned.add2(outlinetool_widget);
+
+        paned.childSetProperty(sw, "resize", new Value(true));
+        paned.childSetProperty(outlinetool_widget, "resize",  new Value(false));
     }
 
     TypicalModuleFileControllerText getModuleFileController()

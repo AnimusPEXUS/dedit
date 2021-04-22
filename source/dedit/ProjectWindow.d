@@ -123,7 +123,24 @@ class ProjectWindow
         filebrowser = new FileTreeView();
         filebrowser.addOnRowActivated(&onFileListViewActivated);
 
-        vertical_paned.add2(filebrowser.getWidget());
+        auto filebrowser_widget = filebrowser.getWidget();
+
+        vertical_paned.add2(filebrowser_widget);
+
+        vertical_paned.childSetProperty(vertical_paned.getChild1(), "resize", new Value(true));
+        vertical_paned.childSetProperty(vertical_paned.getChild2(), "resize", new Value(false));
+
+        project_info_paned.childSetProperty(project_info_paned.getChild1(), "resize", new Value(true));
+        project_info_paned.childSetProperty(project_info_paned.getChild2(), "resize", new Value(true));
+
+        project_bookmarks_paned.childSetProperty(project_bookmarks_paned.getChild1(), "resize", new Value(true));
+        project_bookmarks_paned.childSetProperty(project_bookmarks_paned.getChild2(), "resize", new Value(true));
+
+        project_open_views_paned.childSetProperty(project_open_views_paned.getChild1(), "resize", new Value(true));
+        project_open_views_paned.childSetProperty(project_open_views_paned.getChild2(), "resize", new Value(true));
+
+        todo_list_paned.childSetProperty(todo_list_paned.getChild1(), "resize", new Value(true));
+        todo_list_paned.childSetProperty(todo_list_paned.getChild2(), "resize", new Value(true));
 
         setProject(project);
         loadSettings();

@@ -102,7 +102,12 @@ class FileController
         {
             return tuple("", chars[1]);
         }
-        return tuple(cast(string) chars[0], cast(Exception) null);
+        auto ret = cast(string) chars[0];
+        debug
+        {
+            writeln("getString result", ret);
+        }
+        return tuple(ret, cast(Exception) null);
     }
 
     Exception setString(string text)
@@ -124,6 +129,13 @@ class FileController
             return tuple(cast(char[])[], filename[1]);
         }
 
+        debug
+        {
+            writeln("getChars");
+            writeln("  project:", settings.project);
+            writeln("  filename:", settings.filename);
+            writeln("  filename2:", filename[0]);
+        }
         auto f = new std.stdio.File(filename[0]);
 
         char[] buff;
@@ -134,7 +146,7 @@ class FileController
             f.rawRead(buff);
         }
 
-        return tuple(cast(char[])[], cast(Exception) null);
+        return tuple(buff, cast(Exception) null);
     }
 
     Exception setChars(char[] data)
