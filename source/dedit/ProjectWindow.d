@@ -130,25 +130,50 @@ class ProjectWindow
         vertical_paned.childSetProperty(vertical_paned.getChild1(), "resize", new Value(true));
         vertical_paned.childSetProperty(vertical_paned.getChild2(), "resize", new Value(false));
 
-        project_info_paned.childSetProperty(project_info_paned.getChild1(), "resize", new Value(true));
-        project_info_paned.childSetProperty(project_info_paned.getChild2(), "resize", new Value(true));
+        project_info_paned.childSetProperty(project_info_paned.getChild1(),
+                "resize", new Value(true));
+        project_info_paned.childSetProperty(project_info_paned.getChild2(),
+                "resize", new Value(true));
 
-        project_bookmarks_paned.childSetProperty(project_bookmarks_paned.getChild1(), "resize", new Value(true));
-        project_bookmarks_paned.childSetProperty(project_bookmarks_paned.getChild2(), "resize", new Value(true));
+        project_bookmarks_paned.childSetProperty(project_bookmarks_paned.getChild1(),
+                "resize", new Value(true));
+        project_bookmarks_paned.childSetProperty(project_bookmarks_paned.getChild2(),
+                "resize", new Value(true));
 
-        project_open_views_paned.childSetProperty(project_open_views_paned.getChild1(), "resize", new Value(true));
-        project_open_views_paned.childSetProperty(project_open_views_paned.getChild2(), "resize", new Value(true));
+        project_open_views_paned.childSetProperty(project_open_views_paned.getChild1(),
+                "resize", new Value(true));
+        project_open_views_paned.childSetProperty(project_open_views_paned.getChild2(),
+                "resize", new Value(true));
 
         todo_list_paned.childSetProperty(todo_list_paned.getChild1(), "resize", new Value(true));
         todo_list_paned.childSetProperty(todo_list_paned.getChild2(), "resize", new Value(true));
 
         setProject(project);
-        loadSettings();
+        {
+            auto res = loadSettings();
+            debug
+            {
+                if (res !is null)
+                {
+                    writeln("window settings load error:", res);
+                }
+            }
+        }
+
+        controller.project_windows ~= this;
     }
 
     bool onDeleteEvent(Event event, Widget w)
     {
         saveSettings();
+
+        auto i = controller.project_windows.length - controller.project_windows.find(this).length;
+        debug
+        {
+            writeln("this window index", i);
+        }
+        controller.project_windows = controller.project_windows.remove(i);
+
         return false;
     }
 
@@ -166,7 +191,7 @@ class ProjectWindow
             return res[1];
         }
         filebrowser.setRootDirectory(res[0]);
-        window.setTitle(project);
+        window.setTitle(project ~ " :: (project window)");
         return null;
     }
 
@@ -208,6 +233,11 @@ class ProjectWindow
         window.getPosition(ret.x, ret.y);
         window.getSize(ret.width, ret.height);
         ret.maximized = window.isMaximized();
+        ret.paned1 = vertical_paned.getPosition();
+        ret.paned2 = project_info_paned.getPosition();
+        ret.paned3 = project_bookmarks_paned.getPosition();
+        ret.paned4 = project_open_views_paned.getPosition();
+        ret.paned5 = todo_list_paned.getPosition();
         return ret;
     }
 
@@ -236,6 +266,11 @@ class ProjectWindow
         {
             window.unmaximize();
         }
+        vertical_paned.setPosition(settings.paned1);
+        project_info_paned.setPosition(settings.paned2);
+        project_bookmarks_paned.setPosition(settings.paned3);
+        project_open_views_paned.setPosition(settings.paned4);
+        todo_list_paned.setPosition(settings.paned5);
     }
 
     void onFileListViewActivated(TreePath tp, TreeViewColumn tvc, TreeView tv)
@@ -262,6 +297,8 @@ class ProjectWindowSettings
     int x, y;
     int width, height;
 
+    int paned1, paned2, paned3, paned4, paned5;
+
     this()
     {
     }
@@ -280,6 +317,12 @@ class ProjectWindowSettings
         ret.object["y"] = JSONValue(y);
         ret.object["width"] = JSONValue(width);
         ret.object["height"] = JSONValue(height);
+
+        ret.object["paned1"] = JSONValue(paned1);
+        ret.object["paned2"] = JSONValue(paned2);
+        ret.object["paned3"] = JSONValue(paned3);
+        ret.object["paned4"] = JSONValue(paned4);
+        ret.object["paned5"] = JSONValue(paned5);
 
         return ret;
     }
@@ -319,6 +362,31 @@ class ProjectWindowSettings
         if ("height" in x.object)
         {
             height = cast(int) x.object["height"].integer;
+        }
+
+        if ("paned1" in x.object)
+        {
+            paned1 = cast(int) x.object["paned1"].integer;
+        }
+
+        if ("paned2" in x.object)
+        {
+            paned2 = cast(int) x.object["paned2"].integer;
+        }
+
+        if ("paned3" in x.object)
+        {
+            paned3 = cast(int) x.object["paned3"].integer;
+        }
+
+        if ("paned4" in x.object)
+        {
+            paned4 = cast(int) x.object["paned4"].integer;
+        }
+
+        if ("paned5" in x.object)
+        {
+            paned5 = cast(int) x.object["paned5"].integer;
         }
 
         return true;

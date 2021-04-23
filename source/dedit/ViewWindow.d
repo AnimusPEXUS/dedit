@@ -290,7 +290,7 @@ class ViewWindow
         return null;
     }
 
-    void onMIReloadActivate(MenuItem mi )
+    void onMIReloadActivate(MenuItem mi)
     {
         if (this.current_module_file_controller !is null)
         {
@@ -299,7 +299,7 @@ class ViewWindow
         return;
     }
 
-    void onMISaveActivate(MenuItem mi )
+    void onMISaveActivate(MenuItem mi)
     {
         if (this.current_module_file_controller !is null)
         {
@@ -308,12 +308,12 @@ class ViewWindow
         return;
     }
 
-    void onMIRenameActivate(MenuItem mi )
+    void onMIRenameActivate(MenuItem mi)
     {
         return;
     }
 
-    void onMICloseActivate(MenuItem mi )
+    void onMICloseActivate(MenuItem mi)
     {
         return;
     }

@@ -401,8 +401,8 @@ class View : ModuleControllerView
         paned.add1(sw);
         paned.add2(outlinetool_widget);
 
-        paned.childSetProperty(sw, "resize", new Value(true));
-        paned.childSetProperty(outlinetool_widget, "resize",  new Value(false));
+        paned.childSetProperty(paned.getChild1(), "resize", new Value(true));
+        paned.childSetProperty(paned.getChild2(), "resize", new Value(false));
     }
 
     TypicalModuleFileControllerText getModuleFileController()

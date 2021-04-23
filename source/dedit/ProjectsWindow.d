@@ -196,14 +196,18 @@ class ProjectsWindow
 
     bool onDeleteEvent(Event event, Widget w)
     {
-        // writeln("ProjectsWindow delete");
-        /*foreach (i, c; controller.windows)
+        writeln("ProjectsWindow delete");
+        foreach (i, c; controller.project_windows)
         {
             c.close();
         }
         controller.projects_window_settings = getSettings();
-        controller.saveState();
-        // TODO: check all files are saved*/
+        auto res = controller.saveSettings();
+        if (res !is null)
+        {
+            writeln("Error while saving settings:", res);
+        }
+
         return false;
     }
 

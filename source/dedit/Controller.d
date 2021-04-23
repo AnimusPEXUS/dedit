@@ -69,7 +69,7 @@ class Controller
         return app.run(args);
     }
 
-    void saveSettings()
+    Exception saveSettings()
     {
 
         string j = settings.toJSON(true);
@@ -80,26 +80,42 @@ class Controller
         }
         catch (Exception)
         {
-            return;
+            // NOTE: not an error
+            return cast(Exception) null;
         }
 
-        // TODO: display errors
-        File of = File(settingsPath, "w");
-        of.rawWrite(j);
+        try
+        {
+            File of = File(settingsPath, "w");
+            of.rawWrite(j);
+        }
+        catch (Exception e)
+        {
+            return e;
+        }
+        return cast(Exception) null;
     }
 
-    void loadSettings()
+    Exception loadSettings()
     {
-        if (isFile(settingsPath))
+        try
         {
-            auto f = File(settingsPath);
-            char[] buf;
-            buf.length = f.size;
-            string data = cast(string) f.rawRead(buf);
+            if (isFile(settingsPath))
+            {
+                auto f = File(settingsPath);
+                char[] buf;
+                buf.length = f.size;
+                string data = cast(string) f.rawRead(buf);
 
-            settings = parseJSON(data);
-            settings = sanitizeSettings(settings);
+                settings = parseJSON(data);
+                settings = sanitizeSettings(settings);
+            }
         }
+        catch (Exception e)
+        {
+            return e;
+        }
+        return cast(Exception) null;
     }
 
     JSONValue sanitizeSettings(JSONValue settings)
@@ -115,7 +131,9 @@ class Controller
             settings["font"] = "Go Mono 10";
         }
 
-        foreach (size_t index, v; ["projects", "projects_windows_settings"])
+        foreach (size_t index, v; [
+                "projects", "projects_windows_settings", "view_windows_settings"
+            ])
         {
             if (v !in settings || settings[v].type() != JSONType.object)
             {
@@ -159,6 +177,11 @@ class Controller
     void setProjectWindowSettings(string name, JSONValue value)
     {
         settings = sanitizeSettings(settings);
+        debug
+        {
+            writeln("saving settings for project window:", name);
+            writeln("  settings:", value);
+        }
         settings["projects_windows_settings"][name] = value;
         return;
     }
@@ -182,7 +205,6 @@ class Controller
         if (ret is null)
         {
             ret = createNewProjectWindow(project);
-            project_windows ~= ret;
         }
         return ret;
     }
