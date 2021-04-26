@@ -280,7 +280,7 @@ class ViewWindow
 
         view_box.packStart(view_widget, true, true, 0);
 
-        this.main_menu.setSpecialMenuItem(mfc.getModInfo().moduleName, mm_widget);
+        this.main_menu.setSpecialMenuItem(mfc.getModInfo().name, mm_widget);
 
         this.view_module_project.setText(mfc.getProject());
         this.view_module_filename.setText(mfc.getFilename());

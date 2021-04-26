@@ -105,7 +105,7 @@ string formatWholeBufferText(string txt)
 
 const dedit.moduleinterface.ModuleInformation ModuleInformation =
 {
-    moduleName: "D",
+    name: "D",
     supportedExtensions: [".d"],
     /* ModuleFileController function(Controller c, FileController file_controller) createModuleController; */
     createModuleController: function ModuleFileController(

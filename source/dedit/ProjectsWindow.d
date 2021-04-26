@@ -196,7 +196,10 @@ class ProjectsWindow
 
     bool onDeleteEvent(Event event, Widget w)
     {
-        writeln("ProjectsWindow delete");
+        debug
+        {
+            writeln("ProjectsWindow delete");
+        }
         foreach (i, c; controller.project_windows)
         {
             c.close();

@@ -13,8 +13,7 @@ import dedit.ViewWindow;
 
 struct ModuleInformation
 {
-    string moduleName;
-    /* string specialMenuName; */
+    string name;
     string[] supportedExtensions; // must start with point
     string[] supportedMIMETypes;
     ModuleFileController function(Controller c, FileController file_controller) createModuleController;

@@ -28,9 +28,9 @@ Tuple!(string[], Exception) determineModuleByFileExtension(string filename)
             {
                 if (filename.endsWith(ext))
                 {
-                    if (!ret.canFind(m.moduleName))
+                    if (!ret.canFind(m.name))
                     {
-                        ret ~= m.moduleName;
+                        ret ~= m.name;
                     }
                     continue loop0;
                 }
@@ -49,7 +49,7 @@ dedit.moduleinterface.ModuleInformation* getModuleInformation(string name)
 {
     foreach (size_t index, const ref m; builtinModules)
     {
-        if (m.moduleName == name)
+        if (m.name == name)
         {
             return cast(dedit.moduleinterface.ModuleInformation*)&m;
         }

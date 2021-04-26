@@ -11,13 +11,18 @@ import gio.Application;
 
 import gtk.Widget;
 import gtk.Window;
+import gtk.ListStore;
+import gtk.TreeIter;
+import gobject.Value;
 
 import dedit.ProjectWindow;
 import dedit.ViewWindow;
 import dedit.ProjectsWindow;
 import dedit.FileController;
-import dedit.builtinmodules;
 import dedit.moduleinterface;
+
+import dedit.builtinmodules;
+import dedit.builtintoolwidgets;
 
 class Controller
 {
@@ -41,11 +46,32 @@ class Controller
     JSONValue projects_window_settings;
     // string font;
 
+    ListStore tool_widget_combobox_item_list;
+
     JSONValue settings;
 
     int main(string[] args)
     {
         settingsPath = expandTilde("~/.config/dedit/settings.json");
+
+        tool_widget_combobox_item_list = new ListStore(cast(GType[])[
+                GType.STRING, GType.STRING
+                ]);
+
+        {
+            auto ti = new TreeIter;
+            tool_widget_combobox_item_list.append(ti);
+            tool_widget_combobox_item_list.setValue(ti, 0, new Value(""));
+            tool_widget_combobox_item_list.setValue(ti, 1, new Value("(not selected)"));
+        }
+
+        foreach (i, v; builtinToolWidgets)
+        {
+            auto ti = new TreeIter;
+            tool_widget_combobox_item_list.append(ti);
+            tool_widget_combobox_item_list.setValue(ti, 0, new Value(v.name));
+            tool_widget_combobox_item_list.setValue(ti, 1, new Value(v.displayName));
+        }
 
         loadSettings();
 
