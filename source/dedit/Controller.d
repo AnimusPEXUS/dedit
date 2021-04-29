@@ -158,7 +158,7 @@ class Controller
         }
 
         foreach (size_t index, v; [
-                "projects", "projects_windows_settings", "view_windows_settings"
+                "projects", "projects_windows_settings", "view_windows_settings", "tool_window_settings"
             ])
         {
             if (v !in settings || settings[v].type() != JSONType.object)
@@ -233,6 +233,18 @@ class Controller
             ret = createNewProjectWindow(project);
         }
         return ret;
+    }
+
+    Exception setToolWindowSettings(JSONValue value) {
+        return cast(Exception) null;
+    }
+
+    Tuple!(JSONValue, Exception) getToolWindowSettings(string window_uuid) {
+        return tuple(cast(JSONValue) null, cast(Exception) null);
+    }
+
+    Exception delToolWindowSettings(string window_uuid) {
+        return cast(Exception) null;
     }
 
     void openNewView(string project, string filename, string uri)

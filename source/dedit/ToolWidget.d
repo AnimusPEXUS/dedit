@@ -1,5 +1,7 @@
 module dedit.ToolWidget;
 
+import core.sync.mutex;
+
 import gtk.Box;
 import gtk.ComboBox;
 import gtk.CellRendererText;
@@ -44,6 +46,31 @@ class ToolWidget
         }
 
         tools_box.packStart(tool_selection_cb, false, false, 0);
+
+        tool_selection_cb.addOnChanged(delegate void(ComboBox cb) {
+            auto id = cb.getActiveId();
+
+            if (current_tool_widget !is null)
+            {
+                current_tool_widget.destroy;
+                current_tool_widget = null;
+            }
+
+            if (id != "")
+            {
+                auto twi = getToolWidgetInformation(id);
+                assert(twi !is null);
+                auto tw = twi.createToolWidget(controller);
+                assert(tw !is null);
+                auto w = tw.getWidget();
+                assert(w !is null);
+                assert(children_box.children.length == 0);
+                children_box.packStart(w, true, true, 0);
+                w.showAll();
+                current_tool_widget = tw;
+                current_tool_widget.setProject(project);
+            }
+        });
     }
 
     Box getWidget()
@@ -53,22 +80,29 @@ class ToolWidget
 
     Exception unselectTool()
     {
-        if (current_tool_widget !is null)
+        try
         {
-            current_tool_widget.destroy;
-            current_tool_widget = null;
+            tool_selection_cb.setActiveId("");
+        }
+        catch (Exception e)
+        {
+            return e;
         }
         return cast(Exception) null;
     }
 
     Exception selectTool(string name)
     {
-        unselectTool();
-        auto tw = getToolWidgetInformation(name);
-        auto w = tw.createWidget(controller);
-        children_box.packStart(w.getWidget(), true, true, 0);
-        current_tool_widget = w;
-        current_tool_widget.setProject(project);
+
+        try
+        {
+            tool_selection_cb.setActiveId(name);
+        }
+        catch (Exception e)
+        {
+            return e;
+        }
+
         return cast(Exception) null;
     }
 
