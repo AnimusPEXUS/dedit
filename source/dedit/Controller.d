@@ -5,6 +5,7 @@ import std.file;
 import std.path;
 import std.stdio;
 import std.typecons;
+import std.uuid;
 
 import gtk.Application;
 import gio.Application;
@@ -158,7 +159,8 @@ class Controller
         }
 
         foreach (size_t index, v; [
-                "projects", "projects_windows_settings", "view_windows_settings", "tool_window_settings"
+                "projects", "projects_windows_settings",
+                "view_windows_settings", "tool_windows_settings"
             ])
         {
             if (v !in settings || settings[v].type() != JSONType.object)
@@ -235,15 +237,86 @@ class Controller
         return ret;
     }
 
-    Exception setToolWindowSettings(JSONValue value) {
+    Exception setToolWindowSettings(JSONValue value)
+    {
+        string target_uuid = value["uuid"].str();
+        if (target_uuid == "")
+        {
+            try
+            {
+                parseUUID(target_uuid);
+            }
+            catch (Exception)
+            {
+                return new Exception("invalid 'target_uuid' in supplied value");
+            }
+        }
+
+        bool set = true;
+        bool found = false;
+
+        auto x = settings["tool_windows_settings"];
+        scope (success)
+            settings["tool_windows_settings"] = x;
+
+        foreach_reverse (size_t k, JSONValue v; x.array())
+        {
+            if (v["window_uuid"].str() == target_uuid)
+            {
+                found = true;
+                if (set)
+                {
+                    x[k] = value;
+                    set = false;
+                }
+                else
+                {
+                    auto y = x.array();
+                    x = y[0 .. k] ~ y[k + 1 .. $];
+                }
+            }
+        }
+
+        if (!found)
+        {
+            x ~= value;
+        }
+
         return cast(Exception) null;
     }
 
-    Tuple!(JSONValue, Exception) getToolWindowSettings(string window_uuid) {
+    Tuple!(JSONValue, Exception) getToolWindowSettings(string window_uuid)
+    {
+
+        auto x = settings["tool_windows_settings"];
+        scope (success)
+            settings["tool_windows_settings"] = x;
+
+        foreach (size_t k, JSONValue v; x.array())
+        {
+            if (v["window_uuid"].str() == window_uuid)
+            {
+                return tuple(v, cast(Exception) null);
+            }
+        }
         return tuple(cast(JSONValue) null, cast(Exception) null);
     }
 
-    Exception delToolWindowSettings(string window_uuid) {
+    Exception delToolWindowSettings(string window_uuid)
+    {
+
+        auto x = settings["tool_windows_settings"];
+        scope (success)
+            settings["tool_windows_settings"] = x;
+
+        foreach_reverse (size_t k, JSONValue v; x.array())
+        {
+            if (v["window_uuid"].str() == window_uuid)
+            {
+                auto y = x.array();
+                x = y[0 .. k] ~ y[k + 1 .. $];
+            }
+        }
         return cast(Exception) null;
     }
 

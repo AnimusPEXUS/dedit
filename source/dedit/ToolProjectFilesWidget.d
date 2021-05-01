@@ -1,6 +1,8 @@
 module dedit.ToolProjectFilesWidget;
 
 import std.stdio;
+import std.typecons;
+import std.json;
 
 import gtk.TreePath;
 import gtk.TreeViewColumn;
@@ -76,23 +78,40 @@ const dedit.toolwidgetinterface.ToolWidgetInformation ToolProjectFilesWidgetInfo
         {
             this.project = name;
             auto pth = controller.getProjectPath(name);
-            if (pth[1] !is null)
+            if (pth[1]!is null)
             {
                 return pth[1];
             }
 
             filebrowser.setRootDirectory(pth[0]);
 
-            return  cast(Exception) null;
+            return cast(Exception) null;
         }
 
-        string getProject() {
+        string getProject()
+        {
             return project;
         }
 
         Widget getWidget()
         {
             return main_box;
+        }
+
+        Tuple!(JSONValue, Exception) getSettings()
+        {
+            auto ret = JSONValue(cast(JSONValue[string]) null);
+            ret["project"] = project;
+            return tuple(ret, cast(Exception) null);
+        }
+
+        Exception setSettings(JSONValue v)
+        {
+            if ("project" in v)
+            {
+                setProject(v["project"].str());
+            }
+            return cast(Exception) null;
         }
 
         Exception destroy()

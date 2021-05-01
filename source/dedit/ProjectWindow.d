@@ -65,7 +65,7 @@ class ProjectWindow
 
         auto new_empty_toolwindow_tb = new ToolButton(null, "New Tool Window");
         new_empty_toolwindow_tb.addOnClicked(delegate void(ToolButton tb) {
-            auto tw = new ToolWindow(controller);
+            auto tw = new ToolWindow(controller, "");
             tw.show();
             tw.setProject(project);
         });

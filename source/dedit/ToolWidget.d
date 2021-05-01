@@ -2,6 +2,9 @@ module dedit.ToolWidget;
 
 import core.sync.mutex;
 
+import std.typecons;
+import std.json;
+
 import gtk.Box;
 import gtk.ComboBox;
 import gtk.CellRendererText;
@@ -106,6 +109,21 @@ class ToolWidget
         return cast(Exception) null;
     }
 
+    Tuple!(string, Exception) getTool()
+    {
+        string ret;
+        try
+        {
+            ret = tool_selection_cb.getActiveId();
+        }
+        catch (Exception e)
+        {
+            return tuple("", e);
+        }
+
+        return tuple(ret, cast(Exception) null);
+    }
+
     void setProject(string name)
     {
         project = name;
@@ -113,6 +131,16 @@ class ToolWidget
         {
             current_tool_widget.setProject(name);
         }
+    }
+
+    Tuple!(JSONValue, Exception) getSettings()
+    {
+        return current_tool_widget.getSettings();
+    }
+
+    Exception setSettings(JSONValue v)
+    {
+        return current_tool_widget.setSettings(v);
     }
 
     Exception destroy()
