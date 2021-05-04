@@ -18,6 +18,7 @@ import gobject.Value;
 
 import dedit.ProjectWindow;
 import dedit.ViewWindow;
+import dedit.ToolWindow;
 import dedit.ProjectsWindow;
 import dedit.FileController;
 import dedit.moduleinterface;
@@ -34,6 +35,7 @@ class Controller
 
     ProjectWindow[] project_windows;
     ViewWindow[] view_windows;
+    ToolWindow[] tool_windows;
 
     FileController[] file_controllers;
 
@@ -159,13 +161,20 @@ class Controller
         }
 
         foreach (size_t index, v; [
-                "projects", "projects_windows_settings",
-                "view_windows_settings", "tool_windows_settings"
+                "projects", "projects_windows_settings", "view_windows_settings"
             ])
         {
             if (v !in settings || settings[v].type() != JSONType.object)
             {
                 settings[v] = JSONValue(cast(JSONValue[string]) null);
+            }
+        }
+
+        foreach (size_t index, v; ["tool_windows_settings"])
+        {
+            if (v !in settings || settings[v].type() != JSONType.array)
+            {
+                settings[v] = JSONValue(cast(JSONValue[]) null);
             }
         }
 

@@ -121,11 +121,16 @@ class ProjectWindow
     {
         saveSettings();
 
-        auto i = controller.project_windows.length - controller.project_windows.find(this).length;
-        debug
+        foreach (size_t k, ToolWindow v; controller.tool_windows)
         {
-            writeln("this window index", i);
+            if (v.getProject() == project)
+            {
+                v.keep_settings_on_window_close = true;
+                v.getWindow().close();
+            }
         }
+
+        auto i = controller.project_windows.length - controller.project_windows.find(this).length;
         controller.project_windows = controller.project_windows.remove(i);
 
         return false;

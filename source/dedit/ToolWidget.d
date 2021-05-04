@@ -133,6 +133,11 @@ class ToolWidget
         }
     }
 
+    string getProject()
+    {
+        return project;
+    }
+
     Tuple!(JSONValue, Exception) getSettings()
     {
         return current_tool_widget.getSettings();

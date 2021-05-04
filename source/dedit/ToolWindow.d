@@ -2,6 +2,7 @@ module dedit.ToolWindow;
 
 import std.uuid;
 import std.json;
+import std.algorithm;
 
 import gtk.Window;
 import gtk.Widget;
@@ -41,21 +42,32 @@ class ToolWindow
         tool_widget = new ToolWidget(controller);
 
         window.add(tool_widget.getWidget());
+
+        controller.tool_windows ~= this;
     }
 
     bool onDeleteEvent(Event event, Widget w)
     {
         if (!keep_settings_on_window_close)
         {
-
+            controller.delToolWindowSettings(window_uuid);
         }
         tool_widget.destroy();
+
+        auto i = controller.tool_windows.length - controller.tool_windows.find(this).length;
+        controller.tool_windows = controller.tool_windows.remove(i);
+
         return false;
     }
 
     void setProject(string name)
     {
         tool_widget.setProject(name);
+    }
+
+    string getProject()
+    {
+        return tool_widget.getProject();
     }
 
     private Exception loadSettings()
