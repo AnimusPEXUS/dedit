@@ -104,7 +104,7 @@ class ProjectWindow
                 }
             }
 
-            foreach (ulong k, JSONValue v; controller.settings["tool_windows_settings"])
+            foreach (size_t k, JSONValue v; controller.settings["tool_windows_settings"].array())
             {
                 if (v["project"].str() == project && "tool_name" in v && "window_uuid" in v)
                 {
