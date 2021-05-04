@@ -100,6 +100,7 @@ class ToolWindow
             return r[1];
         }
         val["tool_name"] = r[0];
+        val["project"] = tool_widget.project;
         return cast(Exception) null;
     }
 

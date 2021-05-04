@@ -91,6 +91,9 @@ class ProjectWindow
         window.add(toolbar);
 
         setProject(project);
+
+        controller.project_windows ~= this;
+
         {
             auto res = loadSettings();
             debug
@@ -100,9 +103,18 @@ class ProjectWindow
                     writeln("window settings load error:", res);
                 }
             }
+
+            foreach (ulong k, JSONValue v; controller.settings["tool_windows_settings"])
+            {
+                if (v["project"].str() == project && "tool_name" in v && "window_uuid" in v)
+                {
+                    auto tw = new ToolWindow(controller, v["window_uuid"].str());
+                    tw.show();
+                    tw.setProject(project);
+                }
+            }
         }
 
-        controller.project_windows ~= this;
     }
 
     bool onDeleteEvent(Event event, Widget w)
