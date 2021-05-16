@@ -4,6 +4,7 @@ import std.stdio;
 import std.path;
 import std.algorithm;
 import std.json;
+import std.uuid;
 
 import gtk.Window;
 import gtk.Grid;
@@ -80,12 +81,23 @@ struct ViewWindowContentSetup
 
     // uri (TODO: not implemented yet)
     /* string uri; */
+
+    ~this()
+    {
+        writeln("ViewWindowContentSetup destroyed");
+    }
 }
 
 struct ViewWindowSettings
 {
     Controller controller;
+    string window_uuid;
     ViewWindowContentSetup* setup;
+
+    ~this()
+    {
+        writeln("ViewWindowSettings destroyed");
+    }
 }
 
 class ViewWindow
@@ -108,9 +120,22 @@ class ViewWindow
     ModuleFileController current_module_file_controller;
     // ModuleDataBuffer    current_module_file_controller;
 
+    bool keep_settings_on_window_close = false;
+
     this(ViewWindowSettings* settings)
     {
         this.settings = settings;
+
+        bool apply_setup = settings.window_uuid == "" && settings.setup !is null;
+        debug
+        {
+            writeln("apply_setup == ", apply_setup);
+        }
+
+        if (settings.window_uuid == "")
+        {
+            settings.window_uuid = randomUUID.toString();
+        }
 
         window = new Window("dedit");
         /* window.setGravity(Gravity.STATIC); */
@@ -149,20 +174,172 @@ class ViewWindow
         root_box.packStart(menu_box, false, true, 0);
         root_box.packStart(view_box, true, true, 0);
 
-        if (settings.setup !is null)
+        if (apply_setup)
         {
             this.setSetup(settings.setup);
         }
+
+        settings.controller.view_windows ~= this;
+
+        loadSettings();
+    }
+
+    ~this()
+    {
+        writeln("ViewWindow destroyed");
     }
 
     bool onDeleteEvent(Event event, Widget w)
     {
-        // saveSettings();
-        // controller.editorWindowIsClosed(project);
+        if (!keep_settings_on_window_close)
+        {
+            debug
+            {
+                writeln("removing settings for view window: ", settings.window_uuid);
+            }
+            settings.controller.delViewWindowSettings(settings.window_uuid);
+        }
+        else
+        {
+            saveSettings();
+        }
+        if (current_module_file_controller !is null)
+        {
+            // TODO: maybe is is better to call unsetSetup()
+            current_module_file_controller.close();
+            current_module_file_controller = null;
+        }
+
+        auto i = settings.controller.view_windows.length - settings.controller.view_windows.find(this)
+            .length;
+        settings.controller.view_windows = settings.controller.view_windows.remove(i);
+
         return false;
     }
 
-    Window getWidget()
+    private Exception loadSettings()
+    {
+        debug
+        {
+            writeln("loading settings for view window: ", settings.window_uuid);
+        }
+
+        auto set0 = settings.controller.getViewWindowSettings(settings.window_uuid);
+
+        if (set0[1]!is null)
+        {
+            debug
+            {
+                writeln("error loading view window settings ", settings.window_uuid);
+            }
+        }
+        else
+        {
+            auto x = set0[0];
+            if (!x.isNull)
+            {
+                auto window_uuid = x["window_uuid"].str;
+                /*{
+                    UUID x3;
+                    try
+                    {
+                        x3 = parseUUID(window_uuid);
+                    }
+                    catch (Exception)
+                    {
+                        return new Exception("invalid config format");
+                    }
+                    window_uuid = x3.toString();
+                } */
+
+                if ("x" in x && "y" in x)
+                {
+                    window.move(cast(int)(x["x"].integer()), cast(int)(x["y"].integer()));
+                }
+                if ("w" in x && "h" in x)
+                {
+                    window.resize(cast(int)(x["w"].integer()), cast(int)(x["h"].integer()));
+                }
+
+                if ("view_setup" in x && !x["view_setup"].isNull)
+                {
+                    debug
+                    {
+                        writeln("loading view_setup for window ", window_uuid);
+                    }
+                    auto y = x["view_setup"];
+                    ViewWindowContentSetup setup_o = {
+                        view_module_auto: false, project: settings.setup.project, filename: "filename" in y
+                            ? y["filename"].str() : "", view_module_to_use: "view_module_to_use" in y ? y["view_module_to_use"]
+                            .str() : "",
+                    };
+                    setSetup(&setup_o);
+
+                    if ("view_setup_settings" in y && current_module_file_controller !is null)
+                    {
+                        current_module_file_controller.getView()
+                            .setSettings(y["view_setup_settings"]);
+                    }
+                }
+            }
+        }
+        return cast(Exception) null;
+    }
+
+    private Exception saveSettings()
+    {
+        debug
+        {
+            writeln("saving settings for view window: ", settings.window_uuid);
+        }
+
+        JSONValue val = JSONValue();
+
+        //auto js_setup = cast(JSONValue) getSetup();
+
+        auto view_setup = JSONValue(cast(JSONValue[string]) null);
+
+        if (current_module_file_controller !is null)
+        {
+            auto info = current_module_file_controller.getModInfo();
+            view_setup["view_module_to_use"] = info.name;
+            view_setup["filename"] = current_module_file_controller.getFileController()
+                .settings.filename;
+            view_setup["view_setup_settings"] = current_module_file_controller.getView()
+                .getSettings();
+        }
+
+        val["view_setup"] = view_setup;
+        val["window_uuid"] = settings.window_uuid;
+        val["project"] = settings.setup !is null ? settings.setup.project : "";
+
+        //val["view_module_setup"] = js_setup;
+
+        int x, y, w, h;
+
+        window.getPosition(x, y);
+        window.getSize(w, h);
+
+        val["x"] = JSONValue(x);
+        val["y"] = JSONValue(y);
+        val["w"] = JSONValue(w);
+        val["h"] = JSONValue(h);
+
+        debug
+        {
+            writeln("saveSettings() window_uuid", val["window_uuid"].str());
+        }
+
+        auto res = settings.controller.setViewWindowSettings(val);
+        if (res !is null)
+        {
+            writeln("error saving view window settings:", res);
+        }
+
+        return cast(Exception) null;
+    }
+
+    Window getWindow()
     {
         return window;
     }
@@ -195,13 +372,38 @@ class ViewWindow
         unsetModuleFileController();
     }
 
+    /* Exception setSetup(JSONValue setup)
+    {
+        auto setup_o = new ViewWindowContentSetup{
+            // NOTE: setSetup should not be able to change project. setProject have to be used for this
+            // project:  this.setup.project,
+            filename: "filename" in setup ? setup["filename"].str() : "",
+            view_module_to_use: "view_module_to_use" in setup ? setup["view_module_to_use"].str() : "",
+        };
+
+
+    } */
+
     Exception setSetup(ViewWindowContentSetup* setup)
     {
+        debug
+        {
+            writeln("setSetup for ", settings.window_uuid, " is called");
+        }
         // load appropriate ModuleFileController and feed it to
         // setModuleFileController() function
 
+        // NOTE: setSetup should not be able to change project. setProject have to be used for this
+        setup.project = settings.setup.project;
+
+        debug
+        {
+            writeln("requesting FileController. project ", setup.project,
+                    "filename ", setup.filename);
+        }
+
         auto fc = this.settings.controller.getOrCreateFileController(setup.project,
-                setup.filename, true,);
+                setup.filename, true);
         if (fc[1]!is null)
         {
             return fc[1];
@@ -222,6 +424,11 @@ class ViewWindow
         /* this.setup = setup; */
 
         return cast(Exception) null;
+    }
+
+    ViewWindowContentSetup* getSetup()
+    {
+        return settings.setup;
     }
 
     void unsetModuleFileController()
@@ -319,46 +526,3 @@ class ViewWindow
     }
 
 }
-
-/*
-class ViewWindowSettings
-{
-    int x, y;
-    int width, height;
-
-    int padding_position;
-
-    init(JSONValue v)
-    {
-        if (v.type() != JSONType.object)
-        {
-            return;
-        }
-
-        if ("x" in v)
-        {
-            x = cast(int) v["x"].integer();
-        }
-
-        if ("y" in v)
-        {
-            y = cast(int) v["y"].integer();
-        }
-
-        if ("width" in v)
-        {
-            width = cast(int) v["width"].integer();
-        }
-
-        if ("height" in v)
-        {
-            height = cast(int) v["height"].integer();
-        }
-
-        if ("padding_position" in v)
-        {
-            height = cast(int) v["height"].integer();
-        }
-    }
-}
-*/

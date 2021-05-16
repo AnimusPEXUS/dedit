@@ -210,6 +210,10 @@ class ProjectsWindow
         {
             writeln("Error while saving settings:", res);
         }
+        else
+        {
+            writeln("No problems saving settings");
+        }
 
         return false;
     }
@@ -229,7 +233,7 @@ class ProjectsWindow
             entry_path.setText(absolutePath(filename));
         }
 
-        d.destroy();
+        d.close();
     }
 
     void onClickedAdd(Button btn)

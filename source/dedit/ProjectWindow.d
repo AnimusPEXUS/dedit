@@ -104,10 +104,15 @@ class ProjectWindow
                 }
             }
 
+            debug
+            {
+                writeln("searching for saved ToolWindow settings");
+            }
             foreach (size_t k, JSONValue v; controller.settings["tool_windows_settings"].array())
             {
                 if (v["project"].str() == project && "tool_name" in v && "window_uuid" in v)
                 {
+                    writeln("found settings for tool window: ", v["window_uuid"].str());
                     auto tw = new ToolWindow(controller, v["window_uuid"].str());
                     tw.show();
                     tw.setProject(project);
@@ -124,6 +129,15 @@ class ProjectWindow
         foreach (size_t k, ToolWindow v; controller.tool_windows)
         {
             if (v.getProject() == project)
+            {
+                v.keep_settings_on_window_close = true;
+                v.getWindow().close();
+            }
+        }
+
+        foreach (size_t k, ViewWindow v; controller.view_windows)
+        {
+            if (v.settings !is null && v.settings.setup && v.settings.setup.project == project)
             {
                 v.keep_settings_on_window_close = true;
                 v.getWindow().close();

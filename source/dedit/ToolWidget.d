@@ -74,6 +74,7 @@ class ToolWidget
                 current_tool_widget.setProject(project);
             }
         });
+        tool_selection_cb.setActiveId("");
     }
 
     Box getWidget()
@@ -148,11 +149,11 @@ class ToolWidget
         return current_tool_widget.setSettings(v);
     }
 
-    Exception destroy()
+    /* Exception destroy()
     {
         unselectTool();
         main_box.destroy();
         return cast(Exception) null;
-    }
+    } */
 
 }

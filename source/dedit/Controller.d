@@ -160,9 +160,7 @@ class Controller
             settings["font"] = "Go Mono 10";
         }
 
-        foreach (size_t index, v; [
-                "projects", "projects_windows_settings", "view_windows_settings"
-            ])
+        foreach (size_t index, v; ["projects", "projects_windows_settings"])
         {
             if (v !in settings || settings[v].type() != JSONType.object)
             {
@@ -170,7 +168,9 @@ class Controller
             }
         }
 
-        foreach (size_t index, v; ["tool_windows_settings"])
+        foreach (size_t index, v; [
+                "view_windows_settings", "tool_windows_settings"
+            ])
         {
             if (v !in settings || settings[v].type() != JSONType.array)
             {
@@ -199,10 +199,15 @@ class Controller
 
     Tuple!(JSONValue, Exception) getProjectWindowSettings(string name)
     {
+        return getWindowSettings("projects_windows_settings", name);
+    }
+
+    Tuple!(JSONValue, Exception) getWindowSettings(string window_settings_type, string name)
+    {
         JSONValue ret;
         try
         {
-            ret = settings["projects_windows_settings"][name];
+            ret = settings[window_settings_type][name];
         }
         catch (Exception e)
         {
@@ -213,13 +218,18 @@ class Controller
 
     void setProjectWindowSettings(string name, JSONValue value)
     {
+        return setWindowSettings("projects_windows_settings", name, value);
+    }
+
+    void setWindowSettings(string window_settings_type, string name, JSONValue value)
+    {
         settings = sanitizeSettings(settings);
         debug
         {
-            writeln("saving settings for project window:", name);
+            writeln("saving settings for ", window_settings_type, " window:", name);
             writeln("  settings:", value);
         }
-        settings["projects_windows_settings"][name] = value;
+        settings[window_settings_type][name] = value;
         return;
     }
 
@@ -246,60 +256,116 @@ class Controller
         return ret;
     }
 
+    Exception setViewWindowSettings(JSONValue value)
+    {
+        return setProjectSubwindowSettings("view_windows_settings", value);
+    }
+
     Exception setToolWindowSettings(JSONValue value)
     {
-        string target_uuid = value["uuid"].str();
-        if (target_uuid == "")
+        return setProjectSubwindowSettings("tool_windows_settings", value);
+    }
+
+    Exception setProjectSubwindowSettings(string subwindow_settings_type, JSONValue value)
+    {
+        if ("window_uuid" !in value)
         {
-            try
-            {
-                parseUUID(target_uuid);
-            }
-            catch (Exception)
-            {
-                return new Exception("invalid 'target_uuid' in supplied value");
-            }
+            return new Exception("no 'window_uuid' in supplied value");
+        }
+
+        string window_uuid = value["window_uuid"].str();
+
+        debug
+        {
+            writeln("setProjectSubwindowSettings window_uuid 1 ", window_uuid);
+        }
+
+        try
+        {
+            parseUUID(window_uuid.dup);
+        }
+        catch (Exception)
+        {
+            return new Exception("invalid 'window_uuid' in supplied value");
+        }
+
+        debug
+        {
+            writeln("setProjectSubwindowSettings window_uuid 2 ", window_uuid);
         }
 
         bool set = true;
         bool found = false;
 
-        auto x = settings["tool_windows_settings"];
+        auto x = settings[subwindow_settings_type];
         scope (success)
-            settings["tool_windows_settings"] = x;
+            settings[subwindow_settings_type] = x;
 
         foreach_reverse (size_t k, JSONValue v; x.array())
         {
-            if (v["window_uuid"].str() == target_uuid)
+            if (v["window_uuid"].str() == window_uuid)
             {
                 found = true;
                 if (set)
                 {
+                    debug
+                    {
+                        writeln("updating existing ", window_uuid, " in x");
+                    }
                     x[k] = value;
                     set = false;
                 }
                 else
                 {
+                    debug
+                    {
+                        writeln("removing excess ", window_uuid, " from x");
+                    }
                     auto y = x.array();
                     x = y[0 .. k] ~ y[k + 1 .. $];
                 }
             }
         }
 
+        debug
+        {
+            if (!found)
+            {
+                writeln("couldn't find existing settings in tool_windows_settings for window ",
+                        window_uuid);
+            }
+        }
+
         if (!found)
         {
-            x ~= value;
+            x.array() ~= value;
+        }
+
+        debug
+        {
+            writeln("x length", x.array().length);
         }
 
         return cast(Exception) null;
     }
 
+    Tuple!(JSONValue, Exception) getViewWindowSettings(string window_uuid)
+    {
+        return getProjectSubwindowSettings("view_windows_settings", window_uuid);
+    }
+
     Tuple!(JSONValue, Exception) getToolWindowSettings(string window_uuid)
     {
+        return getProjectSubwindowSettings("tool_windows_settings", window_uuid);
+    }
 
-        auto x = settings["tool_windows_settings"];
+    Tuple!(JSONValue, Exception) getProjectSubwindowSettings(
+            string subwindow_settings_type, string window_uuid)
+    {
+
+        auto x = settings[subwindow_settings_type];
         scope (success)
-            settings["tool_windows_settings"] = x;
+            settings[subwindow_settings_type] = x;
 
         foreach (size_t k, JSONValue v; x.array())
         {
@@ -311,12 +377,22 @@ class Controller
         return tuple(cast(JSONValue) null, cast(Exception) null);
     }
 
+    Exception delViewWindowSettings(string window_uuid)
+    {
+        return delProjectSubwindowSettings("view_windows_settings", window_uuid);
+    }
+
     Exception delToolWindowSettings(string window_uuid)
     {
+        return delProjectSubwindowSettings("tool_windows_settings", window_uuid);
+    }
 
-        auto x = settings["tool_windows_settings"];
+    Exception delProjectSubwindowSettings(string subwindow_settings_type, string window_uuid)
+    {
+
+        auto x = settings[subwindow_settings_type];
         scope (success)
-            settings["tool_windows_settings"] = x;
+            settings[subwindow_settings_type] = x;
 
         foreach_reverse (size_t k, JSONValue v; x.array())
         {
@@ -331,14 +407,20 @@ class Controller
 
     void openNewView(string project, string filename, string uri)
     {
-        ViewWindowContentSetup y = {
+        auto y = new ViewWindowContentSetup;
+
+        /* (*y) = {
             view_module_auto: true, view_module_auto_mode: ViewModuleAutoMode.BY_EXTENSION,
-            project: project, filename: filename};
+            project: project, filename: filename}; */
 
-            ViewWindowSettings x = {controller: this, setup: &y
-        };
+        y.view_module_auto = true;
+        y.view_module_auto_mode = ViewModuleAutoMode.BY_EXTENSION;
+        y.project = project;
+        y.filename = filename;
 
-        ViewWindowSettings* options = &x;
+        auto options = new ViewWindowSettings;
+        options.controller = this;
+        options.setup = y;
 
         auto w = new ViewWindow(options);
 

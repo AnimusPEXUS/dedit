@@ -96,6 +96,11 @@ struct TypicalModuleFileControllerTextSettings
     OutlineToolInputData* delegate(string txt) prepareDataForOutlineTool;
     string delegate(string txt) comment;
     string delegate(string txt) uncomment;
+
+    ~this()
+    {
+        writeln("TypicalModuleFileControllerTextSettings destroyed");
+    }
 }
 
 class TypicalModuleFileControllerText : ModuleFileController

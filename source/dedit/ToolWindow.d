@@ -1,5 +1,6 @@
 module dedit.ToolWindow;
 
+import std.stdio;
 import std.uuid;
 import std.json;
 import std.algorithm;
@@ -44,15 +45,29 @@ class ToolWindow
         window.add(tool_widget.getWidget());
 
         controller.tool_windows ~= this;
+
+        loadSettings();
     }
 
     bool onDeleteEvent(Event event, Widget w)
     {
+
         if (!keep_settings_on_window_close)
         {
+            debug
+            {
+                writeln("removing settings for tool window: ", window_uuid);
+            }
             controller.delToolWindowSettings(window_uuid);
         }
-        tool_widget.destroy();
+        else
+        {
+            saveSettings();
+        }
+        if (tool_widget !is null)
+        {
+            tool_widget.destroy();
+        }
 
         auto i = controller.tool_windows.length - controller.tool_windows.find(this).length;
         controller.tool_windows = controller.tool_windows.remove(i);
@@ -72,6 +87,11 @@ class ToolWindow
 
     private Exception loadSettings()
     {
+        debug
+        {
+            writeln("loading settings for tool window: ", window_uuid);
+        }
+
         auto set0 = controller.getToolWindowSettings(window_uuid);
 
         if (!set0[0].isNull())
@@ -90,6 +110,16 @@ class ToolWindow
                 }
                 x2 = x3.toString();
             }
+
+            if ("x" in x && "y" in x)
+            {
+                window.move(cast(int)(x["x"].integer()), cast(int)(x["y"].integer()));
+            }
+            if ("w" in x && "h" in x)
+            {
+                window.resize(cast(int)(x["w"].integer()), cast(int)(x["h"].integer()));
+            }
+
             if ("tool_name" in x)
             {
                 tool_widget.selectTool(x["tool_name"].str());
@@ -105,14 +135,42 @@ class ToolWindow
 
     private Exception saveSettings()
     {
+        debug
+        {
+            writeln("saving settings for tool window: ", window_uuid);
+        }
+
         JSONValue val = JSONValue();
         auto r = tool_widget.getTool();
         if (r[1]!is null)
         {
             return r[1];
         }
+        val["window_uuid"] = window_uuid;
         val["tool_name"] = r[0];
         val["project"] = tool_widget.project;
+
+        int x, y, w, h;
+
+        window.getPosition(x, y);
+        window.getSize(w, h);
+
+        val["x"] = JSONValue(x);
+        val["y"] = JSONValue(y);
+        val["w"] = JSONValue(w);
+        val["h"] = JSONValue(h);
+
+        debug
+        {
+            writeln("saveSettings() window_uuid", val["window_uuid"].str());
+        }
+
+        auto res = controller.setToolWindowSettings(val);
+        if (res !is null)
+        {
+            writeln("error saving tool window settings:", res);
+        }
+
         return cast(Exception) null;
     }
 

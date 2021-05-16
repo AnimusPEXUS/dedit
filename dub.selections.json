@@ -1,10 +1,10 @@
 {
 	"fileVersion": 1,
 	"versions": {
-		"dfmt": "0.13.2",
+		"dfmt": "0.13.4",
 		"dutils": "0.1.0",
 		"gtk-d": "3.9.0",
-		"libdparse": "0.15.4",
+		"libdparse": "0.17.0",
 		"stdx-allocator": "2.77.5"
 	}
 }

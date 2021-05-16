@@ -104,7 +104,7 @@ class OutlineTool
         }
     }
 
-    void destroy()
+    void close()
     {
         mainBox.destroy();
     }
