@@ -7,7 +7,7 @@ import std.json;
 import dlangui;
 
 import dedit.Controller;
-import dedit.ViewWindow;
+/* import dedit.ViewWindow; */
 
 class ProjectsWindow
 {
@@ -15,35 +15,34 @@ class ProjectsWindow
     private
     {
         Window win;
-        TreeView tv;
-        ListStore tv_ls;
-        Entry entry_name;
-        Entry entry_path;
+        StringGridWidget  tv;
+        EditLine entry_name;
+        EditLine entry_path;
 
         /* Button btn_open; */
 
         Controller controller;
-
     }
 
     this(Controller controller)
     {
         this.controller = controller;
 
-        win = new Window("dedit :: project mgr");
+        win = Platform.instance.createWindow("dedit :: project mgr", null);
         /* win.addOnDestroy(&onWindowDestroy); */
-        win.addOnDelete(&onDeleteEvent);
+        /* win.onClose = &onDeleteEvent; */
+        /* win.addOnDelete(); */
 
-        tv_ls = new ListStore(cast(GType[])[GType.STRING, GType.STRING]);
+        /* tv_ls = new ListStore(cast(GType[])[GType.STRING, GType.STRING]); */
 
-        tv = new TreeView();
-        tv.setModel(tv_ls);
-        {
+        tv = new StringGridWidget("GRID1");
+        /* tv.setModel(tv_ls); */
+        /* {
             auto sel = tv.getSelection();
             sel.addOnChanged(&onSelectionChanged);
-        }
+        } */
         {
-            {
+            /* {
                 auto rend = new CellRendererText();
                 auto col = new TreeViewColumn("Project Name", rend, "text", 0);
                 col.setResizable(true);
@@ -55,27 +54,24 @@ class ProjectsWindow
                 auto col = new TreeViewColumn("Path (Directory)", rend, "text", 1);
                 col.setResizable(true);
                 tv.appendColumn(col);
-            }
+            } */
+            tv.setColTitle(0, "Project Name");
+            tv.setColTitle(1, "Path (Directory)");
         }
-        tv.addOnRowActivated(&onRowActivated);
+        /* tv.addOnRowActivated(&onRowActivated); */
 
-        auto sw = new ScrolledWindow();
-        sw.add(tv);
+        /* auto sw = new ScrolledWindow(); */
 
-        auto box = new Box(GtkOrientation.VERTICAL, 0);
-        box.setSpacing(5);
-        box.setMarginTop(5);
-        box.setMarginBottom(5);
-        box.setMarginLeft(5);
-        box.setMarginRight(5);
-        win.add(box);
+        /* sw.add(tv); */
 
-        box.packStart(new Label(
-                "Closing this window - will save the state, close all editor windows and exit application"),
-                false, true, 0);
+        auto box = new VerticalLayout();
+        win.mainWidget = box;
 
-        box.packStart(sw, true, true, 0);
+        box.addChild(new TextWidget("", to!string("Closing this window - will save the state, close all editor windows and exit application")));
 
+        box.addChild(tv);
+
+/*
         auto hb = new Box(GtkOrientation.HORIZONTAL, 0);
         box.packStart(hb, false, true, 0);
         hb.setSpacing(5);
@@ -100,20 +96,20 @@ class ProjectsWindow
 
         auto btn_open = new Button("Project View..");
         hb.packStart(btn_open, false, true, 0);
-        btn_open.addOnClicked(&onClickedOpen);
+        btn_open.addOnClicked(&onClickedOpen); */
 
-        {
+        /* {
             foreach (string k, string v; controller.project_paths)
             {
                 TreeIter ti = new TreeIter();
                 tv_ls.append(ti);
                 tv_ls.set(ti, [0, 1], [k, v]);
             }
-        }
+        } */
 
-        loadSettings();
+        /* loadSettings(); */
     }
-
+/*
     void loadSettings()
     {
         if ("projects_window_settings" in controller.settings)
@@ -134,12 +130,12 @@ class ProjectsWindow
         auto x = getSettings();
         controller.settings["projects_window_settings"] = x;
     }
-
+*/
     Window getWindow()
     {
         return win;
     }
-
+/*
     JSONValue getSettings()
     {
         auto x = new ProjectsWindowSettings();
@@ -167,7 +163,7 @@ class ProjectsWindow
             win.unmaximize();
         }
 
-    }
+    } */
 
     /* void onWindowDestroy(Widget w)
     {
@@ -175,7 +171,7 @@ class ProjectsWindow
         controller.saveState();
     } */
 
-    bool onDeleteEvent(Event event, Widget w)
+    /* bool onDeleteEvent()
     {
         debug
         {
@@ -197,8 +193,8 @@ class ProjectsWindow
         }
 
         return false;
-    }
-
+    } */
+/*
     void onClickedBrowse(Button btn)
     {
         auto d = new FileChooserDialog("Select Project Directory", win, FileChooserAction.SELECT_FOLDER, [
@@ -290,9 +286,9 @@ class ProjectsWindow
 
         auto w = controller.createNewOrGetExistingProjectWindow(name);
         w.showAndPresent();
-    }
+    } */
 
-    void onSelectionChanged(TreeSelection ts)
+    /* void onSelectionChanged(TreeSelection ts)
     {
 
         TreeModelIF tm;
@@ -312,10 +308,10 @@ class ProjectsWindow
     {
         onSelectionChanged(tv.getSelection());
         onClickedOpen(null);
-    }
+    } */
 
 }
-
+/*
 class ProjectsWindowSettings
 {
     bool maximized;
@@ -384,4 +380,4 @@ class ProjectsWindowSettings
 
         return true;
     }
-}
+} */

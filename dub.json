@@ -7,7 +7,6 @@
 		"dfmt": "~>0.13.2",
 		"dlangui": "~>0.9.186",
 		"dutils": "~>0",
-		"gtk-d": "~>3.9.0"
 	},
 	"description": "code editor",
 	"license": "gplv3",

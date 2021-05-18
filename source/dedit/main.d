@@ -1,9 +1,10 @@
 module dedit.main;
 
+import dlangui;
+
 import dedit.Controller;
 
-int main(string[] args)
-{
+extern (C) int UIAppMain(string[] args) {
     auto editor_controller = new Controller();
     return editor_controller.main(args);
 }

@@ -7,16 +7,17 @@ import std.stdio;
 import std.typecons;
 import std.uuid;
 
+import dlangui;
 
-import dedit.ProjectWindow;
+/* import dedit.ProjectWindow;
 import dedit.ViewWindow;
-import dedit.ToolWindow;
+import dedit.ToolWindow; */
 import dedit.ProjectsWindow;
-import dedit.FileController;
-import dedit.moduleinterface;
+ import dedit.FileController;
+/* import dedit.moduleinterface;
 
 import dedit.builtinmodules;
-import dedit.builtintoolwidgets;
+import dedit.builtintoolwidgets; */
 
 class Controller
 {
@@ -25,10 +26,10 @@ class Controller
 
     string[string] project_paths;
 
-    ProjectWindow[] project_windows;
+    /* ProjectWindow[] project_windows;
     ViewWindow[] view_windows;
     ToolWindow[] tool_windows;
-
+ */
     FileController[] file_controllers;
 
     // TODO: leaving this for a future. for now, I'll will not implement buffer reusage.
@@ -41,7 +42,7 @@ class Controller
     JSONValue projects_window_settings;
     // string font;
 
-    ListStore tool_widget_combobox_item_list;
+    /* ListStore tool_widget_combobox_item_list; */
 
     JSONValue settings;
 
@@ -49,7 +50,7 @@ class Controller
     {
         settingsPath = expandTilde("~/.config/dedit/settings.json");
 
-        tool_widget_combobox_item_list = new ListStore(cast(GType[])[
+        /* tool_widget_combobox_item_list = new ListStore(cast(GType[])[
                 GType.STRING, GType.STRING
                 ]);
 
@@ -66,28 +67,17 @@ class Controller
             tool_widget_combobox_item_list.append(ti);
             tool_widget_combobox_item_list.setValue(ti, 0, new Value(v.name));
             tool_widget_combobox_item_list.setValue(ti, 1, new Value(v.displayName));
-        }
+        } */
 
-        loadSettings();
+        /* loadSettings(); */
 
-        auto app = new gtk.Application.Application(null,
-                gio.Application.GApplicationFlags.FLAGS_NONE);
+        projects_window = new ProjectsWindow(this);
 
-        app.addOnActivate(delegate void(gio.Application.Application gioapp) {
+        auto window = projects_window.getWindow();
 
-            projects_window = new ProjectsWindow(this);
+        window.show();
 
-            /* auto w = createNewCleanWindow(); */
-
-            auto widget = projects_window.getWindow();
-            auto window = cast(Window) widget;
-
-            window.showAll();
-
-            app.addWindow(window);
-        });
-
-        return app.run(args);
+        return Platform.instance.enterMessageLoop();
     }
 
     Exception saveSettings()
@@ -225,7 +215,7 @@ class Controller
         return;
     }
 
-    ProjectWindow createNewProjectWindow(string project)
+    /* ProjectWindow createNewProjectWindow(string project)
     {
         return new ProjectWindow(this, project);
     }
@@ -246,9 +236,9 @@ class Controller
             ret = createNewProjectWindow(project);
         }
         return ret;
-    }
+    } */
 
-    Exception setViewWindowSettings(JSONValue value)
+    /* Exception setViewWindowSettings(JSONValue value)
     {
         return setProjectSubwindowSettings("view_windows_settings", value);
     }
@@ -339,9 +329,9 @@ class Controller
         }
 
         return cast(Exception) null;
-    }
+    } */
 
-    Tuple!(JSONValue, Exception) getViewWindowSettings(string window_uuid)
+    /* Tuple!(JSONValue, Exception) getViewWindowSettings(string window_uuid)
     {
         return getProjectSubwindowSettings("view_windows_settings", window_uuid);
     }
@@ -367,9 +357,9 @@ class Controller
             }
         }
         return tuple(cast(JSONValue) null, cast(Exception) null);
-    }
+    } */
 
-    Exception delViewWindowSettings(string window_uuid)
+    /* Exception delViewWindowSettings(string window_uuid)
     {
         return delProjectSubwindowSettings("view_windows_settings", window_uuid);
     }
@@ -395,16 +385,16 @@ class Controller
             }
         }
         return cast(Exception) null;
-    }
+    } */
 
-    void openNewView(string project, string filename, string uri)
+    /* void openNewView(string project, string filename, string uri)
     {
         auto y = new ViewWindowContentSetup;
 
         /* (*y) = {
             view_module_auto: true, view_module_auto_mode: ViewModuleAutoMode.BY_EXTENSION,
             project: project, filename: filename}; */
-
+/*
         y.view_module_auto = true;
         y.view_module_auto_mode = ViewModuleAutoMode.BY_EXTENSION;
         y.project = project;
@@ -417,7 +407,7 @@ class Controller
         auto w = new ViewWindow(options);
 
         w.show();
-    }
+    } */
 
     Tuple!(FileController, Exception) getOrCreateFileController(string project,
             string filename, bool create_if_absent = true,)
@@ -457,7 +447,7 @@ class Controller
         return tuple(ret, cast(Exception) null);
     }
 
-    Tuple!(ModuleFileController, Exception) createModuleFileController(
+    /* Tuple!(ModuleFileController, Exception) createModuleFileController(
             FileController file_controller)
     {
         assert(file_controller !is null);
@@ -485,7 +475,7 @@ class Controller
         auto ret = minfo.createModuleController(this, file_controller);
 
         return tuple(ret, cast(Exception) null);
-    }
+    } */
     /*
       void openNewViewOrExisting(string cr)
      {
