@@ -9,27 +9,7 @@ import std.range;
 import std.regex;
 import std.string;
 
-import glib.Idle;
-import gobject.Value;
 
-import gtk.Paned;
-import gtk.Scrollbar;
-import gtk.TextBuffer;
-import gtk.TextView;
-import gtk.TextTagTable;
-import gtk.AccelGroup;
-import gtk.Menu;
-import gtk.MenuItem;
-import gtk.Widget;
-import gtk.ScrolledWindow;
-import gtk.c.types;
-
-import pango.PgFontDescription;
-
-import gsv.SourceView;
-import gsv.SourceBuffer;
-import gsv.SourceLanguageManager;
-import gsv.c.types;
 
 import dedit.moduleinterface;
 import dedit.Controller;

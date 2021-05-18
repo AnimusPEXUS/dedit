@@ -7,14 +7,6 @@ import std.stdio;
 import std.typecons;
 import std.uuid;
 
-import gtk.Application;
-import gio.Application;
-
-import gtk.Widget;
-import gtk.Window;
-import gtk.ListStore;
-import gtk.TreeIter;
-import gobject.Value;
 
 import dedit.ProjectWindow;
 import dedit.ViewWindow;

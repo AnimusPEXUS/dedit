@@ -4,26 +4,7 @@ import std.stdio;
 import std.path;
 import std.json;
 
-import gtk.Window;
-import gtk.Widget;
-import gtk.TreeModelIF;
-import gtk.ListStore;
-import gtk.TreeView;
-import gtk.TreeViewColumn;
-import gtk.TreeIter;
-import gtk.TreePath;
-import gtk.TreeSelection;
-import gtk.CellRendererText;
-import gtk.ScrolledWindow;
-import gtk.Button;
-import gtk.ButtonBox;
-import gtk.Box;
-import gtk.Entry;
-import gtk.Label;
-import gtk.FileChooserDialog;
-import gdk.Event;
-
-import gdk.c.types;
+import dlangui;
 
 import dedit.Controller;
 import dedit.ViewWindow;

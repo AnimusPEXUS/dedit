@@ -2,14 +2,7 @@ module dedit.ViewWindowMainMenu;
 
 import std.stdio;
 
-import gdk.Window;
 
-import gtk.Window;
-import gtk.MenuBar;
-import gtk.Menu;
-import gtk.MenuItem;
-import gtk.SeparatorMenuItem;
-import gtk.c.types;
 
 import dedit.ViewWindow;
 

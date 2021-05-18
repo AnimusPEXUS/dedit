@@ -5,9 +5,6 @@ import core.sync.mutex;
 import std.typecons;
 import std.json;
 
-import gtk.Box;
-import gtk.ComboBox;
-import gtk.CellRendererText;
 
 import dedit.Controller;
 import dedit.toolwidgetinterface;

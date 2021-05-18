@@ -5,8 +5,6 @@ import std.uuid;
 import std.json;
 import std.algorithm;
 
-import gtk.Window;
-import gtk.Widget;
 
 import gdk.Event;
 

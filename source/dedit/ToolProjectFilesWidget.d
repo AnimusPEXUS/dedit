@@ -4,11 +4,6 @@ import std.stdio;
 import std.typecons;
 import std.json;
 
-import gtk.TreePath;
-import gtk.TreeViewColumn;
-import gtk.TreeView;
-import gtk.Widget;
-import gtk.Box;
 
 import dutils.gtkcollection.FileTreeView;
 

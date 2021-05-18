@@ -2,11 +2,6 @@ module dedit.moduleinterface;
 
 import std.json;
 
-import gtk.Widget;
-import gtk.TextBuffer;
-import gtk.Menu;
-import gtk.AccelGroup;
-
 import dedit.Controller;
 import dedit.FileController;
 import dedit.ViewWindow;

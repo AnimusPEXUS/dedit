@@ -6,32 +6,7 @@ import std.algorithm;
 import std.json;
 import std.uuid;
 
-import gtk.Window;
-import gtk.Grid;
-import gtk.Label;
-import gtk.Box;
-import gtk.TreeView;
-import gtk.TreeIter;
-import gtk.TreePath;
-import gtk.Frame;
-import gtk.ScrolledWindow;
-import gtk.Paned;
-import gtk.Widget;
-import gtk.CellRendererText;
-import gtk.TreeViewColumn;
-import gtk.ListStore;
-import gtk.TreeIter;
-import gdk.Event;
-import gtk.AccelGroup;
-import gtk.MenuItem;
-import gtk.Button;
-import gtk.MessageDialog;
 
-import gobject.Value;
-
-import gtk.c.types;
-import gdk.c.types;
-import pango.c.types;
 
 import dutils.path;
 import dutils.gtkcollection.FileTreeView;

@@ -2,18 +2,7 @@ module dedit.OutlineTool;
 
 import std.stdio;
 
-import gtk.Box;
-import gtk.Button;
-import gtk.ScrolledWindow;
-import gtk.Scrollbar;
-import gtk.TreeView;
-import gtk.TreeIter;
-import gtk.ListStore;
-import gtk.Widget;
-import gtk.CellRendererText;
-import gtk.TreeViewColumn;
 
-import gobject.Value;
 
 struct OutlineToolInputDataUnit
 {
