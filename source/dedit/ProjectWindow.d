@@ -6,14 +6,16 @@ import std.algorithm;
 import std.json;
 import std.typecons;
 
+import dlangui;
 
 import dutils.path;
 
-import dedit.ViewWindow;
+/* import dedit.ViewWindow; */
 import dedit.Controller;
-import dedit.ToolWindow;
-import dedit.moduleinterface;
-import dedit.builtinmodules;
+
+/* import dedit.ToolWindow; */
+/* import dedit.moduleinterface; */
+/* import dedit.builtinmodules; */
 
 // TODO: ensure window destroyed on close
 
@@ -31,43 +33,45 @@ class ProjectWindow
     {
         this.controller = controller;
 
-        window = new Window("dedit");
-        window.addOnDelete(&onDeleteEvent);
+        window = Platform.instance.createWindow("project window", null);
 
-        auto toolbar = new Toolbar();
+        auto l = new VerticalLayout();
+        l.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
 
-        auto new_empty_toolwindow_tb = new ToolButton(null, "New Tool Window");
-        new_empty_toolwindow_tb.addOnClicked(delegate void(ToolButton tb) {
-            auto tw = new ToolWindow(controller, "");
-            tw.show();
-            tw.setProject(project);
-        });
+        auto toolbar = new ToolBar();
+        l.addChild(toolbar);
 
-        auto new_projectinfo_toolwindow_tb = new ToolButton(null, "Info");
+        auto a = new Button().text = "New Tool Window"d;
+        a.click = delegate bool(Widget b) { writeln("clicked"); return true; };
+        toolbar.addControl(a);
 
-        auto new_projectfiles_toolwindow_tb = new ToolButton(null, "Files");
-        auto new_views_toolwindow_tb = new ToolButton(null, "Views");
-        auto new_bookmarks_toolwindow_tb = new ToolButton(null, "Bookmarks");
-        auto new_todos_toolwindow_tb = new ToolButton(null, "ToDos");
+        a = new Button().text = "Info"d;
+        a.click = delegate bool(Widget b) { writeln("clicked"); return true; };
+        toolbar.addControl(a);
 
-        toolbar.insert(new_empty_toolwindow_tb);
+        a = new Button().text = "Files"d;
+        a.click = delegate bool(Widget b) { writeln("clicked"); return true; };
+        toolbar.addControl(a);
 
-        toolbar.insert(new SeparatorToolItem);
-        toolbar.insert(new_projectinfo_toolwindow_tb);
+        a = new Button().text = "Views"d;
+        a.click = delegate bool(Widget b) { writeln("clicked"); return true; };
+        toolbar.addControl(a);
 
-        toolbar.insert(new SeparatorToolItem);
-        toolbar.insert(new_projectfiles_toolwindow_tb);
-        toolbar.insert(new_views_toolwindow_tb);
-        toolbar.insert(new_bookmarks_toolwindow_tb);
-        toolbar.insert(new_todos_toolwindow_tb);
+        a = new Button().text = "Bookmarks"d;
+        a.click = delegate bool(Widget b) { writeln("clicked"); return true; };
+        toolbar.addControl(a);
 
-        window.add(toolbar);
+        a = new Button().text = "ToDos"d;
+        a.click = delegate bool(Widget b) { writeln("clicked"); return true; };
+        toolbar.addControl(a);
+
+        window.mainWidget = l;
 
         setProject(project);
 
         controller.project_windows ~= this;
 
-        {
+        /* {
             auto res = loadSettings();
             debug
             {
@@ -91,11 +95,11 @@ class ProjectWindow
                     tw.setProject(project);
                 }
             }
-        }
+        } */
 
     }
 
-    bool onDeleteEvent(Event event, Widget w)
+    /* bool onDeleteEvent(Event event, Widget w)
     {
         saveSettings();
 
@@ -121,7 +125,7 @@ class ProjectWindow
         controller.project_windows = controller.project_windows.remove(i);
 
         return false;
-    }
+    } */
 
     Tuple!(string, Exception) getPath()
     {
@@ -137,29 +141,30 @@ class ProjectWindow
             return res[1];
         }
         /* filebrowser.setRootDirectory(res[0]); */
-        window.setTitle(project ~ " :: (project window)");
+        window.windowCaption = to!dstring(project ~ " :: (project window)");
         return null;
     }
 
-    Widget getWidget()
+    Window getWindow()
     {
         return window;
     }
 
     void show()
     {
-        window.showAll();
+        window.show();
     }
 
     void present()
     {
-        window.present();
+        // TODO: todo
+        /* window.present(); */
     }
 
     void showAndPresent()
     {
-        window.showAll();
-        window.present();
+        window.show();
+        /* window.present(); */
     }
 
     void close()
@@ -176,9 +181,9 @@ class ProjectWindow
     ProjectWindowSettings getSettings()
     {
         auto ret = new ProjectWindowSettings;
-        window.getPosition(ret.x, ret.y);
+        /* window.getPosition(ret.x, ret.y);
         window.getSize(ret.width, ret.height);
-        ret.maximized = window.isMaximized();
+        ret.maximized = window.isMaximized(); */
         return ret;
     }
 
@@ -197,7 +202,7 @@ class ProjectWindow
 
     void setSettings(ProjectWindowSettings settings)
     {
-        window.move(settings.x, settings.y);
+        /* window.move(settings.x, settings.y);
         window.resize(settings.width, settings.height);
         if (settings.maximized)
         {
@@ -206,7 +211,7 @@ class ProjectWindow
         else
         {
             window.unmaximize();
-        }
+        } */
     }
 
 }

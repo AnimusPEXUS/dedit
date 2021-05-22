@@ -1,14 +1,15 @@
 {
+	"name": "dedit",
+	"description": "code editor",
+	"license": "gplv3",
 	"authors": [
 		"AnimusPEXUS"
 	],
-	"copyright": "Copyright © 2020, AnimusPEXUS",
 	"dependencies": {
 		"dfmt": "~>0.13.2",
-		"dlangui": "~>0.9.186",
-		"dutils": "~>0",
+		"dlangui": "~master",
+		"dutils": "~master",
 	},
-	"description": "code editor",
-	"license": "gplv3",
-	"name": "dedit"
+	"targetType": "executable",
+
 }

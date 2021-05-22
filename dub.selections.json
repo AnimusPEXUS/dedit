@@ -6,7 +6,7 @@
 		"derelict-sdl2": "3.0.0-beta.8",
 		"derelict-util": "3.0.0-beta.2",
 		"dfmt": "0.13.4",
-		"dlangui": "0.9.186",
+		"dlangui": "~master",
 		"dsfml": "2.1.1",
 		"dutils": "0.1.0",
 		"gtk-d": "3.9.0",

@@ -9,11 +9,13 @@ import std.uuid;
 
 import dlangui;
 
-/* import dedit.ProjectWindow;
-import dedit.ViewWindow;
-import dedit.ToolWindow; */
+import dedit.ProjectWindow;
+
+/* import dedit.ViewWindow; */
+/* import dedit.ToolWindow; */
 import dedit.ProjectsWindow;
- import dedit.FileController;
+import dedit.FileController;
+
 /* import dedit.moduleinterface;
 
 import dedit.builtinmodules;
@@ -26,10 +28,10 @@ class Controller
 
     string[string] project_paths;
 
-    /* ProjectWindow[] project_windows;
-    ViewWindow[] view_windows;
-    ToolWindow[] tool_windows;
- */
+    ProjectWindow[] project_windows;
+    /* ViewWindow[] view_windows; */
+    /* ToolWindow[] tool_windows; */
+
     FileController[] file_controllers;
 
     // TODO: leaving this for a future. for now, I'll will not implement buffer reusage.
@@ -69,7 +71,7 @@ class Controller
             tool_widget_combobox_item_list.setValue(ti, 1, new Value(v.displayName));
         } */
 
-        /* loadSettings(); */
+        loadSettings();
 
         projects_window = new ProjectsWindow(this);
 
@@ -215,7 +217,7 @@ class Controller
         return;
     }
 
-    /* ProjectWindow createNewProjectWindow(string project)
+    ProjectWindow createNewProjectWindow(string project)
     {
         return new ProjectWindow(this, project);
     }
@@ -236,7 +238,7 @@ class Controller
             ret = createNewProjectWindow(project);
         }
         return ret;
-    } */
+    }
 
     /* Exception setViewWindowSettings(JSONValue value)
     {
@@ -394,7 +396,7 @@ class Controller
         /* (*y) = {
             view_module_auto: true, view_module_auto_mode: ViewModuleAutoMode.BY_EXTENSION,
             project: project, filename: filename}; */
-/*
+    /*
         y.view_module_auto = true;
         y.view_module_auto_mode = ViewModuleAutoMode.BY_EXTENSION;
         y.project = project;

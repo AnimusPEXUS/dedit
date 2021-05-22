@@ -5,8 +5,14 @@ import std.path;
 import std.json;
 
 import dlangui;
+import dlangui.dialogs.filedlg;
+import dlangui.dialogs.dialog;
+
+import dutils.string;
+import dutils.dlanguiutils.StringGridWidgetWithTools;
 
 import dedit.Controller;
+
 /* import dedit.ViewWindow; */
 
 class ProjectsWindow
@@ -15,9 +21,10 @@ class ProjectsWindow
     private
     {
         Window win;
-        StringGridWidget  tv;
+        StringGridWidgetWithTools tv;
         EditLine entry_name;
         EditLine entry_path;
+        Button btn_open;
 
         /* Button btn_open; */
 
@@ -29,74 +36,55 @@ class ProjectsWindow
         this.controller = controller;
 
         win = Platform.instance.createWindow("dedit :: project mgr", null);
-        /* win.addOnDestroy(&onWindowDestroy); */
-        /* win.onClose = &onDeleteEvent; */
-        /* win.addOnDelete(); */
 
-        /* tv_ls = new ListStore(cast(GType[])[GType.STRING, GType.STRING]); */
+        tv = new StringGridWidgetWithTools("GRID1");
 
-        tv = new StringGridWidget("GRID1");
-        /* tv.setModel(tv_ls); */
-        /* {
-            auto sel = tv.getSelection();
-            sel.addOnChanged(&onSelectionChanged);
-        } */
-        {
-            /* {
-                auto rend = new CellRendererText();
-                auto col = new TreeViewColumn("Project Name", rend, "text", 0);
-                col.setResizable(true);
-                tv.appendColumn(col);
-            }
-
-            {
-                auto rend = new CellRendererText();
-                auto col = new TreeViewColumn("Path (Directory)", rend, "text", 1);
-                col.setResizable(true);
-                tv.appendColumn(col);
-            } */
-            tv.setColTitle(0, "Project Name");
-            tv.setColTitle(1, "Path (Directory)");
-        }
-        /* tv.addOnRowActivated(&onRowActivated); */
-
-        /* auto sw = new ScrolledWindow(); */
-
-        /* sw.add(tv); */
+        tv.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
+        tv.rowSelect = true;
+        tv.headerCols = 0;
+        tv.fixedCols = 0;
+        tv.fixedRows = 0;
+        tv.cols = 2;
+        tv.rows = 0;
+        tv.setColTitle(0, "Project Name");
+        tv.setColTitle(1, "Path (Directory)");
+        tv.cellSelected = &onCellSelected;
+        tv.cellActivated = &onCellActivated;
 
         auto box = new VerticalLayout();
+        box.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
         win.mainWidget = box;
 
-        box.addChild(new TextWidget("", to!string("Closing this window - will save the state, close all editor windows and exit application")));
+        auto l = new TextWidget("").text("Select or Add and Select Project");
 
+        box.addChild(l);
         box.addChild(tv);
 
-/*
-        auto hb = new Box(GtkOrientation.HORIZONTAL, 0);
-        box.packStart(hb, false, true, 0);
-        hb.setSpacing(5);
+        auto hb = new HorizontalLayout();
+        box.addChild(hb);
 
-        auto btn_delete = new Button("Remove from List");
-        hb.packStart(btn_delete, false, true, 0);
-        btn_delete.addOnClicked(&onClickedRemove);
+        auto btn_delete = new Button().text("Remove from List");
+        btn_delete.click = &onClickedRemove;
+        hb.addChild(btn_delete);
 
-        entry_name = new Entry();
-        hb.packStart(entry_name, false, true, 0);
+        entry_name = new EditLine("");
+        hb.addChild(entry_name);
 
-        entry_path = new Entry();
-        hb.packStart(entry_path, true, true, 0);
+        entry_path = new EditLine("");
+        entry_path.layoutWidth(FILL_PARENT);
+        hb.addChild(entry_path);
 
-        auto btn_browse = new Button("Browse..");
-        hb.packStart(btn_browse, false, true, 0);
-        btn_browse.addOnClicked(&onClickedBrowse);
+        auto btn_browse = new Button().text("Browse..");
+        btn_browse.click = &onClickedBrowse;
+        hb.addChild(btn_browse);
 
-        auto btn_add = new Button("Add / Set");
-        hb.packStart(btn_add, false, true, 0);
-        btn_add.addOnClicked(&onClickedAdd);
+        auto btn_add = new Button().text("Add / Set");
+        btn_add.click = &onClickedAdd;
+        hb.addChild(btn_add);
 
-        auto btn_open = new Button("Project View..");
-        hb.packStart(btn_open, false, true, 0);
-        btn_open.addOnClicked(&onClickedOpen); */
+        btn_open = cast(Button)(new Button().text("Open Project.."));
+        btn_open.click = &onClickedOpen;
+        hb.addChild(btn_open);
 
         /* {
             foreach (string k, string v; controller.project_paths)
@@ -107,9 +95,9 @@ class ProjectsWindow
             }
         } */
 
-        /* loadSettings(); */
+        loadSettings();
     }
-/*
+
     void loadSettings()
     {
         if ("projects_window_settings" in controller.settings)
@@ -119,9 +107,9 @@ class ProjectsWindow
 
         foreach (string k, JSONValue v; controller.settings["projects"])
         {
-            auto iter = new TreeIter;
-            tv_ls.append(iter);
-            tv_ls.set(iter, [0, 1], [k, v.str()]);
+            tv.rows = tv.rows + 1;
+            tv.setCellText(0, tv.rows - 1, to!dstring(k));
+            tv.setCellText(1, tv.rows - 1, to!dstring(v.str));
         }
     }
 
@@ -130,19 +118,21 @@ class ProjectsWindow
         auto x = getSettings();
         controller.settings["projects_window_settings"] = x;
     }
-*/
+
     Window getWindow()
     {
         return win;
     }
-/*
+
     JSONValue getSettings()
     {
         auto x = new ProjectsWindowSettings();
 
-        win.getPosition(x.x, x.y);
-        win.getSize(x.width, x.height);
-        x.maximized = win.isMaximized();
+        /* win.getPosition(x.x, x.y); */
+        /* x.width = win.width;
+        x.height = win.height;
+        /* win.getSize(x.width, x.height); */
+        /* x.maximized = win.isMaximized(); */
 
         return x.toJSONValue();
     }
@@ -152,7 +142,10 @@ class ProjectsWindow
 
         auto x = new ProjectsWindowSettings(value);
 
-        win.move(x.x, x.y);
+        /* win.width = x.width;
+        win.height = x.height; */
+
+        /* win.move(x.x, x.y);
         win.resize(x.width, x.height);
         if (x.maximized)
         {
@@ -161,9 +154,9 @@ class ProjectsWindow
         else
         {
             win.unmaximize();
-        }
+        } */
 
-    } */
+    }
 
     /* void onWindowDestroy(Widget w)
     {
@@ -194,99 +187,113 @@ class ProjectsWindow
 
         return false;
     } */
-/*
-    void onClickedBrowse(Button btn)
+
+    bool onClickedBrowse(Widget btn)
     {
-        auto d = new FileChooserDialog("Select Project Directory", win, FileChooserAction.SELECT_FOLDER, [
-                "Confirm", "Cancel"
-                ], cast(ResponseType[])[ResponseType.OK, ResponseType.CANCEL]);
 
-        auto res = d.run();
-
-        if (res == ResponseType.OK)
-        {
-            auto filename = d.getFilename();
-            entry_name.setText(baseName(filename));
-            entry_path.setText(absolutePath(filename));
-        }
-
-        d.close();
-    }
-
-    void onClickedAdd(Button btn)
-    {
-        // TODO: add checks
-        string name = entry_name.getText();
-        string path = entry_path.getText();
-        auto iter = new TreeIter();
-        tv_ls.append(iter);
-        tv_ls.set(iter, [0, 1], [name, path]);
-
-        controller.project_paths[name] = path;
-
-        // controller.saveState();
-    }
-
-    void onClickedRemove(Button btn)
-    {
-        // TODO: add checks
-        string name = entry_name.getText();
-
-        {
-            auto m = tv.getModel();
-            TreeIter chi;
-            bool res = m.iterChildren(chi, null);
-            while (res)
+        auto d = new FileDialog(UIString.fromRaw("Select Project Directory"d), this.win, null, //
+                FileDialogFlag.SelectDirectory
+                | FileDialogFlag.EnableCreateDirectory | DialogFlag.Resizable);
+        d.dialogResult = (delegate(Dialog dlg, const(Action) result) {
+            writeln("dialog result received: ", result.id);
+            if (result.id == ACTION_OPEN_DIRECTORY.id)
             {
+                writeln("action == ACTION_OPEN_DIRECTORY");
+                writeln("   filename:", d.filename);
+                writeln("   path    :", d.path);
 
-                auto v = m.getValue(chi, 0, null);
-                if (v.getString() == name)
-                {
-                    tv_ls.remove(chi);
-                    break;
-                }
-                res = m.iterNext(chi);
+                entry_name.text = to!dstring(d.path.baseName());
+                entry_path.text = to!dstring(d.path);
+            }
+            // d.close();
+        });
+        d.show();
+
+        return true;
+    }
+
+    bool onClickedAdd(Widget btn)
+    {
+        for (int i = 0; i != tv.rows; i++)
+        {
+            if (tv.cellText(0, i) == entry_name.text)
+            {
+                tv.setCellText(1, i, entry_path.text);
+                return true;
             }
         }
 
-        if (name in controller.project_paths)
+        auto name = entry_name.text;
+        auto path = entry_path.text;
+
+        auto t = tv.rows;
+        tv.rows = tv.rows + 1;
+
+        tv.setCellText(0, t, name);
+        tv.setCellText(1, t, path);
+
+        controller.project_paths[to!string(name)] = to!string(path);
+
+        // controller.saveState();
+        return true;
+    }
+
+    bool onClickedRemove(Widget btn)
+    {
+        // TODO: add checks
+
+        auto n = entry_name.text;
+
+        for (int i = tv.rows - 1; i != -1; i--)
         {
-            controller.project_paths.remove(name);
+            if (tv.cellText(0, i) == n)
+            {
+                tv.removeRow(i);
+            }
+        }
+
+        auto ns = to!string(n);
+
+        if (ns in controller.project_paths)
+        {
+            controller.project_paths.remove(ns);
         }
 
         // controller.saveState();
+        return true;
     }
 
-    void onClickedOpen(Button btn)
+    bool onClickedOpen(Widget btn)
     {
-        string name = entry_name.getText();
-        auto m = tv.getModel();
+        auto name = entry_name.text;
+
         bool found = false;
 
+        for (int i = 0; i != tv.rows; i++)
         {
-            TreeIter chi;
-            bool res = m.iterChildren(chi, null);
-            while (res)
+            if (tv.cellText(0, i) == name)
             {
-
-                auto v = m.getValue(chi, 0, null);
-                if (v.getString() == name)
-                {
-                    found = true;
-                    break;
-                }
-                res = m.iterNext(chi);
+                found = true;
+                break;
             }
         }
+
         if (!found)
         {
             // TODO: show message
-            return;
+            return true;
         }
 
-        auto w = controller.createNewOrGetExistingProjectWindow(name);
+        auto w = controller.createNewOrGetExistingProjectWindow(to!string(name));
         w.showAndPresent();
-    } */
+        return true;
+    }
+
+    void onCellSelected(GridWidgetBase source, int col, int row)
+    {
+        entry_name.text = tv.cellText(0, row);
+        entry_path.text = tv.cellText(1, row);
+    }
 
     /* void onSelectionChanged(TreeSelection ts)
     {
@@ -302,8 +309,14 @@ class ProjectsWindow
             entry_name.setText(tv0.getString());
             entry_path.setText(tv1.getString());
         }
+    }*/
+
+    void onCellActivated(GridWidgetBase source, int col, int row)
+    {
+        btn_open.click(btn_open);
     }
 
+    /*
     void onRowActivated(TreePath tp, TreeViewColumn tvc, TreeView tv)
     {
         onSelectionChanged(tv.getSelection());
@@ -311,7 +324,7 @@ class ProjectsWindow
     } */
 
 }
-/*
+
 class ProjectsWindowSettings
 {
     bool maximized;
@@ -380,4 +393,4 @@ class ProjectsWindowSettings
 
         return true;
     }
-} */
+}
