@@ -8,7 +8,7 @@ import std.process;
 import std.range;
 import std.functional;
 
-
+import dlangui;
 
 import dedit.moduleinterface;
 import dedit.Controller;
@@ -17,11 +17,11 @@ import dedit.ViewWindow;
 import dedit.OutlineTool;
 import dedit.TypicalModuleFileControllerText;
 
-void applyLanguageSettingsToSourceView(SourceView sv)
+void applyLanguageSettingsToSourceView(SourceEdit sv)
 {
-    sv.setAutoIndent(true);
+    /* sv.setAutoIndent(true); */
     /* sv.setDrawSpaces(DrawSpacesFlags.ALL); */
-    sv.setHighlightCurrentLine(true);
+    /* sv.setHighlightCurrentLine(true);
     sv.setIndentOnTab(true);
     sv.setIndentWidth(4);
     sv.setInsertSpacesInsteadOfTabs(true);
@@ -29,14 +29,14 @@ void applyLanguageSettingsToSourceView(SourceView sv)
     sv.setShowRightMargin(true);
     sv.setTabWidth(4);
     sv.setShowLineMarks(true);
-    sv.setShowLineNumbers(true);
+    sv.setShowLineNumbers(true); */
     // sv.setSmartHomeEnd(GtkSourceSmartHomeEndType.ALWAYS);
 }
 
-void applyLanguageSettingsToSourceBuffer(SourceBuffer sb)
+/* void applyLanguageSettingsToSourceBuffer(SourceBuffer sb)
 {
-    sb.setLanguage(SourceLanguageManager.getDefault().getLanguage("d"));
-}
+    /* sb.setLanguage(SourceLanguageManager.getDefault().getLanguage("d")); * /
+} */
 
 string formatWholeBufferText(string txt)
 {
@@ -101,9 +101,9 @@ const dedit.moduleinterface.ModuleInformation ModuleInformation =
             cast(
                     dedit.moduleinterface.ModuleInformation*)&ModuleInformation;
         // settings.module_information = cast(dedit.moduleinterface.ModuleInformation*)&ModuleInformation;
-        settings.applyLanguageSettingsToSourceView = toDelegate(&applyLanguageSettingsToSourceView);
-        settings.applyLanguageSettingsToSourceBuffer = toDelegate(
-                &applyLanguageSettingsToSourceBuffer);
+        /* settings.applyLanguageSettingsToSourceView = toDelegate(&applyLanguageSettingsToSourceView); */
+        /* settings.applyLanguageSettingsToSourceBuffer = toDelegate(
+                &applyLanguageSettingsToSourceBuffer); */
         settings.formatWholeBufferText = toDelegate(&formatWholeBufferText);
 
         auto ret = new TypicalModuleFileControllerText(settings);

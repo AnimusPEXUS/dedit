@@ -9,7 +9,7 @@ import std.range;
 import std.regex;
 import std.string;
 
-
+import dlangui;
 
 import dedit.moduleinterface;
 import dedit.Controller;
@@ -70,8 +70,8 @@ struct TypicalModuleFileControllerTextSettings
     FileController file_controller;
 
     dedit.moduleinterface.ModuleInformation* module_information;
-    void delegate(SourceView sv) applyLanguageSettingsToSourceView;
-    void delegate(SourceBuffer sb) applyLanguageSettingsToSourceBuffer;
+    void delegate(SourceEdit sv) applyLanguageSettingsToSourceView;
+    /* void delegate(SourceBuffer sb) applyLanguageSettingsToSourceBuffer; */
     string delegate(string txt) formatWholeBufferText;
     OutlineToolInputData* delegate(string txt) prepareDataForOutlineTool;
     string delegate(string txt) comment;
@@ -137,14 +137,14 @@ class TypicalModuleFileControllerText : ModuleFileController
         {
             return txt[1];
         }
-        this.buffer.buff.setText(txt[0]);
+        this.buffer.buff.text = to!dstring(txt[0]);
         return cast(Exception) null;
     }
 
     Exception saveData()
     {
-        auto txt = this.buffer.buff.getText();
-        auto res = this.settings.file_controller.setString(txt);
+        auto txt = this.buffer.buff.text;
+        auto res = this.settings.file_controller.setString(to!string(txt));
         if (res !is null)
         {
             return res;
@@ -180,7 +180,7 @@ class Buffer : ModuleControllerBuffer
 
     TypicalModuleFileControllerText tmfct;
 
-    SourceBuffer buff;
+    EditableContent buff;
 
     /* this(TypicalCodeEditorMod tcem, Controller c, ViewWindow w, string uri) */
     this(TypicalModuleFileControllerText tmfct)
@@ -215,13 +215,13 @@ class Buffer : ModuleControllerBuffer
         this.buff = new SourceBuffer(cast(TextTagTable) null);
         this.buff.setText(cast(string) buff.idup); */
 
-        this.buff = new SourceBuffer(cast(TextTagTable) null);
+        this.buff = new EditableContent(true);
         auto res = this.tmfct.settings.file_controller.getString();
         if (res[1]!is null)
         {
             throw res[1];
         }
-        this.buff.setText(res[0]);
+        this.buff.text = to!dstring(res[0]);
     }
 
     /* ref const dedit.moduleinterface.ModuleInformation getModInfo() {
@@ -239,7 +239,7 @@ class Buffer : ModuleControllerBuffer
         // buff = null;
     }
 
-    SourceBuffer getSourceBuffer()
+    EditableContent getSourceBuffer()
     {
         return buff;
     }
@@ -259,9 +259,9 @@ class Buffer : ModuleControllerBuffer
 
     void format()
     {
-        ubyte[] bt = cast(ubyte[]) buff.getText();
+        ubyte[] bt = cast(ubyte[])(to!string(buff.text));
         auto res = this.tmfct.settings.formatWholeBufferText(cast(string) bt);
-        buff.setText(res.idup);
+        buff.text = to!dstring(res);
     }
 
 }
@@ -271,20 +271,24 @@ class MainMenu : ModuleControllerMainMenu
 
     TypicalModuleFileControllerText tmfct;
 
-    private Menu mm;
+    private MenuItem mm;
     private MenuItem mm_menu_format;
 
     this(TypicalModuleFileControllerText tmfct)
     {
         this.tmfct = tmfct;
 
-        mm = new Menu();
+        Action a;
 
-        auto mm_menu_format = new MenuItem("Format");
+        a = new Action(0, "[[Special]]"d);
+        mm = new MenuItem(a);
+
+        a = new Action(0, "Format"d);
+        auto mm_menu_format = new MenuItem(a);
         this.mm_menu_format = mm_menu_format;
-        mm_menu_format.addOnActivate(&onMIFormatActivate);
+        /* mm_menu_format.addOnActivate(&onMIFormatActivate); */
 
-        mm.append(mm_menu_format);
+        mm.add(mm_menu_format);
     }
 
     TypicalModuleFileControllerText getModuleFileController()
@@ -292,13 +296,13 @@ class MainMenu : ModuleControllerMainMenu
         return tmfct;
     }
 
-    Menu getWidget()
+    MenuItem getWidget()
     {
         return mm;
     }
 
     /* void installAccelerators(bool uninstall = false) */
-    void installAccelerators(AccelGroup ag, bool uninstall = false)
+    /* void installAccelerators(AccelGroup ag, bool uninstall = false)
     {
         if (!uninstall)
         {
@@ -316,7 +320,7 @@ class MainMenu : ModuleControllerMainMenu
     void uninstallAccelerators(AccelGroup ag)
     {
         installAccelerators(ag, true);
-    }
+    } */
 
     void onMIFormatActivate(MenuItem mi)
     {
@@ -341,53 +345,57 @@ class View : ModuleControllerView
 
     TypicalModuleFileControllerText tmfct;
 
-    Paned paned;
+    /* Paned paned; */
 
-    SourceView sv;
-    SourceBuffer sb;
-    ScrolledWindow sw;
+    HorizontalLayout paned;
+
+    SourceEdit sv;
+    EditableContent sb;
+    /* ScrolledWindow sw; */
 
     bool close_already_called;
 
-    OutlineTool outlineTool;
+    /* OutlineTool outlineTool; */
 
     this(TypicalModuleFileControllerText tmfct)
     {
         this.tmfct = tmfct;
 
-        paned = new Paned(GtkOrientation.HORIZONTAL);
+        paned = new HorizontalLayout;
+        /* paned = new Paned(GtkOrientation.HORIZONTAL); */
 
         /* sb = new SourceBuffer(cast(GtkSourceBuffer*) null); */
-        sv = new SourceView();
-        this.tmfct.settings.applyLanguageSettingsToSourceView(sv);
-        {
+        sv = new SourceEdit();
+        paned.addChild(sv);
+        /* this.tmfct.settings.applyLanguageSettingsToSourceView(sv); */
+        /* {
             auto fd = PgFontDescription.fromString(
                     this.tmfct.settings.controller.settings["font"].str());
             sv.overrideFont(fd);
-        }
+        } */
         auto sb = (cast(Buffer)(this.tmfct.getBuffer())).getSourceBuffer();
-        this.tmfct.settings.applyLanguageSettingsToSourceBuffer(sb);
-        sv.setBuffer(sb);
+        /* this.tmfct.settings.applyLanguageSettingsToSourceBuffer(sb); */
+        sv.content = sb;
 
-        sw = new ScrolledWindow();
+        /* sw = new ScrolledWindow();
         sw.setOverlayScrolling(false);
         sw.setKineticScrolling(false);
         sw.setCaptureButtonPress(false);
-        sw.add(sv);
+        sw.add(sv); */
         // mm = new MainMenu(this, this.b.uri);
 
-        OutlineToolOptions* oto = new OutlineToolOptions();
+        /* OutlineToolOptions* oto = new OutlineToolOptions();
         oto.userWishesToGoToLine = &outlineToolUserWishesToGoToLine;
-        oto.userWishesToRefreshData = &outlineToolUserWishesToRefreshData;
+        oto.userWishesToRefreshData = &outlineToolUserWishesToRefreshData; */
 
-        outlineTool = new OutlineTool(oto);
-        auto outlinetool_widget = outlineTool.getWidget();
+        /* outlineTool = new OutlineTool(oto);
+        auto outlinetool_widget = outlineTool.getWidget(); */
 
-        paned.add1(sw);
+        /* paned.add1(sw);
         paned.add2(outlinetool_widget);
 
         paned.childSetProperty(paned.getChild1(), "resize", new Value(true));
-        paned.childSetProperty(paned.getChild2(), "resize", new Value(false));
+        paned.childSetProperty(paned.getChild2(), "resize", new Value(false)); */
     }
 
     TypicalModuleFileControllerText getModuleFileController()
@@ -403,8 +411,8 @@ class View : ModuleControllerView
     JSONValue getSettings()
     {
         auto x = new ViewSettings();
-        x.scroll_position = (cast(Scrollbar)(sw.getVscrollbar())).getValue();
-        x.right_paned_position = paned.getPosition();
+        /* x.scroll_position = (cast(Scrollbar)(sw.getVscrollbar())).getValue(); */
+        /* x.right_paned_position = paned.getPosition(); */
         return x.toJSONValue();
     }
 
@@ -413,14 +421,14 @@ class View : ModuleControllerView
 
         auto x = new ViewSettings(value);
 
-        paned.setPosition(x.right_paned_position);
+        /* paned.setPosition(x.right_paned_position); */
 
-        new Idle(delegate bool() {
+        /* new Idle(delegate bool() {
 
             (cast(Scrollbar)(sw.getVscrollbar())).setValue(x.scroll_position);
 
             return false;
-        });
+        }); */
     }
 
     void outlineToolUserWishesToGoToLine(int new_line_number)
@@ -445,9 +453,9 @@ class View : ModuleControllerView
             return;
         }
 
-        auto tt_res = tt((cast(Buffer)(this.tmfct.getBuffer())).buff.getText());
+        /* auto tt_res = tt((cast(Buffer)(this.tmfct.getBuffer())).buff.getText()); */
 
-        outlineTool.setData(tt_res);
+        /* outlineTool.setData(tt_res); */
     }
 
 }

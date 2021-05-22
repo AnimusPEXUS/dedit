@@ -5,6 +5,7 @@ import core.sync.mutex;
 import std.typecons;
 import std.json;
 
+import dlangui;
 
 import dedit.Controller;
 import dedit.toolwidgetinterface;
@@ -17,9 +18,10 @@ class ToolWidget
 
     string project;
 
-    Box main_box;
-    Box tools_box;
-    Box children_box;
+    VerticalLayout main_box;
+
+    HorizontalLayout tools_box;
+    VerticalLayout children_box;
 
     ComboBox tool_selection_cb;
 
@@ -29,25 +31,32 @@ class ToolWidget
     {
         this.controller = controller;
 
-        main_box = new Box(GtkOrientation.VERTICAL, 0);
-        tools_box = new Box(GtkOrientation.HORIZONTAL, 0);
-        children_box = new Box(GtkOrientation.VERTICAL, 0);
+        main_box = new VerticalLayout;
+        tools_box = new HorizontalLayout;
+        children_box = new VerticalLayout;
 
-        main_box.packStart(tools_box, false, true, 0);
-        main_box.packStart(children_box, true, true, 0);
+        main_box.addChild(tools_box);
+        main_box.addChild(children_box);
 
-        tool_selection_cb = new ComboBox(controller.tool_widget_combobox_item_list, false);
-        tool_selection_cb.setIdColumn(0);
+        tools_box.layoutWidth(FILL_PARENT);
+        children_box.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
 
-        {
+        /* main_box.packStart(tools_box, false, true, 0);
+        main_box.packStart(children_box, true, true, 0); */
+
+        tool_selection_cb = new ComboBox("", controller.tool_widget_combobox_item_list);
+        /* tool_selection_cb.setIdColumn(0); */
+
+        /* {
             auto cr = new CellRendererText();
             tool_selection_cb.packStart(cr, true);
             tool_selection_cb.addAttribute(cr, "text", 1);
-        }
+        } */
 
-        tools_box.packStart(tool_selection_cb, false, false, 0);
+        tools_box.addChild(tool_selection_cb);
+        /* tools_box.packStart(tool_selection_cb, false, false, 0); */
 
-        tool_selection_cb.addOnChanged(delegate void(ComboBox cb) {
+        /* tool_selection_cb.addOnChanged(delegate void(ComboBox cb) {
             auto id = cb.getActiveId();
 
             if (current_tool_widget !is null)
@@ -71,10 +80,10 @@ class ToolWidget
                 current_tool_widget.setProject(project);
             }
         });
-        tool_selection_cb.setActiveId("");
+        tool_selection_cb.setActiveId(""); */
     }
 
-    Box getWidget()
+    Widget getWidget()
     {
         return main_box;
     }
@@ -83,7 +92,7 @@ class ToolWidget
     {
         try
         {
-            tool_selection_cb.setActiveId("");
+            /* tool_selection_cb.setActiveId(""); */
         }
         catch (Exception e)
         {
@@ -97,7 +106,7 @@ class ToolWidget
 
         try
         {
-            tool_selection_cb.setActiveId(name);
+            /* tool_selection_cb.setActiveId(name); */
         }
         catch (Exception e)
         {
@@ -112,7 +121,7 @@ class ToolWidget
         string ret;
         try
         {
-            ret = tool_selection_cb.getActiveId();
+            /* ret = tool_selection_cb.getActiveId(); */
         }
         catch (Exception e)
         {

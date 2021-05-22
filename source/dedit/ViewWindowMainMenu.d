@@ -2,7 +2,7 @@ module dedit.ViewWindowMainMenu;
 
 import std.stdio;
 
-
+import dlangui;
 
 import dedit.ViewWindow;
 
@@ -11,7 +11,7 @@ const string SPECIAL_MENU_ITEM_LABEL = "[Special]";
 class ViewWindowMainMenu
 {
 
-    MenuBar menuBar;
+    MainMenu menuBar;
 
     ViewWindow view_window;
 
@@ -24,18 +24,38 @@ class ViewWindowMainMenu
 
         this.view_window = view_window;
 
-        menuBar = new MenuBar();
+        menuBar = new MainMenu();
+        auto mainmenu = new MenuItem();
 
+        Action a;
+
+        a = new Action(0, "File"d);
+        auto menu_file = new MenuItem(a);
+        mainmenu.add(menu_file);
+        menuBar.menuItems = mainmenu;
+
+        a = new Action(0, "(Re)Load"d);
+        auto menu_file_menu_reload = new MenuItem(a);
+        menu_file_menu_reload.menuItemClick = delegate bool(MenuItem item) {
+            writeln("onMenuItemClick");
+            return true;
+        };
+
+        menu_file.add(menu_file_menu_reload);
+
+        /*
         auto menu_file = new MenuItem("File");
-        /* auto menu_edit = new MenuItem("Edit"); */
+        /* auto menu_edit = new MenuItem("Edit"); * /
         menu_special = new MenuItem(SPECIAL_MENU_ITEM_LABEL);
 
         auto menu_file_menu = new Menu();
         menu_file.setSubmenu(menu_file_menu);
 
+        auto a = new Action()
+
         auto menu_file_menu_reload = new MenuItem("(Re)Load");
         /* menu_file_menu_save.addAccelerator("activate", view_window.accel_group,
-                's', GdkModifierType.CONTROL_MASK, GtkAccelFlags.VISIBLE); */
+                's', GdkModifierType.CONTROL_MASK, GtkAccelFlags.VISIBLE); * /
         menu_file_menu_reload.addOnActivate(&view_window.onMIReloadActivate);
         menu_file_menu.append(menu_file_menu_reload);
 
@@ -63,28 +83,28 @@ class ViewWindowMainMenu
 
         menuBar.append(menu_special);
         menuBar.append(new SeparatorMenuItem);
-        /* menuBar.append(menu_edit); */
-        menuBar.append(menu_file);
+        /* menuBar.append(menu_edit); * /
+        menuBar.append(menu_file); */
 
     }
 
-    MenuBar getWidget()
+    MainMenu getWidget()
     {
         return menuBar;
     }
 
-    void setSpecialMenuItem(string label, Menu newSubmenu)
+    void setSpecialMenuItem(string label, MenuItem newSubmenu)
     {
-        menu_special.setLabel(label);
+        /* menu_special.setLabel(label);
         menu_special.setSubmenu(newSubmenu);
         if (newSubmenu !is null)
         {
             menu_special.showAll();
-        }
+        } */
     }
 
     void removeSpecialMenuItem()
     {
-        setSpecialMenuItem(SPECIAL_MENU_ITEM_LABEL, null);
+        /* setSpecialMenuItem(SPECIAL_MENU_ITEM_LABEL, null); */
     }
 }

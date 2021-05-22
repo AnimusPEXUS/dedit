@@ -2,7 +2,7 @@ module dedit.OutlineTool;
 
 import std.stdio;
 
-
+import dlangui;
 
 struct OutlineToolInputDataUnit
 {
@@ -27,17 +27,20 @@ class OutlineTool
 
     OutlineToolOptions* options;
 
-    Box mainBox;
+    VerticalLayout mainBox;
+    /* Box mainBox; */
 
-    ScrolledWindow sw;
-    TreeView tw;
-    ListStore tw_ls;
+    /* ScrolledWindow sw; */
+    /* TreeView tw; */
+    /* ListStore tw_ls; */
 
     this(OutlineToolOptions* options)
     {
 
         this.options = options;
 
+        mainBox = new VerticalLayout;
+        /*
         sw = new ScrolledWindow();
         sw.setOverlayScrolling(false);
 
@@ -56,26 +59,26 @@ class OutlineTool
 
         tw.setModel(tw_ls);
 
-        setupTableColumns(tw);
+        setupTableColumns(tw); */
     }
 
     private void buttonRefreshClicked(Button b)
     {
 
-        if (options.userWishesToRefreshData !is null)
+        /* if (options.userWishesToRefreshData !is null)
         {
             debug
             {
                 writeln("refresh button clicked");
             }
             options.userWishesToRefreshData();
-        }
+        } */
 
     }
 
-    private void setupTableColumns(TreeView tw)
+    /* private void setupTableColumns(TreeView tw)
     {
-        {
+        /* {
             auto rend = new CellRendererText();
             // rend.setProperty("ellipsize", PangoEllipsizeMode.START);
             auto col = new TreeViewColumn("line", rend, "text", 0);
@@ -90,12 +93,12 @@ class OutlineTool
             auto col = new TreeViewColumn("contents", rend, "text", 1);
             // col.setResizable(true);
             tw.insertColumn(col, 1);
-        }
-    }
+        } * /
+    } */
 
     void close()
     {
-        mainBox.destroy();
+        /* mainBox.destroy(); */
     }
 
     Widget getWidget()
@@ -105,7 +108,7 @@ class OutlineTool
 
     void setData(OutlineToolInputData* data)
     {
-        assert(data !is null);
+        /* assert(data !is null);
         // assert(data.data !is null);
 
         foreach (size_t k, OutlineToolInputDataUnit* v; data.data)
@@ -173,7 +176,7 @@ class OutlineTool
                 }
 
             }
-        }
+        } */
 
     }
 

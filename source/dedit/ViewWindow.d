@@ -6,10 +6,10 @@ import std.algorithm;
 import std.json;
 import std.uuid;
 
-
+import dlangui;
 
 import dutils.path;
-import dutils.gtkcollection.FileTreeView;
+import dutils.dlanguicollection.FileTreeView;
 
 import dedit.ViewWindowMainMenu;
 import dedit.Controller;
@@ -80,17 +80,17 @@ class ViewWindow
 
     ViewWindowSettings* settings;
 
-    AccelGroup accel_group;
+    /* AccelGroup accel_group; */
 
     ViewWindowMainMenu main_menu;
 
     Window window;
 
-    Box root_box;
-    Box view_box;
+    VerticalLayout root_box;
+    VerticalLayout view_box;
 
-    Label view_module_project;
-    Label view_module_filename;
+    TextWidget view_module_project;
+    TextWidget view_module_filename;
 
     ModuleFileController current_module_file_controller;
     // ModuleDataBuffer    current_module_file_controller;
@@ -112,42 +112,39 @@ class ViewWindow
             settings.window_uuid = randomUUID.toString();
         }
 
-        window = new Window("dedit");
+        window = Platform.instance.createWindow("dedit", null);
         /* window.setGravity(Gravity.STATIC); */
         /* window.addOnDestroy(&windowOnDestroy); */
-        window.addOnDelete(&onDeleteEvent);
+        /* window.addOnDelete(&onDeleteEvent); */
 
-        accel_group = new AccelGroup();
+        /* accel_group = new AccelGroup();
 
-        window.addAccelGroup(accel_group);
+        window.addAccelGroup(accel_group); */
 
         main_menu = new ViewWindowMainMenu(this);
 
-        root_box = new Box(GtkOrientation.VERTICAL, 0);
-        window.add(root_box);
+        root_box = new VerticalLayout;
+        window.mainWidget = root_box;
 
-        view_box = new Box(GtkOrientation.VERTICAL, 0);
+        view_box = new VerticalLayout;
 
-        auto menu_box = new Box(GtkOrientation.HORIZONTAL, 0);
+        auto menu_box = new HorizontalLayout;
 
-        view_module_project = new Label("project");
-        view_module_filename = new Label("filename");
+        view_module_project = cast(TextWidget)(new TextWidget().text = "project"d);
+        view_module_filename = cast(TextWidget)(new TextWidget().text = "filename"d);
         /* auto view_module_data_load = new Button("Load Data"); */
         /* auto view_module_data_save = new Button("Save Data"); */
         /* auto view_module_change_name = new Button("Change Name.."); */
         /* auto view_module_apply = new Button("Apply"); */
 
-        auto view_module_grid = new Grid();
-        view_module_grid.attach(new Label("project:"), 0, 0, 1, 1);
-        view_module_grid.attach(view_module_project, 1, 0, 1, 1);
-        view_module_grid.attach(new Label("file:"), 0, 1, 1, 1);
-        view_module_grid.attach(view_module_filename, 1, 1, 1, 1);
+        auto view_module_grid = new TableLayout();
+        view_module_grid.colCount(2);
 
-        menu_box.packStart(main_menu.getWidget(), true, true, 0);
-        menu_box.packStart(view_module_grid, false, true, 0);
+        view_module_grid.addChild(new TextWidget().text = "project:"d);
+        view_module_grid.addChild(view_module_project);
 
-        root_box.packStart(menu_box, false, true, 0);
-        root_box.packStart(view_box, true, true, 0);
+        view_module_grid.addChild(new TextWidget().text = "file:"d);
+        view_module_grid.addChild(view_module_filename);
 
         if (apply_setup)
         {
@@ -164,7 +161,7 @@ class ViewWindow
         writeln("ViewWindow destroyed");
     }
 
-    bool onDeleteEvent(Event event, Widget w)
+    /* bool onDeleteEvent(Event event, Widget w)
     {
         if (!keep_settings_on_window_close)
         {
@@ -190,7 +187,7 @@ class ViewWindow
         settings.controller.view_windows = settings.controller.view_windows.remove(i);
 
         return false;
-    }
+    } */
 
     private Exception loadSettings()
     {
@@ -229,11 +226,11 @@ class ViewWindow
 
                 if ("x" in x && "y" in x)
                 {
-                    window.move(cast(int)(x["x"].integer()), cast(int)(x["y"].integer()));
+                    /* window.move(cast(int)(x["x"].integer()), cast(int)(x["y"].integer())); */
                 }
                 if ("w" in x && "h" in x)
                 {
-                    window.resize(cast(int)(x["w"].integer()), cast(int)(x["h"].integer()));
+                    /* window.resize(cast(int)(x["w"].integer()), cast(int)(x["h"].integer())); */
                 }
 
                 if ("view_setup" in x && !x["view_setup"].isNull)
@@ -243,12 +240,21 @@ class ViewWindow
                         writeln("loading view_setup for window ", window_uuid);
                     }
                     auto y = x["view_setup"];
-                    ViewWindowContentSetup setup_o = {
+
+                    /* ViewWindowContentSetup setup_o = {
                         view_module_auto: false, project: settings.setup.project, filename: "filename" in y
                             ? y["filename"].str() : "", view_module_to_use: "view_module_to_use" in y ? y["view_module_to_use"]
                             .str() : "",
-                    };
-                    setSetup(&setup_o);
+                    }; */
+
+                    auto setup_o = new ViewWindowContentSetup;
+                    setup_o.view_module_auto = false;
+                    setup_o.project = settings.setup.project;
+                    setup_o.filename = "filename" in y ? y["filename"].str() : "";
+                    setup_o.view_module_to_use = "view_module_to_use" in y
+                        ? y["view_module_to_use"].str() : "";
+
+                    setSetup(setup_o);
 
                     if ("view_setup_settings" in y && current_module_file_controller !is null)
                     {
@@ -292,8 +298,8 @@ class ViewWindow
 
         int x, y, w, h;
 
-        window.getPosition(x, y);
-        window.getSize(w, h);
+        /* window.getPosition(x, y); */
+        /* window.getSize(w, h); */
 
         val["x"] = JSONValue(x);
         val["y"] = JSONValue(y);
@@ -321,12 +327,12 @@ class ViewWindow
 
     void show()
     {
-        window.showAll();
+        window.show();
     }
 
     void present()
     {
-        window.present();
+        /* window.present(); */
     }
 
     void showAndPresent()
@@ -422,22 +428,24 @@ class ViewWindow
         {
             auto mm = current_module_file_controller.getMainMenu();
 
-            mm.uninstallAccelerators(this.accel_group);
+            /* mm.uninstallAccelerators(this.accel_group); */
 
             main_menu.removeSpecialMenuItem();
             current_module_file_controller.close();
             current_module_file_controller = null;
         }
 
-        while (view_box.children.length != 0)
+        view_box.removeAllChildren();
+        /* while (view_box.children.length != 0)
         {
             auto x = view_box.children[0];
             x.destroy();
-        }
+        } */
 
-        auto x = new Label(LABEL_TEXT_FILE_NOT_OPENED);
-        view_box.packStart(x, true, true, 0);
-        view_box.showAll();
+        auto x = new TextWidget().text = to!dstring( LABEL_TEXT_FILE_NOT_OPENED);
+        view_box.addChild(x);
+        /* view_box.packStart(x, true, true, 0); */
+        /* view_box.show(); */
     }
 
     Exception setModuleFileController(ModuleFileController mfc)
@@ -460,12 +468,13 @@ class ViewWindow
 
         auto mm_widget = mm_res.getWidget();
 
-        view_box.packStart(view_widget, true, true, 0);
+        view_box.addChild(view_widget);
+        /* view_box.packStart(view_widget, true, true, 0); */
 
         this.main_menu.setSpecialMenuItem(mfc.getModInfo().name, mm_widget);
 
-        this.view_module_project.setText(mfc.getProject());
-        this.view_module_filename.setText(mfc.getFilename());
+        this.view_module_project.text = to!dstring(mfc.getProject());
+        this.view_module_filename.text = to!dstring(mfc.getFilename());
 
         this.current_module_file_controller = mfc;
 

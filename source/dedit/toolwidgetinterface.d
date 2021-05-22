@@ -3,6 +3,7 @@ module dedit.toolwidgetinterface;
 import std.json;
 import std.typecons;
 
+import dlangui;
 
 import dedit.Controller;
 

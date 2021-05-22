@@ -5,6 +5,7 @@ import std.uuid;
 import std.json;
 import std.algorithm;
 
+import dlangui;
 
 import gdk.Event;
 
@@ -35,12 +36,12 @@ class ToolWindow
         }
         this.window_uuid = window_uuid;
 
-        window = new Window("tool window");
-        window.addOnDelete(&onDeleteEvent);
+        window = Platform.instance.createWindow("tool window"d, null);
+        /* window.addOnDelete(&onDeleteEvent); */
 
         tool_widget = new ToolWidget(controller);
 
-        window.add(tool_widget.getWidget());
+        window.mainWidget = tool_widget.getWidget();
 
         controller.tool_windows ~= this;
 
@@ -111,11 +112,11 @@ class ToolWindow
 
             if ("x" in x && "y" in x)
             {
-                window.move(cast(int)(x["x"].integer()), cast(int)(x["y"].integer()));
+                /* window.move(cast(int)(x["x"].integer()), cast(int)(x["y"].integer())); */
             }
             if ("w" in x && "h" in x)
             {
-                window.resize(cast(int)(x["w"].integer()), cast(int)(x["h"].integer()));
+                /* window.resize(cast(int)(x["w"].integer()), cast(int)(x["h"].integer())); */
             }
 
             if ("tool_name" in x)
@@ -150,8 +151,8 @@ class ToolWindow
 
         int x, y, w, h;
 
-        window.getPosition(x, y);
-        window.getSize(w, h);
+        /* window.getPosition(x, y); */
+        /* window.getSize(w, h); */
 
         val["x"] = JSONValue(x);
         val["y"] = JSONValue(y);
@@ -184,7 +185,7 @@ class ToolWindow
 
     void show()
     {
-        window.showAll();
+        window.show();
     }
 
 }

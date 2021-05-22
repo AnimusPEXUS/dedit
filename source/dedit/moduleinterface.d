@@ -2,6 +2,8 @@ module dedit.moduleinterface;
 
 import std.json;
 
+import dlangui;
+
 import dedit.Controller;
 import dedit.FileController;
 import dedit.ViewWindow;
@@ -45,9 +47,9 @@ interface ModuleControllerMainMenu
     ModuleFileController getModuleFileController();
 
     // ref ModuleInformation getModInfo()  ;
-    Menu getWidget();
-    void installAccelerators(AccelGroup ag, bool uninstall = false);
-    void uninstallAccelerators(AccelGroup ag);
+    MenuItem getWidget();
+    /* void installAccelerators(AccelGroup ag, bool uninstall = false);
+    void uninstallAccelerators(AccelGroup ag); */
 }
 
 interface ModuleControllerView

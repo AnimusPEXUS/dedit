@@ -4,8 +4,9 @@ import std.stdio;
 import std.typecons;
 import std.json;
 
+import dlangui;
 
-import dutils.gtkcollection.FileTreeView;
+import dutils.dlanguicollection.FileTreeView;
 
 import dedit.Controller;
 import dedit.toolwidgetinterface;
@@ -31,7 +32,7 @@ const dedit.toolwidgetinterface.ToolWidgetInformation ToolProjectFilesWidgetInfo
 
         string project;
 
-        Box main_box;
+        VerticalLayout main_box;
 
         FileTreeView filebrowser;
 
@@ -39,17 +40,17 @@ const dedit.toolwidgetinterface.ToolWidgetInformation ToolProjectFilesWidgetInfo
         {
             this.controller = controller;
 
-            main_box = new Box(GtkOrientation.VERTICAL, 0);
+            main_box = new VerticalLayout();
 
             filebrowser = new FileTreeView();
-            filebrowser.addOnRowActivated(&onFileListViewActivated);
+            /* filebrowser.addOnRowActivated(&onFileListViewActivated); */
 
-            auto filebrowser_widget = filebrowser.getWidget();
+            /* auto filebrowser_widget = filebrowser.getWidget(); */
 
-            main_box.packStart(filebrowser_widget, true, true, 0);
+            /* main_box.packStart(filebrowser_widget, true, true, 0); */
         }
 
-        void onFileListViewActivated(TreePath tp, TreeViewColumn tvc, TreeView tv)
+        /* void onFileListViewActivated(TreePath tp, TreeViewColumn tvc, TreeView tv)
         {
 
             if (filebrowser.isDir(tp))
@@ -62,7 +63,7 @@ const dedit.toolwidgetinterface.ToolWidgetInformation ToolProjectFilesWidgetInfo
                 auto filename = filebrowser.convertTreePathToFilePath(tp);
                 this.controller.openNewView(this.project, filename, "");
             }
-        }
+        } */
 
         ToolWidgetInformation* getToolWidgetInformation()
         {
@@ -78,7 +79,7 @@ const dedit.toolwidgetinterface.ToolWidgetInformation ToolProjectFilesWidgetInfo
                 return pth[1];
             }
 
-            filebrowser.setRootDirectory(pth[0]);
+            /* filebrowser.setRootDirectory(pth[0]); */
 
             return cast(Exception) null;
         }

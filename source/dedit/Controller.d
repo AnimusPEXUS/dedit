@@ -11,15 +11,15 @@ import dlangui;
 
 import dedit.ProjectWindow;
 
-/* import dedit.ViewWindow; */
-/* import dedit.ToolWindow; */
+import dedit.ViewWindow;
+import dedit.ToolWindow;
 import dedit.ProjectsWindow;
 import dedit.FileController;
 
-/* import dedit.moduleinterface;
+import dedit.moduleinterface;
 
 import dedit.builtinmodules;
-import dedit.builtintoolwidgets; */
+import dedit.builtintoolwidgets;
 
 class Controller
 {
@@ -29,8 +29,8 @@ class Controller
     string[string] project_paths;
 
     ProjectWindow[] project_windows;
-    /* ViewWindow[] view_windows; */
-    /* ToolWindow[] tool_windows; */
+    ViewWindow[] view_windows;
+    ToolWindow[] tool_windows;
 
     FileController[] file_controllers;
 
@@ -44,7 +44,7 @@ class Controller
     JSONValue projects_window_settings;
     // string font;
 
-    /* ListStore tool_widget_combobox_item_list; */
+    string[] tool_widget_combobox_item_list;
 
     JSONValue settings;
 
@@ -61,15 +61,16 @@ class Controller
             tool_widget_combobox_item_list.append(ti);
             tool_widget_combobox_item_list.setValue(ti, 0, new Value(""));
             tool_widget_combobox_item_list.setValue(ti, 1, new Value("(not selected)"));
-        }
+        }*/
 
         foreach (i, v; builtinToolWidgets)
         {
-            auto ti = new TreeIter;
+            tool_widget_combobox_item_list ~= v.name;
+            /* auto ti = new TreeIter;
             tool_widget_combobox_item_list.append(ti);
             tool_widget_combobox_item_list.setValue(ti, 0, new Value(v.name));
-            tool_widget_combobox_item_list.setValue(ti, 1, new Value(v.displayName));
-        } */
+            tool_widget_combobox_item_list.setValue(ti, 1, new Value(v.displayName)); */
+        }
 
         loadSettings();
 
@@ -240,7 +241,7 @@ class Controller
         return ret;
     }
 
-    /* Exception setViewWindowSettings(JSONValue value)
+    Exception setViewWindowSettings(JSONValue value)
     {
         return setProjectSubwindowSettings("view_windows_settings", value);
     }
@@ -331,9 +332,9 @@ class Controller
         }
 
         return cast(Exception) null;
-    } */
+    }
 
-    /* Tuple!(JSONValue, Exception) getViewWindowSettings(string window_uuid)
+    Tuple!(JSONValue, Exception) getViewWindowSettings(string window_uuid)
     {
         return getProjectSubwindowSettings("view_windows_settings", window_uuid);
     }
@@ -359,9 +360,9 @@ class Controller
             }
         }
         return tuple(cast(JSONValue) null, cast(Exception) null);
-    } */
+    }
 
-    /* Exception delViewWindowSettings(string window_uuid)
+    Exception delViewWindowSettings(string window_uuid)
     {
         return delProjectSubwindowSettings("view_windows_settings", window_uuid);
     }
@@ -387,16 +388,16 @@ class Controller
             }
         }
         return cast(Exception) null;
-    } */
+    }
 
-    /* void openNewView(string project, string filename, string uri)
+    void openNewView(string project, string filename, string uri)
     {
         auto y = new ViewWindowContentSetup;
 
         /* (*y) = {
             view_module_auto: true, view_module_auto_mode: ViewModuleAutoMode.BY_EXTENSION,
             project: project, filename: filename}; */
-    /*
+
         y.view_module_auto = true;
         y.view_module_auto_mode = ViewModuleAutoMode.BY_EXTENSION;
         y.project = project;
@@ -409,7 +410,7 @@ class Controller
         auto w = new ViewWindow(options);
 
         w.show();
-    } */
+    }
 
     Tuple!(FileController, Exception) getOrCreateFileController(string project,
             string filename, bool create_if_absent = true,)
@@ -449,7 +450,7 @@ class Controller
         return tuple(ret, cast(Exception) null);
     }
 
-    /* Tuple!(ModuleFileController, Exception) createModuleFileController(
+    Tuple!(ModuleFileController, Exception) createModuleFileController(
             FileController file_controller)
     {
         assert(file_controller !is null);
@@ -477,28 +478,25 @@ class Controller
         auto ret = minfo.createModuleController(this, file_controller);
 
         return tuple(ret, cast(Exception) null);
-    } */
-    /*
-      void openNewViewOrExisting(string cr)
-     {
+    }
 
-         ViewWindowContentSetup* y = {
-             view_module_auto: true,
-            view_mode_auto_mode: ViewModuleAutoMode.BY_EXTENSION,
-            file_mode: ViewWindowMode.PROJECT_FILE,
-            project: project,
-            filename: cr
-        };
+    void openNewViewOrExisting(string cr)
+    {
 
-        ViewWindowSettings x = {controller: controller,
-        setup: &y};
+        auto y = new ViewWindowContentSetup;
+        y.view_module_auto = true;
+        /* y.view_mode_auto_mode = ViewModuleAutoMode.BY_EXTENSION; */
+        /* y.file_mode = ViewWindowMode.PROJECT_FILE; */
+        /* y.project = project; */
+        /* y.filename = cr; */
 
-        ViewWindowSettings* options = &x;
+        auto x = new ViewWindowSettings;
+        x.controller = this;
+        x.setup = y;
 
-        auto w = new ViewWindow(options);
+        auto w = new ViewWindow(x);
 
         w.show();
     }
-    */
 
 }
