@@ -168,9 +168,14 @@ class TypicalModuleFileControllerText : ModuleFileController
         return;
     }
 
-    void close()
+    void destroy()
     {
         // TODO: is this needed?
+        this.settings = null;
+
+        this.buffer = null;
+        this.view = null;
+        this.mainmenu = null;
     }
 
 }

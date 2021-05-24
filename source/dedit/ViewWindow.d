@@ -113,6 +113,7 @@ class ViewWindow
         }
 
         window = Platform.instance.createWindow("dedit", null);
+        window.onClose = &onClose;
         /* window.setGravity(Gravity.STATIC); */
         /* window.addOnDestroy(&windowOnDestroy); */
         /* window.addOnDelete(&onDeleteEvent); */
@@ -161,8 +162,12 @@ class ViewWindow
         writeln("ViewWindow destroyed");
     }
 
-    /* bool onDeleteEvent(Event event, Widget w)
+    void onClose()
     {
+        debug
+        {
+            writeln("onClose() - View");
+        }
         if (!keep_settings_on_window_close)
         {
             debug
@@ -178,7 +183,7 @@ class ViewWindow
         if (current_module_file_controller !is null)
         {
             // TODO: maybe is is better to call unsetSetup()
-            current_module_file_controller.close();
+            current_module_file_controller.destroy();
             current_module_file_controller = null;
         }
 
@@ -186,8 +191,7 @@ class ViewWindow
             .length;
         settings.controller.view_windows = settings.controller.view_windows.remove(i);
 
-        return false;
-    } */
+    }
 
     private Exception loadSettings()
     {
@@ -431,7 +435,7 @@ class ViewWindow
             /* mm.uninstallAccelerators(this.accel_group); */
 
             main_menu.removeSpecialMenuItem();
-            current_module_file_controller.close();
+            current_module_file_controller.destroy();
             current_module_file_controller = null;
         }
 
@@ -442,7 +446,7 @@ class ViewWindow
             x.destroy();
         } */
 
-        auto x = new TextWidget().text = to!dstring( LABEL_TEXT_FILE_NOT_OPENED);
+        auto x = new TextWidget().text = to!dstring(LABEL_TEXT_FILE_NOT_OPENED);
         view_box.addChild(x);
         /* view_box.packStart(x, true, true, 0); */
         /* view_box.show(); */

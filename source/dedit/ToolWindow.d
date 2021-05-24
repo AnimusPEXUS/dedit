@@ -26,7 +26,7 @@ class ToolWindow
     // dedit 'projects mgr window' or project's main window.
     bool keep_settings_on_window_close = false;
 
-    this(Controller controller, string window_uuid)
+    this(Controller controller, string window_uuid, string project)
     {
         this.controller = controller;
 
@@ -37,20 +37,26 @@ class ToolWindow
         this.window_uuid = window_uuid;
 
         window = Platform.instance.createWindow("tool window"d, null);
+        window.onClose = &onClose;
         /* window.addOnDelete(&onDeleteEvent); */
 
         tool_widget = new ToolWidget(controller);
+        tool_widget.setProject(project);
 
         window.mainWidget = tool_widget.getWidget();
+        window.mainWidget.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
 
         controller.tool_windows ~= this;
 
         loadSettings();
     }
 
-    bool onDeleteEvent(Event event, Widget w)
+    void onClose()
     {
-
+        debug
+        {
+            writeln("onClose() - Tool");
+        }
         if (!keep_settings_on_window_close)
         {
             debug
@@ -70,8 +76,6 @@ class ToolWindow
 
         auto i = controller.tool_windows.length - controller.tool_windows.find(this).length;
         controller.tool_windows = controller.tool_windows.remove(i);
-
-        return false;
     }
 
     void setProject(string name)
@@ -110,13 +114,13 @@ class ToolWindow
                 x2 = x3.toString();
             }
 
-            if ("x" in x && "y" in x)
+            if ("x" in x && "y" in x && "w" in x && "h" in x)
             {
-                /* window.move(cast(int)(x["x"].integer()), cast(int)(x["y"].integer())); */
-            }
-            if ("w" in x && "h" in x)
-            {
-                /* window.resize(cast(int)(x["w"].integer()), cast(int)(x["h"].integer())); */
+                auto rect = new Rect();
+                rect.top = cast(int)(x["y"].integer());
+                rect.left = cast(int)(x["x"].integer());
+                rect.bottom = cast(int)(x["h"].integer());
+                rect.right = cast(int)(x["w"].integer());
             }
 
             if ("tool_name" in x)
@@ -151,13 +155,14 @@ class ToolWindow
 
         int x, y, w, h;
 
+        auto rect = window.windowRect;
         /* window.getPosition(x, y); */
         /* window.getSize(w, h); */
 
-        val["x"] = JSONValue(x);
-        val["y"] = JSONValue(y);
-        val["w"] = JSONValue(w);
-        val["h"] = JSONValue(h);
+        val["x"] = JSONValue(rect.left);
+        val["y"] = JSONValue(rect.top);
+        val["w"] = JSONValue(rect.right);
+        val["h"] = JSONValue(rect.bottom);
 
         debug
         {
@@ -173,7 +178,7 @@ class ToolWindow
         return cast(Exception) null;
     }
 
-    void destroy()
+    void close()
     {
         window.close();
     }

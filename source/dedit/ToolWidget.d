@@ -45,6 +45,7 @@ class ToolWidget
         main_box.packStart(children_box, true, true, 0); */
 
         tool_selection_cb = new ComboBox("", controller.tool_widget_combobox_item_list);
+        tool_selection_cb.layoutWidth(FILL_PARENT);
         /* tool_selection_cb.setIdColumn(0); */
 
         /* {
@@ -155,11 +156,11 @@ class ToolWidget
         return current_tool_widget.setSettings(v);
     }
 
-    /* Exception destroy()
+    Exception destroy()
     {
         unselectTool();
         main_box.destroy();
         return cast(Exception) null;
-    } */
+    }
 
 }

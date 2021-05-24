@@ -34,7 +34,7 @@ interface ModuleFileController
     string getFilename();
     void setFilename(string filename);
 
-    void close();
+    void destroy();
 }
 
 interface ModuleControllerBuffer

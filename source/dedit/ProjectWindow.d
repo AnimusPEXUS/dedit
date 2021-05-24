@@ -10,12 +10,12 @@ import dlangui;
 
 import dutils.path;
 
-/* import dedit.ViewWindow; */
+import dedit.ViewWindow;
 import dedit.Controller;
 
-/* import dedit.ToolWindow; */
-/* import dedit.moduleinterface; */
-/* import dedit.builtinmodules; */
+import dedit.ToolWindow;
+import dedit.moduleinterface;
+import dedit.builtinmodules;
 
 // TODO: ensure window destroyed on close
 
@@ -34,6 +34,7 @@ class ProjectWindow
         this.controller = controller;
 
         window = Platform.instance.createWindow("project window", null);
+        window.onClose = &onClose;
 
         auto l = new VerticalLayout();
         l.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
@@ -42,7 +43,11 @@ class ProjectWindow
         l.addChild(toolbar);
 
         auto a = new Button().text = "New Tool Window"d;
-        a.click = delegate bool(Widget b) { writeln("clicked"); return true; };
+        a.click = delegate bool(Widget b) {
+            auto tw = new ToolWindow(controller, "", project);
+            tw.show();
+            return true;
+        };
         toolbar.addControl(a);
 
         a = new Button().text = "Info"d;
@@ -71,7 +76,7 @@ class ProjectWindow
 
         controller.project_windows ~= this;
 
-        /* {
+        {
             auto res = loadSettings();
             debug
             {
@@ -81,7 +86,7 @@ class ProjectWindow
                 }
             }
 
-            debug
+            /* debug
             {
                 writeln("searching for saved ToolWindow settings");
             }
@@ -94,13 +99,18 @@ class ProjectWindow
                     tw.show();
                     tw.setProject(project);
                 }
-            }
-        } */
+            } */
+        }
 
     }
 
-    /* bool onDeleteEvent(Event event, Widget w)
+    void onClose()
     {
+        debug
+        {
+            writeln("onClose() - Project");
+        }
+
         saveSettings();
 
         foreach (size_t k, ToolWindow v; controller.tool_windows)
@@ -123,9 +133,7 @@ class ProjectWindow
 
         auto i = controller.project_windows.length - controller.project_windows.find(this).length;
         controller.project_windows = controller.project_windows.remove(i);
-
-        return false;
-    } */
+    }
 
     Tuple!(string, Exception) getPath()
     {
@@ -180,10 +188,17 @@ class ProjectWindow
 
     ProjectWindowSettings getSettings()
     {
+        auto rect = window.windowRect;
+        auto state = window.windowState;
+
         auto ret = new ProjectWindowSettings;
-        /* window.getPosition(ret.x, ret.y);
-        window.getSize(ret.width, ret.height);
-        ret.maximized = window.isMaximized(); */
+
+        ret.x = rect.left;
+        ret.y = rect.top;
+        ret.width = rect.right;
+        ret.height = rect.bottom;
+
+        ret.maximized = state == WindowState.maximized;
         return ret;
     }
 
@@ -202,16 +217,18 @@ class ProjectWindow
 
     void setSettings(ProjectWindowSettings settings)
     {
-        /* window.move(settings.x, settings.y);
-        window.resize(settings.width, settings.height);
+        auto rect = Rect();
+        rect.top = settings.y;
+        rect.left = settings.x;
+        rect.right = settings.width;
+        rect.bottom = settings.height;
+
+        window.moveAndResizeWindow(rect);
+
         if (settings.maximized)
         {
-            window.maximize();
+            window.maximizeWindow();
         }
-        else
-        {
-            window.unmaximize();
-        } */
     }
 
 }

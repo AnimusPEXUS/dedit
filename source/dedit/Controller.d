@@ -63,6 +63,7 @@ class Controller
             tool_widget_combobox_item_list.setValue(ti, 1, new Value("(not selected)"));
         }*/
 
+        tool_widget_combobox_item_list ~= "";
         foreach (i, v; builtinToolWidgets)
         {
             tool_widget_combobox_item_list ~= v.name;

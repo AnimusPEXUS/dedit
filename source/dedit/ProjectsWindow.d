@@ -36,6 +36,7 @@ class ProjectsWindow
         this.controller = controller;
 
         win = Platform.instance.createWindow("dedit :: project mgr", null);
+        win.onClose = &onClose;
 
         tv = new StringGridWidgetWithTools("GRID1");
 
@@ -126,50 +127,42 @@ class ProjectsWindow
 
     JSONValue getSettings()
     {
-        auto x = new ProjectsWindowSettings();
+        auto rect = win.windowRect;
+        auto state = win.windowState;
 
-        /* win.getPosition(x.x, x.y); */
-        /* x.width = win.width;
-        x.height = win.height;
-        /* win.getSize(x.width, x.height); */
-        /* x.maximized = win.isMaximized(); */
+        auto ret = new ProjectsWindowSettings;
 
-        return x.toJSONValue();
+        ret.x = rect.left;
+        ret.y = rect.top;
+        ret.width = rect.right;
+        ret.height = rect.bottom;
+
+        ret.maximized = state == WindowState.maximized;
+
+        return ret.toJSONValue();
     }
 
     void setSettings(JSONValue value)
     {
+        auto settings = new ProjectsWindowSettings(value);
 
-        auto x = new ProjectsWindowSettings(value);
+        auto rect = Rect();
+        rect.top = settings.y;
+        rect.left = settings.x;
+        rect.right = settings.width;
+        rect.bottom = settings.height;
 
-        /* win.width = x.width;
-        win.height = x.height; */
+        win.moveAndResizeWindow(rect);
 
-        /* win.move(x.x, x.y);
-        win.resize(x.width, x.height);
-        if (x.maximized)
+        if (settings.maximized)
         {
-            win.maximize();
+            win.maximizeWindow();
         }
-        else
-        {
-            win.unmaximize();
-        } */
-
     }
 
-    /* void onWindowDestroy(Widget w)
+    void onClose()
     {
-        writeln("ProjectsWindow destroy");
-        controller.saveState();
-    } */
-
-    /* bool onDeleteEvent()
-    {
-        debug
-        {
-            writeln("ProjectsWindow delete");
-        }
+        writeln("ProjectsWindow close");
         foreach (i, c; controller.project_windows)
         {
             c.close();
@@ -184,9 +177,7 @@ class ProjectsWindow
         {
             writeln("No problems saving settings");
         }
-
-        return false;
-    } */
+    }
 
     bool onClickedBrowse(Widget btn)
     {
