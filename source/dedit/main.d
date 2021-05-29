@@ -14,5 +14,3 @@ extern (C) int UIAppMain(string[] args)
     auto editor_controller = new Controller();
     return editor_controller.main(args);
 }
-
-/* int main() { return 0;} */

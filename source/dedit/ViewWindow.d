@@ -97,6 +97,8 @@ class ViewWindow
 
     bool keep_settings_on_window_close = false;
 
+    bool close_called;
+
     this(ViewWindowSettings* settings)
     {
         this.settings = settings;
@@ -164,36 +166,40 @@ class ViewWindow
 
     void onClose()
     {
-        debug
+        if (!close_called)
         {
-            writeln("onClose() - View");
-        }
-        if (!keep_settings_on_window_close)
-        {
+            close_called = true;
+
             debug
             {
-                writeln("removing settings for view window: ", settings.window_uuid);
+                writeln("onClose() - View");
             }
-            settings.controller.delViewWindowSettings(settings.window_uuid);
-        }
-        else
-        {
-            saveSettings();
-        }
-        if (current_module_file_controller !is null)
-        {
-            // TODO: maybe is is better to call unsetSetup()
-            current_module_file_controller.destroy();
-            current_module_file_controller = null;
-        }
+            if (!keep_settings_on_window_close)
+            {
+                debug
+                {
+                    writeln("removing settings for view window: ", settings.window_uuid);
+                }
+                settings.controller.delViewWindowSettings(settings.window_uuid);
+            }
+            else
+            {
+                saveSettings();
+            }
+            if (current_module_file_controller !is null)
+            {
+                // TODO: maybe is is better to call unsetSetup()
+                current_module_file_controller.destroy();
+                current_module_file_controller = null;
+            }
 
-        auto i = settings.controller.view_windows.length - settings.controller.view_windows.find(this)
-            .length;
-        settings.controller.view_windows = settings.controller.view_windows.remove(i);
-
+            auto i = settings.controller.view_windows.length - settings.controller.view_windows.find(this)
+                .length;
+            settings.controller.view_windows = settings.controller.view_windows.remove(i);
+        }
     }
 
-    private Exception loadSettings()
+    Exception loadSettings()
     {
         debug
         {
@@ -215,26 +221,16 @@ class ViewWindow
             if (!x.isNull)
             {
                 auto window_uuid = x["window_uuid"].str;
-                /*{
-                    UUID x3;
-                    try
-                    {
-                        x3 = parseUUID(window_uuid);
-                    }
-                    catch (Exception)
-                    {
-                        return new Exception("invalid config format");
-                    }
-                    window_uuid = x3.toString();
-                } */
 
-                if ("x" in x && "y" in x)
+                if ("x" in x && "y" in x && "w" in x && "h" in x)
                 {
-                    /* window.move(cast(int)(x["x"].integer()), cast(int)(x["y"].integer())); */
-                }
-                if ("w" in x && "h" in x)
-                {
-                    /* window.resize(cast(int)(x["w"].integer()), cast(int)(x["h"].integer())); */
+                    auto rect = Rect();
+                    rect.top = cast(int)(x["y"].integer());
+                    rect.left = cast(int)(x["x"].integer());
+                    rect.bottom = cast(int)(x["h"].integer());
+                    rect.right = cast(int)(x["w"].integer());
+
+                    window.moveAndResizeWindow(rect);
                 }
 
                 if ("view_setup" in x && !x["view_setup"].isNull)
@@ -244,12 +240,6 @@ class ViewWindow
                         writeln("loading view_setup for window ", window_uuid);
                     }
                     auto y = x["view_setup"];
-
-                    /* ViewWindowContentSetup setup_o = {
-                        view_module_auto: false, project: settings.setup.project, filename: "filename" in y
-                            ? y["filename"].str() : "", view_module_to_use: "view_module_to_use" in y ? y["view_module_to_use"]
-                            .str() : "",
-                    }; */
 
                     auto setup_o = new ViewWindowContentSetup;
                     setup_o.view_module_auto = false;
@@ -271,7 +261,7 @@ class ViewWindow
         return cast(Exception) null;
     }
 
-    private Exception saveSettings()
+    Exception saveSettings()
     {
         debug
         {
@@ -300,15 +290,14 @@ class ViewWindow
 
         //val["view_module_setup"] = js_setup;
 
-        int x, y, w, h;
+        /* int x, y, w, h; */
 
-        /* window.getPosition(x, y); */
-        /* window.getSize(w, h); */
+        auto rect = window.windowRect;
 
-        val["x"] = JSONValue(x);
-        val["y"] = JSONValue(y);
-        val["w"] = JSONValue(w);
-        val["h"] = JSONValue(h);
+        val["x"] = JSONValue(rect.left);
+        val["y"] = JSONValue(rect.top);
+        val["w"] = JSONValue(rect.right);
+        val["h"] = JSONValue(rect.bottom);
 
         debug
         {

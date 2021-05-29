@@ -2,6 +2,7 @@ module dedit.ToolWidget;
 
 import core.sync.mutex;
 
+import std.stdio;
 import std.typecons;
 import std.json;
 
@@ -44,8 +45,9 @@ class ToolWidget
         /* main_box.packStart(tools_box, false, true, 0);
         main_box.packStart(children_box, true, true, 0); */
 
-        tool_selection_cb = new ComboBox("", controller.tool_widget_combobox_item_list);
+        tool_selection_cb = new ComboBox("", controller.tool_widget_combobox_item_list_titles);
         tool_selection_cb.layoutWidth(FILL_PARENT);
+        tool_selection_cb.selectedItemIndex = 0;
         /* tool_selection_cb.setIdColumn(0); */
 
         /* {
@@ -57,12 +59,44 @@ class ToolWidget
         tools_box.addChild(tool_selection_cb);
         /* tools_box.packStart(tool_selection_cb, false, false, 0); */
 
+        tool_selection_cb.itemClick = delegate bool(Widget wi, int index) {
+            auto id = controller.tool_widget_combobox_item_list[index];
+
+            writeln("itemSelected " ~ to!string(index) ~ ":" ~ id);
+
+            if (current_tool_widget !is null)
+            {
+                current_tool_widget.destroy();
+                current_tool_widget = null;
+                children_box.removeAllChildren();
+            }
+
+            if (index != 0)
+            {
+                auto twi = getToolWidgetInformation(id);
+                assert(twi !is null);
+                auto tw = twi.createToolWidget(controller);
+                assert(tw !is null);
+                auto w = tw.getWidget();
+                assert(w !is null);
+                assert(children_box.childCount == 0);
+                /* children_box.packStart(w, true, true, 0); */
+                children_box.addChild(w);
+                w.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
+                /* w.showAll(); */
+                current_tool_widget = tw;
+                current_tool_widget.setProject(project);
+            }
+
+            return true;
+        };
+
         /* tool_selection_cb.addOnChanged(delegate void(ComboBox cb) {
             auto id = cb.getActiveId();
 
             if (current_tool_widget !is null)
             {
-                current_tool_widget.destroy;
+                current_tool_widget.destroy();
                 current_tool_widget = null;
             }
 

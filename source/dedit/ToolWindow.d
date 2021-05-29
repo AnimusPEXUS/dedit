@@ -26,6 +26,8 @@ class ToolWindow
     // dedit 'projects mgr window' or project's main window.
     bool keep_settings_on_window_close = false;
 
+    bool close_called;
+
     this(Controller controller, string window_uuid, string project)
     {
         this.controller = controller;
@@ -53,29 +55,34 @@ class ToolWindow
 
     void onClose()
     {
-        debug
+        if (!close_called)
         {
-            writeln("onClose() - Tool");
-        }
-        if (!keep_settings_on_window_close)
-        {
+            close_called = true;
+
             debug
             {
-                writeln("removing settings for tool window: ", window_uuid);
+                writeln("onClose() - Tool");
             }
-            controller.delToolWindowSettings(window_uuid);
-        }
-        else
-        {
-            saveSettings();
-        }
-        if (tool_widget !is null)
-        {
-            tool_widget.destroy();
-        }
+            if (!keep_settings_on_window_close)
+            {
+                debug
+                {
+                    writeln("removing settings for tool window: ", window_uuid);
+                }
+                controller.delToolWindowSettings(window_uuid);
+            }
+            else
+            {
+                saveSettings();
+            }
+            if (tool_widget !is null)
+            {
+                tool_widget.destroy();
+            }
 
-        auto i = controller.tool_windows.length - controller.tool_windows.find(this).length;
-        controller.tool_windows = controller.tool_windows.remove(i);
+            auto i = controller.tool_windows.length - controller.tool_windows.find(this).length;
+            controller.tool_windows = controller.tool_windows.remove(i);
+        }
     }
 
     void setProject(string name)
@@ -88,7 +95,7 @@ class ToolWindow
         return tool_widget.getProject();
     }
 
-    private Exception loadSettings()
+    Exception loadSettings()
     {
         debug
         {
@@ -116,11 +123,13 @@ class ToolWindow
 
             if ("x" in x && "y" in x && "w" in x && "h" in x)
             {
-                auto rect = new Rect();
+                auto rect = Rect();
                 rect.top = cast(int)(x["y"].integer());
                 rect.left = cast(int)(x["x"].integer());
                 rect.bottom = cast(int)(x["h"].integer());
                 rect.right = cast(int)(x["w"].integer());
+
+                window.moveAndResizeWindow(rect);
             }
 
             if ("tool_name" in x)
@@ -136,7 +145,7 @@ class ToolWindow
         return cast(Exception) null;
     }
 
-    private Exception saveSettings()
+    Exception saveSettings()
     {
         debug
         {
@@ -153,11 +162,9 @@ class ToolWindow
         val["tool_name"] = r[0];
         val["project"] = tool_widget.project;
 
-        int x, y, w, h;
+        /* int x, y, w, h; */
 
         auto rect = window.windowRect;
-        /* window.getPosition(x, y); */
-        /* window.getSize(w, h); */
 
         val["x"] = JSONValue(rect.left);
         val["y"] = JSONValue(rect.top);

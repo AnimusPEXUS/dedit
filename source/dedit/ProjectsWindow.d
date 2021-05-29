@@ -29,6 +29,8 @@ class ProjectsWindow
         /* Button btn_open; */
 
         Controller controller;
+
+        bool close_called = false;
     }
 
     this(Controller controller)
@@ -160,22 +162,19 @@ class ProjectsWindow
         }
     }
 
+    void close()
+    {
+        win.close();
+    }
+
     void onClose()
     {
-        writeln("ProjectsWindow close");
-        foreach (i, c; controller.project_windows)
+        if (!close_called)
         {
-            c.close();
-        }
-        controller.projects_window_settings = getSettings();
-        auto res = controller.saveSettings();
-        if (res !is null)
-        {
-            writeln("Error while saving settings:", res);
-        }
-        else
-        {
-            writeln("No problems saving settings");
+            close_called = true;
+            writeln("ProjectsWindow close");
+            saveSettings();
+            controller.close();
         }
     }
 

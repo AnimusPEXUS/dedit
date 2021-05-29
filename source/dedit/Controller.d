@@ -41,12 +41,31 @@ class Controller
     // ViewWindowSettings[string] window_settings;
 
     ProjectsWindow projects_window;
-    JSONValue projects_window_settings;
+    /* JSONValue projects_window_settings; */
     // string font;
 
+    // TODO: move this toto builtintoolwidgets.d as mixins
     string[] tool_widget_combobox_item_list;
+    string[] tool_widget_combobox_item_list_titles;
 
     JSONValue settings;
+
+    bool close_called;
+
+    this()
+    {
+        tool_widget_combobox_item_list ~= "";
+        tool_widget_combobox_item_list_titles ~= "";
+        foreach (i, v; builtinToolWidgets)
+        {
+            tool_widget_combobox_item_list ~= v.name;
+            tool_widget_combobox_item_list_titles ~= v.displayName;
+            /* auto ti = new TreeIter;
+            tool_widget_combobox_item_list.append(ti);
+            tool_widget_combobox_item_list.setValue(ti, 0, new Value(v.name));
+            tool_widget_combobox_item_list.setValue(ti, 1, new Value(v.displayName)); */
+        }
+    }
 
     int main(string[] args)
     {
@@ -62,16 +81,6 @@ class Controller
             tool_widget_combobox_item_list.setValue(ti, 0, new Value(""));
             tool_widget_combobox_item_list.setValue(ti, 1, new Value("(not selected)"));
         }*/
-
-        tool_widget_combobox_item_list ~= "";
-        foreach (i, v; builtinToolWidgets)
-        {
-            tool_widget_combobox_item_list ~= v.name;
-            /* auto ti = new TreeIter;
-            tool_widget_combobox_item_list.append(ti);
-            tool_widget_combobox_item_list.setValue(ti, 0, new Value(v.name));
-            tool_widget_combobox_item_list.setValue(ti, 1, new Value(v.displayName)); */
-        }
 
         loadSettings();
 
@@ -89,6 +98,8 @@ class Controller
 
         string j = settings.toJSON(true);
 
+        writeln(j);
+
         try
         {
             mkdir(dirName(settingsPath));
@@ -96,7 +107,7 @@ class Controller
         catch (Exception)
         {
             // NOTE: not an error
-            return cast(Exception) null;
+            /* return cast(Exception) null; */
         }
 
         try
@@ -146,7 +157,7 @@ class Controller
             settings["font"] = "Go Mono 10";
         }
 
-        foreach (size_t index, v; ["projects", "projects_windows_settings"])
+        foreach (size_t index, v; ["projects", "project_window_settings"])
         {
             if (v !in settings || settings[v].type() != JSONType.object)
             {
@@ -185,7 +196,7 @@ class Controller
 
     Tuple!(JSONValue, Exception) getProjectWindowSettings(string name)
     {
-        return getWindowSettings("projects_windows_settings", name);
+        return getWindowSettings("project_window_settings", name);
     }
 
     Tuple!(JSONValue, Exception) getWindowSettings(string window_settings_type, string name)
@@ -204,7 +215,7 @@ class Controller
 
     void setProjectWindowSettings(string name, JSONValue value)
     {
-        return setWindowSettings("projects_windows_settings", name, value);
+        return setWindowSettings("project_window_settings", name, value);
     }
 
     void setWindowSettings(string window_settings_type, string name, JSONValue value)
@@ -391,28 +402,6 @@ class Controller
         return cast(Exception) null;
     }
 
-    void openNewView(string project, string filename, string uri)
-    {
-        auto y = new ViewWindowContentSetup;
-
-        /* (*y) = {
-            view_module_auto: true, view_module_auto_mode: ViewModuleAutoMode.BY_EXTENSION,
-            project: project, filename: filename}; */
-
-        y.view_module_auto = true;
-        y.view_module_auto_mode = ViewModuleAutoMode.BY_EXTENSION;
-        y.project = project;
-        y.filename = filename;
-
-        auto options = new ViewWindowSettings;
-        options.controller = this;
-        options.setup = y;
-
-        auto w = new ViewWindow(options);
-
-        w.show();
-    }
-
     Tuple!(FileController, Exception) getOrCreateFileController(string project,
             string filename, bool create_if_absent = true,)
     {
@@ -481,23 +470,70 @@ class Controller
         return tuple(ret, cast(Exception) null);
     }
 
-    void openNewViewOrExisting(string cr)
+    ViewWindow openNewView(string project, string filename)
     {
-
         auto y = new ViewWindowContentSetup;
+
         y.view_module_auto = true;
-        /* y.view_mode_auto_mode = ViewModuleAutoMode.BY_EXTENSION; */
-        /* y.file_mode = ViewWindowMode.PROJECT_FILE; */
-        /* y.project = project; */
-        /* y.filename = cr; */
+        y.view_module_auto_mode = ViewModuleAutoMode.BY_EXTENSION;
+        y.project = project;
+        y.filename = filename;
 
-        auto x = new ViewWindowSettings;
-        x.controller = this;
-        x.setup = y;
+        auto options = new ViewWindowSettings;
+        options.controller = this;
+        options.setup = y;
 
-        auto w = new ViewWindow(x);
+        auto w = new ViewWindow(options);
 
         w.show();
+        w.present();
+        return w;
+    }
+
+    ViewWindow openNewViewOrExisting(string project, string filename)
+    {
+        foreach (size_t i, ref ViewWindow v; view_windows)
+        {
+            if (v.settings.setup.project == project && v.settings.setup.filename == filename)
+            {
+                v.show();
+                v.present();
+                return v;
+            }
+        }
+
+        return openNewView(project, filename);
+    }
+
+    Exception close()
+    {
+        if (!close_called)
+        {
+
+            foreach (i, c; project_windows)
+            {
+                c.saveSettings();
+                c.close();
+            }
+
+            foreach (i, c; tool_windows)
+            {
+                c.saveSettings();
+                c.close();
+            }
+
+            foreach (i, c; view_windows)
+            {
+                c.saveSettings();
+                c.close();
+            }
+
+            projects_window.saveSettings();
+            projects_window.close();
+
+            saveSettings();
+        }
+        return cast(Exception) null;
     }
 
 }

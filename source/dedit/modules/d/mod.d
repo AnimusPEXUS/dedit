@@ -85,21 +85,15 @@ string formatWholeBufferText(string txt)
 
 }
 
-const dedit.moduleinterface.ModuleInformation ModuleInformation =
-{
-    name: "D",
-    supportedExtensions: [".d"],
-    /* ModuleFileController function(Controller c, FileController file_controller) createModuleController; */
-    createModuleController: function ModuleFileController(
-            Controller controller,
-             FileController file_controller,
-             ) {
+const dedit.moduleinterface.ModuleInformation ModuleInformation = {
+    name: "D", supportedExtensions: [".d"], /* ModuleFileController function(Controller c, FileController file_controller) createModuleController; */
+    createModuleController: function ModuleFileController(Controller controller,
+                FileController file_controller,) {
         auto settings = new TypicalModuleFileControllerTextSettings;
         settings.controller = controller;
         settings.file_controller = file_controller;
-        settings.module_information =
-            cast(
-                    dedit.moduleinterface.ModuleInformation*)&ModuleInformation;
+        settings.module_information = cast(
+                dedit.moduleinterface.ModuleInformation*)&ModuleInformation;
         // settings.module_information = cast(dedit.moduleinterface.ModuleInformation*)&ModuleInformation;
         /* settings.applyLanguageSettingsToSourceView = toDelegate(&applyLanguageSettingsToSourceView); */
         /* settings.applyLanguageSettingsToSourceBuffer = toDelegate(

@@ -43,6 +43,10 @@ const dedit.toolwidgetinterface.ToolWidgetInformation ToolProjectFilesWidgetInfo
             main_box = new VerticalLayout();
 
             filebrowser = new FileTreeView();
+            filebrowser.itemActivated = &itemActivated;
+            auto w = filebrowser.getWidget();
+            w.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
+            main_box.addChild(w);
             /* filebrowser.addOnRowActivated(&onFileListViewActivated); */
 
             /* auto filebrowser_widget = filebrowser.getWidget(); */
@@ -50,20 +54,24 @@ const dedit.toolwidgetinterface.ToolWidgetInformation ToolProjectFilesWidgetInfo
             /* main_box.packStart(filebrowser_widget, true, true, 0); */
         }
 
-        /* void onFileListViewActivated(TreePath tp, TreeViewColumn tvc, TreeView tv)
+        void itemActivated(TreeItem ti)
         {
-
-            if (filebrowser.isDir(tp))
+            if (filebrowser.isDir(ti))
             {
-                filebrowser.loadByTreePath(tp);
-                filebrowser.expandByTreePath(tp);
+                filebrowser.loadByTreeItem(ti);
+                filebrowser.expandByTreeItem(ti);
             }
             else
             {
-                auto filename = filebrowser.convertTreePathToFilePath(tp);
-                this.controller.openNewView(this.project, filename, "");
+                auto filename = filebrowser.convertTreeItemToFilePath(ti);
+                debug
+                {
+                    writeln("filebrowser.convertTreeItemToFilePath returned path ", filename);
+                }
+                // TODO: openNewViewOrExisting or openNewView?
+                this.controller.openNewViewOrExisting(this.project, filename);
             }
-        } */
+        }
 
         ToolWidgetInformation* getToolWidgetInformation()
         {
@@ -79,7 +87,7 @@ const dedit.toolwidgetinterface.ToolWidgetInformation ToolProjectFilesWidgetInfo
                 return pth[1];
             }
 
-            /* filebrowser.setRootDirectory(pth[0]); */
+            filebrowser.setRootDirectory(pth[0]);
 
             return cast(Exception) null;
         }

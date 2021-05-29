@@ -29,6 +29,8 @@ class ProjectWindow
 
     Window window;
 
+    bool close_called;
+
     this(Controller controller, string project)
     {
         this.controller = controller;
@@ -86,7 +88,7 @@ class ProjectWindow
                 }
             }
 
-            /* debug
+            debug
             {
                 writeln("searching for saved ToolWindow settings");
             }
@@ -95,44 +97,49 @@ class ProjectWindow
                 if (v["project"].str() == project && "tool_name" in v && "window_uuid" in v)
                 {
                     writeln("found settings for tool window: ", v["window_uuid"].str());
-                    auto tw = new ToolWindow(controller, v["window_uuid"].str());
+                    auto tw = new ToolWindow(controller, v["window_uuid"].str(), project);
                     tw.show();
-                    tw.setProject(project);
                 }
-            } */
+            }
         }
 
     }
 
     void onClose()
     {
-        debug
+        if (!close_called)
         {
-            writeln("onClose() - Project");
-        }
+            close_called = true;
 
-        saveSettings();
-
-        foreach (size_t k, ToolWindow v; controller.tool_windows)
-        {
-            if (v.getProject() == project)
+            debug
             {
-                v.keep_settings_on_window_close = true;
-                v.getWindow().close();
+                writeln("onClose() - Project");
             }
-        }
 
-        foreach (size_t k, ViewWindow v; controller.view_windows)
-        {
-            if (v.settings !is null && v.settings.setup && v.settings.setup.project == project)
+            saveSettings();
+
+            foreach (size_t k, ToolWindow v; controller.tool_windows)
             {
-                v.keep_settings_on_window_close = true;
-                v.getWindow().close();
+                if (v.getProject() == project)
+                {
+                    v.keep_settings_on_window_close = true;
+                    v.getWindow().close();
+                }
             }
-        }
 
-        auto i = controller.project_windows.length - controller.project_windows.find(this).length;
-        controller.project_windows = controller.project_windows.remove(i);
+            foreach (size_t k, ViewWindow v; controller.view_windows)
+            {
+                if (v.settings !is null && v.settings.setup && v.settings.setup.project == project)
+                {
+                    v.keep_settings_on_window_close = true;
+                    v.getWindow().close();
+                }
+            }
+
+            auto i = controller.project_windows.length - controller.project_windows.find(this)
+                .length;
+            controller.project_windows = controller.project_windows.remove(i);
+        }
     }
 
     Tuple!(string, Exception) getPath()
