@@ -479,11 +479,7 @@ class Controller
         y.project = project;
         y.filename = filename;
 
-        auto options = new ViewWindowSettings;
-        options.controller = this;
-        options.setup = y;
-
-        auto w = new ViewWindow(options);
+        auto w = new ViewWindow(this, "", y);
 
         w.show();
         w.present();
@@ -494,7 +490,7 @@ class Controller
     {
         foreach (size_t i, ref ViewWindow v; view_windows)
         {
-            if (v.settings.setup.project == project && v.settings.setup.filename == filename)
+            if (v.project == project && v.filename == filename)
             {
                 v.show();
                 v.present();

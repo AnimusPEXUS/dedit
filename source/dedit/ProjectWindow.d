@@ -129,7 +129,7 @@ class ProjectWindow
 
             foreach (size_t k, ViewWindow v; controller.view_windows)
             {
-                if (v.settings !is null && v.settings.setup && v.settings.setup.project == project)
+                if (v.project == project)
                 {
                     v.keep_settings_on_window_close = true;
                     v.getWindow().close();
