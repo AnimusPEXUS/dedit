@@ -92,6 +92,7 @@ class ProjectWindow
             {
                 writeln("searching for saved ToolWindow settings");
             }
+
             foreach (size_t k, JSONValue v; controller.settings["tool_windows_settings"].array())
             {
                 if (v["project"].str() == project && "tool_name" in v && "window_uuid" in v)
@@ -99,6 +100,21 @@ class ProjectWindow
                     writeln("found settings for tool window: ", v["window_uuid"].str());
                     auto tw = new ToolWindow(controller, v["window_uuid"].str(), project);
                     tw.show();
+                }
+            }
+
+            debug
+            {
+                writeln("searching for saved ViewWindow settings");
+            }
+
+            foreach (size_t k, JSONValue v; controller.settings[VIEW_WINDOWS_SETTINGS_STR].array())
+            {
+                if (v["project"].str() == project && "window_uuid" in v)
+                {
+                    writeln("found settings for view window: ", v["window_uuid"].str());
+                    auto vw = new ViewWindow(controller, v["window_uuid"].str(), null);
+                    vw.show();
                 }
             }
         }

@@ -119,13 +119,17 @@ class ViewWindow
         window.onClose = &onClose;
 
         auto view_module_grid = new TableLayout();
+        /* view_module_grid.fontSize = 9; */
         view_module_grid.colCount(2);
 
-        view_module_grid.addChild(new TextWidget().text = "project:"d);
-        view_module_grid.addChild(view_module_project = new TextWidget);
+        view_module_grid.addChild(new TextWidget().text("project:"d).fontSize(9));
+        view_module_grid.addChild(view_module_project = new TextWidget());
 
-        view_module_grid.addChild(new TextWidget().text = "file:"d);
-        view_module_grid.addChild(view_module_filename = new TextWidget);
+        view_module_grid.addChild(new TextWidget().text("file:"d).fontSize(9));
+        view_module_grid.addChild(view_module_filename = new TextWidget());
+
+        view_module_project.fontSize(9);
+        view_module_filename.fontSize(9);
 
         main_menu = new ViewWindowMainMenu(this);
 
@@ -139,10 +143,12 @@ class ViewWindow
         menu_box.addChild(view_module_grid);
 
         root_box = new VerticalLayout;
+        root_box.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
         window.mainWidget = root_box;
 
         root_box.addChild(menu_box);
         root_box.addChild(view_box = new VerticalLayout);
+        view_box.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
 
         if (apply_setup)
         {
@@ -155,7 +161,6 @@ class ViewWindow
         }
 
         controller.view_windows ~= this;
-
     }
 
     ~this()
@@ -185,6 +190,7 @@ class ViewWindow
             {
                 saveSettings();
             }
+
             if (current_module_file_controller !is null)
             {
                 // TODO: maybe is is better to call unsetSetup()
@@ -192,8 +198,17 @@ class ViewWindow
                 current_module_file_controller = null;
             }
 
-            auto i = controller.view_windows.length - controller.view_windows.find(this).length;
-            controller.view_windows = controller.view_windows.remove(i);
+            foreach_reverse (size_t i, ref ViewWindow w; controller.view_windows)
+            {
+                if (w == this)
+                {
+                    controller.view_windows = controller.view_windows[0 .. i]
+                        ~ controller.view_windows[i + 1 .. $];
+                }
+            }
+
+            /* auto i = controller.view_windows.length - controller.view_windows.find(this).length;
+            controller.view_windows = controller.view_windows.remove(i); */
         }
     }
 
@@ -231,28 +246,27 @@ class ViewWindow
                     window.moveAndResizeWindow(rect);
                 }
 
-                if ("view_setup" in x && !x["view_setup"].isNull)
+                this.project = x["project"].str;
+                this.filename = x["filename"].str;
+
+                debug
                 {
-                    debug
-                    {
-                        writeln("loading view_setup for window ", window_uuid);
-                    }
-                    auto y = x["view_setup"];
+                    writeln("loading view_setup for window ", window_uuid);
+                }
+                /* auto y = x["view_setup"]; */
 
-                    auto setup_o = new ViewWindowContentSetup;
-                    setup_o.view_module_auto = false;
-                    setup_o.project = project;
-                    setup_o.filename = "filename" in y ? y["filename"].str() : "";
-                    setup_o.view_module_to_use = "view_module_to_use" in y
-                        ? y["view_module_to_use"].str() : "";
+                auto setup_o = new ViewWindowContentSetup;
+                setup_o.view_module_auto = false;
+                setup_o.project = project;
+                setup_o.filename = filename;
+                setup_o.view_module_to_use = "view_module_to_use" in x
+                    ? x["view_module_to_use"].str() : "";
 
-                    setSetup(setup_o);
+                setSetup(setup_o);
 
-                    if ("view_setup_settings" in y && current_module_file_controller !is null)
-                    {
-                        current_module_file_controller.getView()
-                            .setSettings(y["view_setup_settings"]);
-                    }
+                if ("view_setup_settings" in x && current_module_file_controller !is null)
+                {
+                    current_module_file_controller.getView().setSettings(x["view_setup_settings"]);
                 }
             }
         }
@@ -270,21 +284,20 @@ class ViewWindow
 
         //auto js_setup = cast(JSONValue) getSetup();
 
-        auto view_setup = JSONValue(cast(JSONValue[string]) null);
+        /* auto view_setup = JSONValue(cast(JSONValue[string]) null); */
+
+        /* val["view_setup"] = view_setup; */
+        val["window_uuid"] = window_uuid;
+        val["project"] = project;
+        val["filename"] = filename;
+        /* val["view_module_to_use"] = current_module_file_controller is null ? "" : current_module_file_controller.getModInfo().name; */
 
         if (current_module_file_controller !is null)
         {
             auto info = current_module_file_controller.getModInfo();
-            view_setup["view_module_to_use"] = info.name;
-            view_setup["filename"] = current_module_file_controller.getFileController()
-                .settings.filename;
-            view_setup["view_setup_settings"] = current_module_file_controller.getView()
-                .getSettings();
+            val["view_module_to_use"] = info.name;
+            val["view_setup_settings"] = current_module_file_controller.getView().getSettings();
         }
-
-        val["view_setup"] = view_setup;
-        val["window_uuid"] = window_uuid;
-        val["project"] = project;
 
         //val["view_module_setup"] = js_setup;
 

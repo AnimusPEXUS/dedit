@@ -17,8 +17,13 @@ import dedit.ViewWindow;
 import dedit.OutlineTool;
 import dedit.TypicalModuleFileControllerText;
 
-void applyLanguageSettingsToSourceView(SourceEdit sv)
+void applyLanguageSettingsToSourceView(TypicalModuleFileControllerText tmfct, SourceEdit sv)
 {
+    tmfct.settings.controller.setFontOnSourceEdit(sv);
+    sv.smartIndents = true;
+    sv.tabSize = 4;
+    sv.useSpacesForTabs=true;
+    sv.wantTabs=true;
     /* sv.setAutoIndent(true); */
     /* sv.setDrawSpaces(DrawSpacesFlags.ALL); */
     /* sv.setHighlightCurrentLine(true);
@@ -38,7 +43,7 @@ void applyLanguageSettingsToSourceView(SourceEdit sv)
     /* sb.setLanguage(SourceLanguageManager.getDefault().getLanguage("d")); * /
 } */
 
-string formatWholeBufferText(string txt)
+string formatWholeBufferText(TypicalModuleFileControllerText tmfct, string txt)
 {
     import std.array;
     import dfmt.config : Config;
@@ -94,10 +99,10 @@ const dedit.moduleinterface.ModuleInformation ModuleInformation = {
         settings.file_controller = file_controller;
         settings.module_information = cast(
                 dedit.moduleinterface.ModuleInformation*)&ModuleInformation;
-        // settings.module_information = cast(dedit.moduleinterface.ModuleInformation*)&ModuleInformation;
-        /* settings.applyLanguageSettingsToSourceView = toDelegate(&applyLanguageSettingsToSourceView); */
+        settings.applyLanguageSettingsToSourceView = toDelegate(&applyLanguageSettingsToSourceView);
         /* settings.applyLanguageSettingsToSourceBuffer = toDelegate(
                 &applyLanguageSettingsToSourceBuffer); */
+        /* settings.formatWholeBufferText = toDelegate(&formatWholeBufferText); */
         settings.formatWholeBufferText = toDelegate(&formatWholeBufferText);
 
         auto ret = new TypicalModuleFileControllerText(settings);

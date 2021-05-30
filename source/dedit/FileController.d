@@ -60,7 +60,8 @@ class FileController
                 {
                     throw pp[1];
                 }
-                if (!settings.filename.absolutePath().startsWith(pp[0] ~ "/"))
+                if (!dutils.path.join([pp[0], settings.filename])
+                        .absolutePath().startsWith(pp[0] ~ "/"))
                 {
                     throw new Exception("supplied filename is outside project's path");
                 }
@@ -103,10 +104,10 @@ class FileController
             return tuple("", chars[1]);
         }
         auto ret = cast(string) chars[0];
-        debug
+        /* debug
         {
             writeln("getString result", ret);
-        }
+        } */
         return tuple(ret, cast(Exception) null);
     }
 

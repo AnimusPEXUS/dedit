@@ -70,12 +70,12 @@ struct TypicalModuleFileControllerTextSettings
     FileController file_controller;
 
     dedit.moduleinterface.ModuleInformation* module_information;
-    void delegate(SourceEdit sv) applyLanguageSettingsToSourceView;
+    void delegate(TypicalModuleFileControllerText tmfct, SourceEdit sv) applyLanguageSettingsToSourceView;
     /* void delegate(SourceBuffer sb) applyLanguageSettingsToSourceBuffer; */
-    string delegate(string txt) formatWholeBufferText;
+    string delegate(TypicalModuleFileControllerText tmfct, string txt) formatWholeBufferText;
     OutlineToolInputData* delegate(string txt) prepareDataForOutlineTool;
-    string delegate(string txt) comment;
-    string delegate(string txt) uncomment;
+    string delegate(TypicalModuleFileControllerText tmfct, string txt) comment;
+    string delegate(TypicalModuleFileControllerText tmfct, string txt) uncomment;
 
     ~this()
     {
@@ -265,7 +265,7 @@ class Buffer : ModuleControllerBuffer
     void format()
     {
         ubyte[] bt = cast(ubyte[])(to!string(buff.text));
-        auto res = this.tmfct.settings.formatWholeBufferText(cast(string) bt);
+        auto res = this.tmfct.settings.formatWholeBufferText(tmfct, cast(string) bt);
         buff.text = to!dstring(res);
     }
 
@@ -352,7 +352,7 @@ class View : ModuleControllerView
 
     /* Paned paned; */
 
-    HorizontalLayout paned;
+    HorizontalLayout layout;
 
     SourceEdit sv;
     EditableContent sb;
@@ -366,13 +366,16 @@ class View : ModuleControllerView
     {
         this.tmfct = tmfct;
 
-        paned = new HorizontalLayout;
-        /* paned = new Paned(GtkOrientation.HORIZONTAL); */
+        layout = new HorizontalLayout;
+        layout.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
 
-        /* sb = new SourceBuffer(cast(GtkSourceBuffer*) null); */
         sv = new SourceEdit();
-        paned.addChild(sv);
-        /* this.tmfct.settings.applyLanguageSettingsToSourceView(sv); */
+        sv.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
+        layout.addChild(sv);
+        if (tmfct.settings.applyLanguageSettingsToSourceView !is null)
+        {
+            tmfct.settings.applyLanguageSettingsToSourceView(tmfct, sv);
+        }
         /* {
             auto fd = PgFontDescription.fromString(
                     this.tmfct.settings.controller.settings["font"].str());
@@ -410,7 +413,7 @@ class View : ModuleControllerView
 
     Widget getWidget()
     {
-        return paned;
+        return layout;
     }
 
     JSONValue getSettings()
@@ -487,34 +490,35 @@ class ViewSettings
 
     JSONValue toJSONValue()
     {
-        JSONValue ret = JSONValue(cast(string[string]) null);
-        ret.object["cursor_line"] = JSONValue(cursor_line);
-        ret.object["cursor_column"] = JSONValue(cursor_column);
-        ret.object["scroll_position"] = JSONValue(scroll_position);
-        ret.object["right_paned_position"] = JSONValue(right_paned_position);
+        /* JSONValue ret = JSONValue(cast(JSONValue[string]) null); */
+        JSONValue ret = JSONValue();
+        /* ret["cursor_line"] = JSONValue(cursor_line);
+        ret["cursor_column"] = JSONValue(cursor_column);
+        ret["scroll_position"] = JSONValue(scroll_position);
+        ret["right_paned_position"] = JSONValue(right_paned_position); */
         return ret;
     }
 
     bool fromJSONValue(JSONValue v)
     {
-        if (v.type != JSONType.object)
+        /* if (v.type != JSONType.object)
         {
             return false;
         }
 
-        if ("cursor_line" in v.object)
+        if ("cursor_line" in v)
         {
-            cursor_line = cast(int) v.object["cursor_line"].integer;
+            cursor_line = cast(int) v["cursor_line"].integer;
         }
 
-        if ("cursor_column" in v.object)
+        if ("cursor_column" in v.)
         {
-            cursor_column = cast(int) v.object["cursor_column"].integer;
+            cursor_column = cast(int) v["cursor_column"].integer;
         }
 
-        if ("right_paned_position" in v.object)
+        if ("right_paned_position" in v)
         {
-            right_paned_position = cast(int) v.object["right_paned_position"].integer;
+            right_paned_position = cast(int) v["right_paned_position"].integer;
         }
 
         if (right_paned_position < 300)
@@ -522,23 +526,23 @@ class ViewSettings
             right_paned_position = 300;
         }
 
-        if ("scroll_position" in v.object)
+        if ("scroll_position" in v)
         {
             // writeln("scroll_position type ", v.object["scroll_position"].type);
-            switch (v.object["scroll_position"].type)
+            switch (v["scroll_position"].type)
             {
             default:
                 break;
             case JSONType.integer:
-                scroll_position = cast(double) v.object["scroll_position"].integer;
+                scroll_position = cast(double) v["scroll_position"].integer;
                 break;
             case JSONType.float_:
-                scroll_position = v.object["scroll_position"].floating;
+                scroll_position = v["scroll_position"].floating;
                 break;
 
             }
 
-        }
+        } */
 
         return true;
     }

@@ -75,13 +75,23 @@ class ToolWindow
             {
                 saveSettings();
             }
+
             if (tool_widget !is null)
             {
                 tool_widget.destroy();
             }
 
-            auto i = controller.tool_windows.length - controller.tool_windows.find(this).length;
-            controller.tool_windows = controller.tool_windows.remove(i);
+            foreach_reverse (size_t i, ref ToolWindow w; controller.tool_windows)
+            {
+                if (w == this)
+                {
+                    controller.tool_windows = controller.tool_windows[0 .. i]
+                        ~ controller.tool_windows[i + 1 .. $];
+                }
+            }
+
+            /* auto i = controller.tool_windows.length - controller.tool_windows.find(this).length;
+            controller.tool_windows = controller.tool_windows.remove(i); */
         }
     }
 
@@ -142,6 +152,7 @@ class ToolWindow
                 }
             }
         }
+        window.requestLayout();
         return cast(Exception) null;
     }
 

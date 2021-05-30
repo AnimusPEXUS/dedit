@@ -21,6 +21,14 @@ import dedit.moduleinterface;
 import dedit.builtinmodules;
 import dedit.builtintoolwidgets;
 
+const VIEW_WINDOWS_SETTINGS_STR = "view_windows_settings";
+
+/* struct EditorPreferences {
+    string fontFamily = "Go Mono";
+    FontFamily fontFamily = FontFamily.
+    int fontSize;
+} */
+
 class Controller
 {
 
@@ -91,6 +99,12 @@ class Controller
         window.show();
 
         return Platform.instance.enterMessageLoop();
+    }
+
+    void setFontOnSourceEdit(SourceEdit se) {
+        se.fontFace("Go Mono");
+        se.fontFamily(FontFamily.MonoSpace);
+        se.fontSize(10);
     }
 
     Exception saveSettings()
@@ -166,7 +180,7 @@ class Controller
         }
 
         foreach (size_t index, v; [
-                "view_windows_settings", "tool_windows_settings"
+                VIEW_WINDOWS_SETTINGS_STR, "tool_windows_settings"
             ])
         {
             if (v !in settings || settings[v].type() != JSONType.array)
@@ -237,25 +251,19 @@ class Controller
 
     ProjectWindow createNewOrGetExistingProjectWindow(string project)
     {
-        ProjectWindow ret;
-        foreach (size_t index, w; project_windows)
+        foreach (size_t index, ref w; project_windows)
         {
             if (w.project == project)
             {
-                ret = w;
-                break;
+                return w;
             }
         }
-        if (ret is null)
-        {
-            ret = createNewProjectWindow(project);
-        }
-        return ret;
+        return createNewProjectWindow(project);
     }
 
     Exception setViewWindowSettings(JSONValue value)
     {
-        return setProjectSubwindowSettings("view_windows_settings", value);
+        return setProjectSubwindowSettings(VIEW_WINDOWS_SETTINGS_STR, value);
     }
 
     Exception setToolWindowSettings(JSONValue value)
@@ -328,7 +336,7 @@ class Controller
         {
             if (!found)
             {
-                writeln("couldn't find existing settings in tool_windows_settings for window ",
+                writeln("couldn't find existing settings in " ~ subwindow_settings_type ~ " for window ",
                         window_uuid);
             }
         }
@@ -348,7 +356,7 @@ class Controller
 
     Tuple!(JSONValue, Exception) getViewWindowSettings(string window_uuid)
     {
-        return getProjectSubwindowSettings("view_windows_settings", window_uuid);
+        return getProjectSubwindowSettings(VIEW_WINDOWS_SETTINGS_STR, window_uuid);
     }
 
     Tuple!(JSONValue, Exception) getToolWindowSettings(string window_uuid)
@@ -376,7 +384,7 @@ class Controller
 
     Exception delViewWindowSettings(string window_uuid)
     {
-        return delProjectSubwindowSettings("view_windows_settings", window_uuid);
+        return delProjectSubwindowSettings(VIEW_WINDOWS_SETTINGS_STR, window_uuid);
     }
 
     Exception delToolWindowSettings(string window_uuid)
@@ -505,21 +513,25 @@ class Controller
     {
         if (!close_called)
         {
+            close_called = true;
 
-            foreach (i, c; project_windows)
+            foreach (i, ref c; tool_windows)
             {
+                c.keep_settings_on_window_close = true;
                 c.saveSettings();
                 c.close();
             }
 
-            foreach (i, c; tool_windows)
+            foreach (i, ref c; view_windows)
             {
+                c.keep_settings_on_window_close = true;
                 c.saveSettings();
                 c.close();
             }
 
-            foreach (i, c; view_windows)
+            foreach (i, ref c; project_windows)
             {
+                /* c.keep_settings_on_window_close = true; */
                 c.saveSettings();
                 c.close();
             }
