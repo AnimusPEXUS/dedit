@@ -6,7 +6,7 @@
 	"dependencies": {
 		"dfmt": "~>0.13.2",
 		"dutils": "~>0",
-		"gtk-d": "~>3.9.0"
+		"gtk-d": "~master"
 	},
 	"description": "code editor",
 	"license": "gplv3",

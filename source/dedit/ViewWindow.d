@@ -454,11 +454,12 @@ class ViewWindow
             current_module_file_controller = null;
         }
 
-        while (view_box.children.length != 0)
+        view_box.removeAll();
+        /* while (view_box.children.length != 0)
         {
             auto x = view_box.children[0];
             x.destroy();
-        }
+        } */
 
         auto x = new Label(LABEL_TEXT_FILE_NOT_OPENED);
         view_box.packStart(x, true, true, 0);

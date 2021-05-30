@@ -67,7 +67,7 @@ class ToolWidget
                 assert(tw !is null);
                 auto w = tw.getWidget();
                 assert(w !is null);
-                assert(children_box.children.length == 0);
+                assert(children_box.getChildren().length() == 0);
                 children_box.packStart(w, true, true, 0);
                 w.showAll();
                 current_tool_widget = tw;
