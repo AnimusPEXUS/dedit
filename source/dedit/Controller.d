@@ -6,15 +6,17 @@ import std.path;
 import std.stdio;
 import std.typecons;
 import std.uuid;
+import std.algorithm;
 
 import dlangui;
+
+import dutils.path;
 
 import dedit.ProjectWindow;
 
 import dedit.ViewWindow;
 import dedit.ToolWindow;
 import dedit.ProjectsWindow;
-import dedit.FileController;
 
 import dedit.moduleinterface;
 
@@ -39,8 +41,6 @@ class Controller
     ProjectWindow[] project_windows;
     ViewWindow[] view_windows;
     ToolWindow[] tool_windows;
-
-    FileController[] file_controllers;
 
     // TODO: leaving this for a future. for now, I'll will not implement buffer reusage.
     //       maybe in future..
@@ -101,7 +101,8 @@ class Controller
         return Platform.instance.enterMessageLoop();
     }
 
-    void setFontOnSourceEdit(SourceEdit se) {
+    void setFontOnSourceEdit(SourceEdit se)
+    {
         se.fontFace("Go Mono");
         se.fontFamily(FontFamily.MonoSpace);
         se.fontSize(10);
@@ -410,58 +411,26 @@ class Controller
         return cast(Exception) null;
     }
 
-    Tuple!(FileController, Exception) getOrCreateFileController(string project,
-            string filename, bool create_if_absent = true,)
+    Tuple!(ModuleController, Exception) createModuleController(string project, string filename)
     {
-        auto new_object = new FileController(this, project, filename);
 
-        auto res = new_object.getFilename();
+        auto res = calculateRealFilenameByProjectAndFilename(project, filename);
         if (res[1]!is null)
         {
-            return tuple(cast(FileController) null, res[1]);
+            return tuple(cast(ModuleController) null, res[1]);
         }
 
-        FileController ret;
+        auto valid_filename = res[0];
 
-        foreach (k, FileController v; file_controllers)
-        {
-            auto res2 = v.getFilename();
-            if (res2[1]!is null)
-            {
-                // ignorring faulty object
-                continue;
-            }
-
-            if (res2[0] == res[0])
-            {
-                ret = v;
-                break;
-            }
-        }
-
-        if (ret is null && create_if_absent)
-        {
-            ret = new_object;
-            file_controllers ~= new_object;
-        }
-
-        return tuple(ret, cast(Exception) null);
-    }
-
-    Tuple!(ModuleFileController, Exception) createModuleFileController(
-            FileController file_controller)
-    {
-        assert(file_controller !is null);
-
-        auto m = determineModuleByFileExtension(file_controller.settings.filename);
+        auto m = determineModuleByFileExtension(valid_filename);
         if (m[1]!is null)
         {
-            return tuple(cast(ModuleFileController) null, m[1]);
+            return tuple(cast(ModuleController) null, m[1]);
         }
 
         if (m[0].length == 0)
         {
-            return tuple(cast(ModuleFileController) null,
+            return tuple(cast(ModuleController) null,
                     new Exception("couldn't determine module for file"));
         }
 
@@ -469,11 +438,11 @@ class Controller
 
         if (minfo is null)
         {
-            return tuple(cast(ModuleFileController) null,
+            return tuple(cast(ModuleController) null,
                     new Exception("couldn't get module information"));
         }
 
-        auto ret = minfo.createModuleController(this, file_controller);
+        auto ret = minfo.createModuleController(this);
 
         return tuple(ret, cast(Exception) null);
     }
@@ -544,4 +513,129 @@ class Controller
         return cast(Exception) null;
     }
 
+    Exception checkFilenameIsAllowedToBeOutsideOfProject(string project, string filename)
+    {
+        if (project != "")
+        {
+            auto pp = getProjectPath(project);
+            if (pp[1]!is null)
+            {
+                return pp[1];
+            }
+            if (!dutils.path.join([pp[0], filename]).absolutePath().startsWith(pp[0] ~ "/"))
+            {
+                return new Exception("supplied filename is outside project's path");
+            }
+        }
+        return cast(Exception) null;
+    }
+
+    Tuple!(string, Exception) calculateRealFilenameByProjectAndFilename(string project,
+            string filename)
+    {
+        auto res = checkFilenameIsAllowedToBeOutsideOfProject(project, filename);
+        if (res !is null)
+        {
+            return tuple("", res);
+        }
+
+        string ret;
+        if (project == "")
+        {
+            if (!filename.startsWith("/"))
+            {
+                ret = dutils.path.join(cast(string[])[getcwd(), filename]).absolutePath();
+            }
+            else
+            {
+                ret = dutils.path.join(cast(string[])[filename]).absolutePath();
+            }
+        }
+        else
+        {
+            auto pp = getProjectPath(project);
+            if (pp[1]!is null)
+            {
+                return tuple("", pp[1]);
+            }
+
+            ret = dutils.path.join([pp[0], filename]);
+        }
+        return tuple(ret, cast(Exception) null);
+    }
+
+    Tuple!(string, Exception) getFileString(string project, string filename)
+    {
+
+        auto chars = getFileChars(project, filename);
+        if (chars[1]!is null)
+        {
+            return tuple("", chars[1]);
+        }
+
+        return tuple(cast(string) chars[0], cast(Exception) null);
+    }
+
+    Exception setFileString(string project, string filename, string text)
+    {
+        auto res = setFileChars(project, filename, cast(char[]) text);
+        if (res !is null)
+        {
+            return res;
+        }
+        return cast(Exception) null;
+    }
+
+    Tuple!(char[], Exception) getFileChars(string project, string filename)
+    {
+
+        auto res = calculateRealFilenameByProjectAndFilename(project, filename);
+        if (res[1]!is null)
+        {
+            return tuple(cast(char[]) null, res[1]);
+        }
+
+        auto valid_filename = res[0];
+
+        debug
+        {
+            writeln("getChars");
+            writeln("  project        :", project);
+            writeln("  filename       :", filename);
+            writeln("  valid_filename :", valid_filename);
+        }
+        auto f = new std.stdio.File(valid_filename);
+
+        char[] buff;
+        buff.length = f.size;
+
+        if (f.size > 0)
+        {
+            f.rawRead(buff);
+        }
+
+        return tuple(buff, cast(Exception) null);
+    }
+
+    Exception setFileChars(string project, string filename, char[] data)
+    {
+        auto res = calculateRealFilenameByProjectAndFilename(project, filename);
+        if (res[1]!is null)
+        {
+            return res[1];
+        }
+
+        auto valid_filename = res[0];
+
+        try
+        {
+            toFile(data, valid_filename);
+        }
+        catch (Exception e)
+        {
+            return e;
+        }
+
+        return cast(Exception) null;
+    }
 }

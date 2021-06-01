@@ -5,7 +5,6 @@ import std.json;
 import dlangui;
 
 import dedit.Controller;
-import dedit.FileController;
 import dedit.ViewWindow;
 
 struct ModuleInformation
@@ -13,38 +12,33 @@ struct ModuleInformation
     string name;
     string[] supportedExtensions; // must start with point
     string[] supportedMIMETypes;
-    ModuleFileController function(Controller c, FileController file_controller) createModuleController;
+    ModuleController function(Controller c) createModuleController;
 }
 
-interface ModuleFileController
+interface ModuleController
 {
     ModuleInformation* getModInfo(); // TODO: ModuleInformation must be unmodifiable
 
     Controller getController();
-    FileController getFileController();
 
     ModuleControllerBuffer getBuffer();
     ModuleControllerMainMenu getMainMenu();
     ModuleControllerView getView();
 
-    Exception loadData();
-    Exception saveData();
-
-    string getProject();
-    string getFilename();
-    void setFilename(string filename);
+    Exception loadData(string project, string filename);
+    Exception saveData(string project, string filename);
 
     void destroy();
 }
 
 interface ModuleControllerBuffer
 {
-    ModuleFileController getModuleFileController();
+    ModuleController getModuleController();
 }
 
 interface ModuleControllerMainMenu
 {
-    ModuleFileController getModuleFileController();
+    ModuleController getModuleController();
 
     // ref ModuleInformation getModInfo()  ;
     MenuItem getWidget();
@@ -54,7 +48,7 @@ interface ModuleControllerMainMenu
 
 interface ModuleControllerView
 {
-    ModuleFileController getModuleFileController();
+    ModuleController getModuleController();
 
     //ref const ModuleInformation getModInfo();
     Widget getWidget();

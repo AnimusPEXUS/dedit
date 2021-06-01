@@ -51,6 +51,7 @@ class ToolWindow
         controller.tool_windows ~= this;
 
         loadSettings();
+        window.update(true);
     }
 
     void onClose()
@@ -152,7 +153,6 @@ class ToolWindow
                 }
             }
         }
-        window.requestLayout();
         return cast(Exception) null;
     }
 

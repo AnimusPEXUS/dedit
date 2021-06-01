@@ -67,8 +67,30 @@ class ViewWindow
 {
     Controller controller;
 
-    string project;
-    string filename;
+    private string _project;
+    @property string project()
+    {
+        return _project;
+    }
+
+    @property project(string value)
+    {
+        _project = value;
+        projectOrFilenameUpdated();
+    }
+
+    private string _filename;
+    @property string filename()
+    {
+        return _filename;
+    }
+
+    @property filename(string value)
+    {
+        _filename = value;
+        projectOrFilenameUpdated();
+    }
+
     string window_uuid;
 
     /* AccelGroup accel_group; */
@@ -83,8 +105,8 @@ class ViewWindow
     TextWidget view_module_project;
     TextWidget view_module_filename;
 
-    ModuleFileController current_module_file_controller;
-    // ModuleDataBuffer    current_module_file_controller;
+    ModuleController current_module_controller;
+    // ModuleDataBuffer    current_module_controller;
 
     bool keep_settings_on_window_close = false;
 
@@ -160,12 +182,25 @@ class ViewWindow
             loadSettings();
         }
 
+        /* updateTitle(); */
+
         controller.view_windows ~= this;
+        window.update(true);
     }
 
     ~this()
     {
         writeln("ViewWindow destroyed");
+    }
+
+    private void projectOrFilenameUpdated()
+    {
+        if (window !is null)
+        {
+            window.windowCaption = to!dstring(filename ~ " (" ~ project ~ ")");
+            view_module_project.text = to!dstring(project);
+            view_module_filename.text = to!dstring(filename);
+        }
     }
 
     void onClose()
@@ -191,11 +226,11 @@ class ViewWindow
                 saveSettings();
             }
 
-            if (current_module_file_controller !is null)
+            if (current_module_controller !is null)
             {
                 // TODO: maybe is is better to call unsetSetup()
-                current_module_file_controller.destroy();
-                current_module_file_controller = null;
+                current_module_controller.destroy();
+                current_module_controller = null;
             }
 
             foreach_reverse (size_t i, ref ViewWindow w; controller.view_windows)
@@ -264,9 +299,9 @@ class ViewWindow
 
                 setSetup(setup_o);
 
-                if ("view_setup_settings" in x && current_module_file_controller !is null)
+                if ("view_setup_settings" in x && current_module_controller !is null)
                 {
-                    current_module_file_controller.getView().setSettings(x["view_setup_settings"]);
+                    current_module_controller.getView().setSettings(x["view_setup_settings"]);
                 }
             }
         }
@@ -290,13 +325,13 @@ class ViewWindow
         val["window_uuid"] = window_uuid;
         val["project"] = project;
         val["filename"] = filename;
-        /* val["view_module_to_use"] = current_module_file_controller is null ? "" : current_module_file_controller.getModInfo().name; */
+        /* val["view_module_to_use"] = current_module_controller is null ? "" : current_module_controller.getModInfo().name; */
 
-        if (current_module_file_controller !is null)
+        if (current_module_controller !is null)
         {
-            auto info = current_module_file_controller.getModInfo();
+            auto info = current_module_controller.getModInfo();
             val["view_module_to_use"] = info.name;
-            val["view_setup_settings"] = current_module_file_controller.getView().getSettings();
+            val["view_setup_settings"] = current_module_controller.getView().getSettings();
         }
 
         //val["view_module_setup"] = js_setup;
@@ -352,9 +387,9 @@ class ViewWindow
 
     void unsetSetup()
     {
-        // simply calling unsetModuleFileController(), but maybe something more
+        // simply calling unsetModuleController(), but maybe something more
         // should be done
-        unsetModuleFileController();
+        unsetModuleController();
     }
 
     Exception setSetup(ViewWindowContentSetup* setup)
@@ -363,11 +398,12 @@ class ViewWindow
         {
             writeln("setSetup for ", window_uuid, " is called");
         }
-        // load appropriate ModuleFileController and feed it to
-        // setModuleFileController() function
+        // load appropriate ModuleController and feed it to
+        // setModuleController() function
 
         // NOTE: setSetup should not be able to change project. setProject have to be used for this
         /* setup.project = settings.setup.project; */
+        // TODO: may be this should be allowed;
         if (project != setup.project)
         {
             return new Exception("provided setup have invalid project name");
@@ -379,62 +415,63 @@ class ViewWindow
                     "filename ", setup.filename);
         }
 
-        auto fc = controller.getOrCreateFileController(setup.project, setup.filename, true);
-        if (fc[1]!is null)
+        auto mc = controller.createModuleController(setup.project, setup.filename);
+        if (mc[1]!is null)
         {
-            return fc[1];
+            return mc[1];
         }
 
-        auto mfc = controller.createModuleFileController(fc[0]);
-        if (mfc[1]!is null)
+        auto res = mc[0].loadData(setup.project, setup.filename);
+        if (res !is null)
         {
-            return mfc[1];
+            window.showMessageBox(UIString.fromRaw("Couldn't load file contents"), UIString.fromRaw(res.msg));
+            // NOTE: this should not return with error
         }
 
-        auto smfc = setModuleFileController(mfc[0]);
-        if (smfc !is null)
+        auto smc = setModuleController(mc[0]);
+        if (smc !is null)
         {
-            return smfc;
+            return smc;
         }
 
-        /* this.setup = setup; */
+        this.filename = setup.filename;
 
         return cast(Exception) null;
     }
 
-    void cleanupModuleFileController()
+    void cleanupModuleController()
     {
-        if (current_module_file_controller !is null)
+        if (current_module_controller !is null)
         {
-            auto mm = current_module_file_controller.getMainMenu();
+            auto mm = current_module_controller.getMainMenu();
 
             /* mm.uninstallAccelerators(this.accel_group); */
 
             main_menu.removeSpecialMenuItem();
-            current_module_file_controller.destroy();
-            current_module_file_controller = null;
+            current_module_controller.destroy();
+            current_module_controller = null;
         }
         view_box.removeAllChildren();
     }
 
-    void unsetModuleFileController()
+    void unsetModuleController()
     {
-        cleanupModuleFileController();
+        cleanupModuleController();
 
         view_box.addChild(new TextWidget().text = to!dstring(LABEL_TEXT_FILE_NOT_OPENED));
     }
 
-    Exception setModuleFileController(ModuleFileController mfc)
+    Exception setModuleController(ModuleController mc)
     {
-        assert(mfc !is null);
+        assert(mc !is null);
 
-        cleanupModuleFileController();
+        cleanupModuleController();
 
         /* dedit.moduleinterface.ModuleInformation* moduleinfo; */
 
-        auto view_res = mfc.getView();
+        auto view_res = mc.getView();
 
-        auto mm_res = mfc.getMainMenu();
+        auto mm_res = mc.getMainMenu();
 
         auto view_widget = view_res.getWidget();
 
@@ -443,42 +480,10 @@ class ViewWindow
         view_box.addChild(view_widget);
         /* view_box.packStart(view_widget, true, true, 0); */
 
-        this.main_menu.setSpecialMenuItem(mfc.getModInfo().name, mm_widget);
+        this.main_menu.setSpecialMenuItem(mc.getModInfo().name, mm_widget);
 
-        this.view_module_project.text = to!dstring(mfc.getProject());
-        this.view_module_filename.text = to!dstring(mfc.getFilename());
-
-        this.current_module_file_controller = mfc;
+        this.current_module_controller = mc;
 
         return null;
     }
-
-    void onMIReloadActivate(MenuItem mi)
-    {
-        if (this.current_module_file_controller !is null)
-        {
-            auto res = this.current_module_file_controller.loadData();
-        }
-        return;
-    }
-
-    void onMISaveActivate(MenuItem mi)
-    {
-        if (this.current_module_file_controller !is null)
-        {
-            auto res = this.current_module_file_controller.saveData();
-        }
-        return;
-    }
-
-    void onMIRenameActivate(MenuItem mi)
-    {
-        return;
-    }
-
-    void onMICloseActivate(MenuItem mi)
-    {
-        return;
-    }
-
 }

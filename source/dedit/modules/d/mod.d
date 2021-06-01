@@ -12,18 +12,18 @@ import dlangui;
 
 import dedit.moduleinterface;
 import dedit.Controller;
-import dedit.FileController;
 import dedit.ViewWindow;
 import dedit.OutlineTool;
-import dedit.TypicalModuleFileControllerText;
+import dedit.TypicalModuleControllerText;
 
-void applyLanguageSettingsToSourceView(TypicalModuleFileControllerText tmfct, SourceEdit sv)
+void applyLanguageSettingsToSourceView(TypicalModuleControllerText tmfct, SourceEdit sv)
 {
+    // TODO: this should be redesigned
     tmfct.settings.controller.setFontOnSourceEdit(sv);
     sv.smartIndents = true;
     sv.tabSize = 4;
-    sv.useSpacesForTabs=true;
-    sv.wantTabs=true;
+    sv.useSpacesForTabs = true;
+    sv.wantTabs = true;
     /* sv.setAutoIndent(true); */
     /* sv.setDrawSpaces(DrawSpacesFlags.ALL); */
     /* sv.setHighlightCurrentLine(true);
@@ -43,7 +43,7 @@ void applyLanguageSettingsToSourceView(TypicalModuleFileControllerText tmfct, So
     /* sb.setLanguage(SourceLanguageManager.getDefault().getLanguage("d")); * /
 } */
 
-string formatWholeBufferText(TypicalModuleFileControllerText tmfct, string txt)
+string formatWholeBufferText(TypicalModuleControllerText tmfct, string txt)
 {
     import std.array;
     import dfmt.config : Config;
@@ -92,11 +92,9 @@ string formatWholeBufferText(TypicalModuleFileControllerText tmfct, string txt)
 
 const dedit.moduleinterface.ModuleInformation ModuleInformation = {
     name: "D", supportedExtensions: [".d"], /* ModuleFileController function(Controller c, FileController file_controller) createModuleController; */
-    createModuleController: function ModuleFileController(Controller controller,
-                FileController file_controller,) {
-        auto settings = new TypicalModuleFileControllerTextSettings;
+    createModuleController: function ModuleController(Controller controller) {
+        auto settings = new TypicalModuleControllerTextSettings;
         settings.controller = controller;
-        settings.file_controller = file_controller;
         settings.module_information = cast(
                 dedit.moduleinterface.ModuleInformation*)&ModuleInformation;
         settings.applyLanguageSettingsToSourceView = toDelegate(&applyLanguageSettingsToSourceView);
@@ -105,6 +103,6 @@ const dedit.moduleinterface.ModuleInformation ModuleInformation = {
         /* settings.formatWholeBufferText = toDelegate(&formatWholeBufferText); */
         settings.formatWholeBufferText = toDelegate(&formatWholeBufferText);
 
-        auto ret = new TypicalModuleFileControllerText(settings);
+        auto ret = new TypicalModuleControllerText(settings);
         return ret;
     }};
