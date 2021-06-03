@@ -42,16 +42,17 @@ class ToolWindow
         window.onClose = &onClose;
         /* window.addOnDelete(&onDeleteEvent); */
 
-        tool_widget = new ToolWidget(controller);
+        tool_widget = new ToolWidget(controller, this);
         tool_widget.setProject(project);
 
         window.mainWidget = tool_widget.getWidget();
-        window.mainWidget.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
+        // window.mainWidget.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
 
         controller.tool_windows ~= this;
 
         loadSettings();
-        window.update(true);
+        // window.update(true);
+        window.invalidate();
     }
 
     void onClose()
@@ -113,11 +114,11 @@ class ToolWindow
             writeln("loading settings for tool window: ", window_uuid);
         }
 
-        auto set0 = controller.getToolWindowSettings(window_uuid);
+        auto res = controller.getToolWindowSettings(window_uuid);
 
-        if (!set0[0].isNull())
+        if (!res[0].isNull())
         {
-            auto x = set0[0];
+            auto x = res[0];
             auto x2 = x["window_uuid"].str();
             {
                 UUID x3;

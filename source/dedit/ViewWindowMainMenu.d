@@ -46,7 +46,8 @@ class ViewWindowMainMenu
             {
                 return true;
             }
-            auto res = view_window.current_module_controller.loadData(view_window.project, view_window.filename);
+            auto res = view_window.current_module_controller.loadData(view_window.project,
+                    view_window.filename);
             if (res !is null)
             {
                 view_window.window.showMessageBox(UIString.fromRaw("File Data Loading Error"),
@@ -67,7 +68,8 @@ class ViewWindowMainMenu
             {
                 return true;
             }
-            auto res = view_window.current_module_controller.saveData(view_window.project, view_window.filename);
+            auto res = view_window.current_module_controller.saveData(view_window.project,
+                    view_window.filename);
             if (res !is null)
             {
                 view_window.window.showMessageBox(UIString.fromRaw("File Data Saving Error"),

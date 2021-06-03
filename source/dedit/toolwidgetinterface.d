@@ -22,5 +22,5 @@ interface ToolWidgetInterface
     Widget getWidget();
     Tuple!(JSONValue, Exception) getSettings();
     Exception setSettings(JSONValue);
-    Exception destroy();
+    void destroy(); // so widget could unbind it self from signals
 }

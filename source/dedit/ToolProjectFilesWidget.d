@@ -12,7 +12,7 @@ import dedit.Controller;
 import dedit.toolwidgetinterface;
 
 const dedit.toolwidgetinterface.ToolWidgetInformation ToolProjectFilesWidgetInformation = {
-    name: "projectfiles", displayName: "Project Files", createToolWidget: function ToolWidgetInterface(
+    name: "projectfiles", displayName: "Files", createToolWidget: function ToolWidgetInterface(
             Controller c) {
         debug
         {
@@ -41,6 +41,7 @@ const dedit.toolwidgetinterface.ToolWidgetInformation ToolProjectFilesWidgetInfo
             this.controller = controller;
 
             main_box = new VerticalLayout();
+            main_box.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
 
             filebrowser = new FileTreeView();
             filebrowser.itemActivated = &itemActivated;
@@ -118,17 +119,8 @@ const dedit.toolwidgetinterface.ToolWidgetInformation ToolProjectFilesWidgetInfo
             return cast(Exception) null;
         }
 
-        Exception destroy()
+        void destroy()
         {
-            try
-            {
-                main_box.destroy();
-            }
-            catch (Exception e)
-            {
-                return e;
-            }
-            return cast(Exception) null;
         }
 
     }

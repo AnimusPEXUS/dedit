@@ -12,6 +12,8 @@ import dlangui;
 
 import dutils.path;
 
+import dedit.ControllerViewWindowMGR;
+
 import dedit.ProjectWindow;
 
 import dedit.ViewWindow;
@@ -39,8 +41,9 @@ class Controller
     string[string] project_paths;
 
     ProjectWindow[] project_windows;
-    ViewWindow[] view_windows;
     ToolWindow[] tool_windows;
+
+    ControllerViewWindowMGR view_windows;
 
     // TODO: leaving this for a future. for now, I'll will not implement buffer reusage.
     //       maybe in future..
@@ -62,6 +65,8 @@ class Controller
 
     this()
     {
+        view_windows = new ControllerViewWindowMGR;
+
         tool_widget_combobox_item_list ~= "";
         tool_widget_combobox_item_list_titles ~= "";
         foreach (i, v; builtinToolWidgets)
@@ -465,14 +470,9 @@ class Controller
 
     ViewWindow openNewViewOrExisting(string project, string filename)
     {
-        foreach (size_t i, ref ViewWindow v; view_windows)
+        if (view_windows.isIn(project, filename))
         {
-            if (v.project == project && v.filename == filename)
-            {
-                v.show();
-                v.present();
-                return v;
-            }
+            return view_windows.get(project, filename);
         }
 
         return openNewView(project, filename);
@@ -491,12 +491,11 @@ class Controller
                 c.close();
             }
 
-            foreach (i, ref c; view_windows)
-            {
-                c.keep_settings_on_window_close = true;
-                c.saveSettings();
-                c.close();
-            }
+            view_windows.listItems(delegate void(ViewWindow w) {
+                w.keep_settings_on_window_close = true;
+                w.saveSettings();
+                w.close();
+            });
 
             foreach (i, ref c; project_windows)
             {

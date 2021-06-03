@@ -174,17 +174,27 @@ class ViewWindow
 
         if (apply_setup)
         {
-            setSetup(setup);
+            auto err = setSetup(setup);
+            if (err !is null)
+            {
+                window.showMessageBox(UIString.fromRaw("Couldn't apply this setup"),
+                        UIString.fromRaw(err.msg));
+            }
         }
 
         if (load_settings)
         {
-            loadSettings();
+            auto err = loadSettings();
+            if (err !is null)
+            {
+                window.showMessageBox(UIString.fromRaw("Couldn't load settings"),
+                        UIString.fromRaw(err.msg));
+            }
         }
 
         /* updateTitle(); */
 
-        controller.view_windows ~= this;
+        controller.view_windows.add(this);
         window.update(true);
     }
 
@@ -233,17 +243,7 @@ class ViewWindow
                 current_module_controller = null;
             }
 
-            foreach_reverse (size_t i, ref ViewWindow w; controller.view_windows)
-            {
-                if (w == this)
-                {
-                    controller.view_windows = controller.view_windows[0 .. i]
-                        ~ controller.view_windows[i + 1 .. $];
-                }
-            }
-
-            /* auto i = controller.view_windows.length - controller.view_windows.find(this).length;
-            controller.view_windows = controller.view_windows.remove(i); */
+            controller.view_windows.remove(this);
         }
     }
 
@@ -297,7 +297,11 @@ class ViewWindow
                 setup_o.view_module_to_use = "view_module_to_use" in x
                     ? x["view_module_to_use"].str() : "";
 
-                setSetup(setup_o);
+                auto err = setSetup(setup_o);
+                if (err !is null)
+                {
+                    return err;
+                }
 
                 if ("view_setup_settings" in x && current_module_controller !is null)
                 {
@@ -424,7 +428,8 @@ class ViewWindow
         auto res = mc[0].loadData(setup.project, setup.filename);
         if (res !is null)
         {
-            window.showMessageBox(UIString.fromRaw("Couldn't load file contents"), UIString.fromRaw(res.msg));
+            window.showMessageBox(UIString.fromRaw("Couldn't load file contents"),
+                    UIString.fromRaw(res.msg));
             // NOTE: this should not return with error
         }
 

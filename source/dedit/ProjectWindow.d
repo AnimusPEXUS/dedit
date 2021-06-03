@@ -61,7 +61,13 @@ class ProjectWindow
         toolbar.addControl(a);
 
         a = new Button().text = "Views"d;
-        a.click = delegate bool(Widget b) { writeln("clicked"); return true; };
+        a.click = delegate bool(Widget b) {
+            writeln("view_windows");
+            controller.view_windows.listItems(delegate void(ViewWindow vw) {
+                writeln(vw.project ~ ":" ~ vw.filename);
+            });
+            return true;
+        };
         toolbar.addControl(a);
 
         a = new Button().text = "Bookmarks"d;
@@ -139,18 +145,17 @@ class ProjectWindow
                 if (v.getProject() == project)
                 {
                     v.keep_settings_on_window_close = true;
-                    v.getWindow().close();
+                    v.close();
                 }
             }
 
-            foreach (size_t k, ViewWindow v; controller.view_windows)
-            {
-                if (v.project == project)
+            controller.view_windows.listItems(delegate void(ViewWindow w) {
+                if (w.project == project)
                 {
-                    v.keep_settings_on_window_close = true;
-                    v.getWindow().close();
+                    w.keep_settings_on_window_close = true;
+                    w.close();
                 }
-            }
+            });
 
             auto i = controller.project_windows.length - controller.project_windows.find(this)
                 .length;

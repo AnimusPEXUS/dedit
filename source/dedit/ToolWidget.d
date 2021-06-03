@@ -9,6 +9,8 @@ import std.json;
 import dlangui;
 
 import dedit.Controller;
+import dedit.ToolWindow;
+
 import dedit.toolwidgetinterface;
 import dedit.builtintoolwidgets;
 
@@ -16,8 +18,18 @@ class ToolWidget
 {
 
     Controller controller;
+    ToolWindow tool_window;
 
-    string project;
+    private string _project;
+    @property string project()
+    {
+        return _project;
+    };
+    @property void project(string value)
+    {
+        _project = value;
+        updateToolWindowTitle();
+    };
 
     VerticalLayout main_box;
 
@@ -28,13 +40,16 @@ class ToolWidget
 
     ToolWidgetInterface current_tool_widget;
 
-    this(Controller controller)
+    this(Controller controller, ToolWindow tool_window)
     {
         this.controller = controller;
+        this.tool_window = tool_window;
 
         main_box = new VerticalLayout;
         tools_box = new HorizontalLayout;
         children_box = new VerticalLayout;
+
+        main_box.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
 
         main_box.addChild(tools_box);
         main_box.addChild(children_box);
@@ -42,80 +57,21 @@ class ToolWidget
         tools_box.layoutWidth(FILL_PARENT);
         children_box.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
 
-        /* main_box.packStart(tools_box, false, true, 0);
-        main_box.packStart(children_box, true, true, 0); */
-
         tool_selection_cb = new ComboBox("", controller.tool_widget_combobox_item_list_titles);
         tool_selection_cb.layoutWidth(FILL_PARENT);
-        tool_selection_cb.selectedItemIndex = 0;
-        /* tool_selection_cb.setIdColumn(0); */
-
-        /* {
-            auto cr = new CellRendererText();
-            tool_selection_cb.packStart(cr, true);
-            tool_selection_cb.addAttribute(cr, "text", 1);
-        } */
 
         tools_box.addChild(tool_selection_cb);
-        /* tools_box.packStart(tool_selection_cb, false, false, 0); */
 
         tool_selection_cb.itemClick = delegate bool(Widget wi, int index) {
             auto id = controller.tool_widget_combobox_item_list[index];
 
             writeln("itemSelected " ~ to!string(index) ~ ":" ~ id);
-
-            if (current_tool_widget !is null)
-            {
-                current_tool_widget.destroy();
-                current_tool_widget = null;
-                children_box.removeAllChildren();
-            }
-
-            if (index != 0)
-            {
-                auto twi = getToolWidgetInformation(id);
-                assert(twi !is null);
-                auto tw = twi.createToolWidget(controller);
-                assert(tw !is null);
-                auto w = tw.getWidget();
-                assert(w !is null);
-                assert(children_box.childCount == 0);
-                /* children_box.packStart(w, true, true, 0); */
-                children_box.addChild(w);
-                w.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
-                /* w.showAll(); */
-                current_tool_widget = tw;
-                current_tool_widget.setProject(project);
-            }
-
+            selectTool(id);
             return true;
         };
 
-        /* tool_selection_cb.addOnChanged(delegate void(ComboBox cb) {
-            auto id = cb.getActiveId();
-
-            if (current_tool_widget !is null)
-            {
-                current_tool_widget.destroy();
-                current_tool_widget = null;
-            }
-
-            if (id != "")
-            {
-                auto twi = getToolWidgetInformation(id);
-                assert(twi !is null);
-                auto tw = twi.createToolWidget(controller);
-                assert(tw !is null);
-                auto w = tw.getWidget();
-                assert(w !is null);
-                assert(children_box.children.length == 0);
-                children_box.packStart(w, true, true, 0);
-                w.showAll();
-                current_tool_widget = tw;
-                current_tool_widget.setProject(project);
-            }
-        });
-        tool_selection_cb.setActiveId(""); */
+        selectTool("");
+        main_box.invalidate();
     }
 
     Widget getWidget()
@@ -123,45 +79,72 @@ class ToolWidget
         return main_box;
     }
 
+    void updateToolWindowTitle()
+    {
+        tool_window.window.windowCaption = to!dstring((current_tool_widget is null
+                ? "Empty Tool Window" : current_tool_widget.getToolWidgetInformation()
+                .displayName) ~ " (project: " ~ project ~ ")");
+    }
+
     Exception unselectTool()
     {
-        try
-        {
-            /* tool_selection_cb.setActiveId(""); */
-        }
-        catch (Exception e)
-        {
-            return e;
-        }
-        return cast(Exception) null;
+        return selectTool("");
     }
 
     Exception selectTool(string name)
     {
 
-        try
+        writeln("selectTool: " ~ name);
+
+        if (current_tool_widget !is null)
         {
-            /* tool_selection_cb.setActiveId(name); */
+            current_tool_widget.destroy();
+            current_tool_widget = null;
+            children_box.removeAllChildren();
         }
-        catch (Exception e)
+
+        if (children_box.childCount == 0)
         {
-            return e;
+            children_box.addChild(new TextWidget().text("Select Tool"d)
+                    .layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT));
         }
+
+        if (name != "")
+        {
+            auto twi = getToolWidgetInformation(name);
+            assert(twi !is null);
+            auto tw = twi.createToolWidget(controller);
+            assert(tw !is null);
+            auto w = tw.getWidget();
+            assert(w !is null);
+            // assert(children_box.childCount == 0);
+            /* children_box.packStart(w, true, true, 0); */
+            children_box.removeAllChildren();
+            children_box.addChild(w);
+            w.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
+            /* w.showAll(); */
+            current_tool_widget = tw;
+            current_tool_widget.setProject(project);
+        }
+
+        foreach (size_t i, string v; controller.tool_widget_combobox_item_list)
+        {
+            if (v == name)
+            {
+                tool_selection_cb.selectedItemIndex = cast(int) i;
+                break;
+            }
+        }
+
+        updateToolWindowTitle();
 
         return cast(Exception) null;
     }
 
     Tuple!(string, Exception) getTool()
     {
-        string ret;
-        try
-        {
-            /* ret = tool_selection_cb.getActiveId(); */
-        }
-        catch (Exception e)
-        {
-            return tuple("", e);
-        }
+        string ret = current_tool_widget is null ? "" : current_tool_widget.getToolWidgetInformation()
+            .name;
 
         return tuple(ret, cast(Exception) null);
     }
