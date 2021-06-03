@@ -151,6 +151,7 @@ class ViewWindow
         view_module_grid.colCount(2);
 
         synchronous_window_rect = new CheckBox;
+        synchronous_window_rect.text = "Synchronize Project Views Movements"d;
 
         view_module_grid.addChild(new TextWidget().text("project:"d).fontSize(9));
         view_module_grid.addChild(view_module_project = new TextWidget());
