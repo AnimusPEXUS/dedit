@@ -63,6 +63,8 @@ class Controller
 
     bool close_called;
 
+    /* bool view_window_state_change_propagation_already_entered; */
+
     this()
     {
         view_windows = new ControllerViewWindowMGR;
@@ -637,4 +639,5 @@ class Controller
 
         return cast(Exception) null;
     }
+
 }

@@ -105,12 +105,16 @@ class ViewWindow
     TextWidget view_module_project;
     TextWidget view_module_filename;
 
+    CheckBox synchronous_window_rect;
+
     ModuleController current_module_controller;
     // ModuleDataBuffer    current_module_controller;
 
     bool keep_settings_on_window_close = false;
 
     bool close_called;
+
+    bool window_is_active;
 
     this(Controller controller, string window_uuid, ViewWindowContentSetup* setup)
     {
@@ -138,11 +142,15 @@ class ViewWindow
         }
 
         window = Platform.instance.createWindow("dedit", null);
+        window.windowStateChanged = &onWindowStateChange;
+        window.windowActivityChanged = &onWindowActivityChange;
         window.onClose = &onClose;
 
         auto view_module_grid = new TableLayout();
         /* view_module_grid.fontSize = 9; */
         view_module_grid.colCount(2);
+
+        synchronous_window_rect = new CheckBox;
 
         view_module_grid.addChild(new TextWidget().text("project:"d).fontSize(9));
         view_module_grid.addChild(view_module_project = new TextWidget());
@@ -162,6 +170,7 @@ class ViewWindow
             w.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
             return w;
         }());
+        menu_box.addChild(synchronous_window_rect);
         menu_box.addChild(view_module_grid);
 
         root_box = new VerticalLayout;
@@ -211,6 +220,42 @@ class ViewWindow
             view_module_project.text = to!dstring(project);
             view_module_filename.text = to!dstring(filename);
         }
+    }
+
+    bool onWindowActivityChange(Window win, bool isActive)
+    {
+        window_is_active = isActive;
+        return true;
+    }
+
+    bool onWindowStateChange(Window window, WindowState winState, Rect rect)
+    {
+        if (!window_is_active)
+        {
+            return true;
+        }
+
+        if (!synchronous_window_rect.checked)
+        {
+            return true;
+        }
+
+        controller.view_windows.listItems(delegate void(ViewWindow win) {
+            if (win.window == window || win.project != project
+                || !win.synchronous_window_rect.checked)
+            {
+                return;
+            }
+
+            /* debug
+                {
+                    writeln(win.filename, " : resizing and moving window: ", win.filename);
+                } */
+
+            win.window.moveAndResizeWindow(rect);
+
+        });
+        return true;
     }
 
     void onClose()
@@ -284,6 +329,11 @@ class ViewWindow
                 this.project = x["project"].str;
                 this.filename = x["filename"].str;
 
+                if ("synchronous_window_rect" in x)
+                {
+                    synchronous_window_rect.checked = x["synchronous_window_rect"].boolean;
+                }
+
                 debug
                 {
                     writeln("loading view_setup for window ", window_uuid);
@@ -348,6 +398,8 @@ class ViewWindow
         val["y"] = JSONValue(rect.top);
         val["w"] = JSONValue(rect.right);
         val["h"] = JSONValue(rect.bottom);
+
+        val["synchronous_window_rect"] = synchronous_window_rect.checked;
 
         debug
         {
