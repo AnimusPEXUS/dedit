@@ -85,6 +85,8 @@ class TypicalModuleControllerText : ModuleController
     View view;
     MainMenu mainmenu;
 
+    ViewWindow window;
+
     this(TypicalModuleControllerTextSettings* settings)
     {
         this.settings = settings;
@@ -102,6 +104,11 @@ class TypicalModuleControllerText : ModuleController
     Controller getController()
     {
         return this.settings.controller;
+    }
+
+    void setViewWindow(ViewWindow window)
+    {
+        this.window = window;
     }
 
     ModuleControllerBuffer getBuffer()
@@ -177,11 +184,19 @@ class Buffer : ModuleControllerBuffer
         return buff;
     }
 
-    void format()
+    Exception format()
     {
-        ubyte[] bt = cast(ubyte[])(to!string(buff.text));
-        auto res = this.tmct.settings.formatWholeBufferText(tmct, cast(string) bt);
-        buff.text = to!dstring(res);
+        try
+        {
+            ubyte[] bt = cast(ubyte[])(to!string(buff.text));
+            auto res = this.tmct.settings.formatWholeBufferText(tmct, cast(string) bt);
+            buff.text = to!dstring(res);
+        }
+        catch (Exception e)
+        {
+            return e;
+        }
+        return cast(Exception) null;
     }
 }
 
@@ -193,19 +208,39 @@ class MainMenu : ModuleControllerMainMenu
     private MenuItem mm;
     private MenuItem mm_menu_format;
 
+    ActionPair[] action_pair_list;
+
     this(TypicalModuleControllerText tmct)
     {
         this.tmct = tmct;
 
-        Action a;
+        mm = new MenuItem(new Action(0, to!dstring({
+                    auto x = tmct.getModInfo();
+                    return x.menuName != "" ? x.menuName : x.name;
+                }())));
 
-        a = new Action(0, "[[Special]]"d);
-        mm = new MenuItem(a);
+        ActionPair ap;
 
-        a = new Action(0, "Format"d);
-        auto mm_menu_format = new MenuItem(a);
-        this.mm_menu_format = mm_menu_format;
-        /* mm_menu_format.addOnActivate(&onMIFormatActivate); */
+        ap = ActionPair(new Action(0, "Format"d, null), delegate bool(const(Action) a) {
+            debug
+            {
+                writeln("onMenuItemClick Format");
+            }
+
+            auto err = (cast(Buffer)(tmct.getBuffer())).format();
+            if (err !is null)
+            {
+                tmct.window.window.showMessageBox(UIString.fromRaw("Error formatting text"),
+                    UIString.fromRaw(err.msg));
+                return true;
+            }
+            return true;
+        });
+
+        action_pair_list ~= ap;
+
+        mm_menu_format = new MenuItem(ap.action);
+        mm_menu_format.menuItemAction = ap.callback;
 
         mm.add(mm_menu_format);
     }
@@ -220,14 +255,19 @@ class MainMenu : ModuleControllerMainMenu
         return mm;
     }
 
-    void onMIFormatActivate(MenuItem mi)
+    ActionPair[] getActionPairList()
+    {
+        return action_pair_list;
+    }
+
+    /* void onMIFormatActivate(MenuItem mi)
     {
 
         auto s = this.tmct.getView().getSettings();
         (cast(Buffer)(this.tmct.getBuffer())).format();
         this.tmct.getView().setSettings(s);
 
-    }
+    } */
 
 }
 

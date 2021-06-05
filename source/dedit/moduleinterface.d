@@ -10,6 +10,8 @@ import dedit.ViewWindow;
 struct ModuleInformation
 {
     string name;
+    string menuName;
+    string titleName;
     string[] supportedExtensions; // must start with point
     string[] supportedMIMETypes;
     ModuleController function(Controller c) createModuleController;
@@ -18,6 +20,8 @@ struct ModuleInformation
 interface ModuleController
 {
     ModuleInformation* getModInfo(); // TODO: ModuleInformation must be unmodifiable
+
+    void setViewWindow(ViewWindow window);
 
     Controller getController();
 
@@ -40,17 +44,14 @@ interface ModuleControllerMainMenu
 {
     ModuleController getModuleController();
 
-    // ref ModuleInformation getModInfo()  ;
     MenuItem getWidget();
-    /* void installAccelerators(AccelGroup ag, bool uninstall = false);
-    void uninstallAccelerators(AccelGroup ag); */
+    ActionPair[] getActionPairList();
 }
 
 interface ModuleControllerView
 {
     ModuleController getModuleController();
 
-    //ref const ModuleInformation getModInfo();
     Widget getWidget();
     JSONValue getSettings();
     void setSettings(JSONValue value);

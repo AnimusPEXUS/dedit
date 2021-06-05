@@ -57,15 +57,19 @@ class ProjectWindow
         toolbar.addControl(a);
 
         a = new Button().text = "Files"d;
-        a.click = delegate bool(Widget b) { writeln("clicked"); return true; };
+        a.click = delegate bool(Widget b) {
+            auto tw = new ToolWindow(controller, "", project);
+            tw.tool_widget.selectTool("projectfiles");
+            tw.show();
+            return true;
+        };
         toolbar.addControl(a);
 
         a = new Button().text = "Views"d;
         a.click = delegate bool(Widget b) {
-            writeln("view_windows");
-            controller.view_windows.listItems(delegate void(ViewWindow vw) {
-                writeln(vw.project ~ ":" ~ vw.filename);
-            });
+            auto tw = new ToolWindow(controller, "", project);
+            tw.tool_widget.selectTool("projectviews");
+            tw.show();
             return true;
         };
         toolbar.addControl(a);

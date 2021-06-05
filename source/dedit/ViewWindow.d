@@ -63,6 +63,12 @@ struct ViewWindowContentSetup
     }
 }
 
+struct ActionPair
+{
+    Action action;
+    bool delegate(const(Action) a) callback;
+}
+
 class ViewWindow
 {
     Controller controller;
@@ -95,9 +101,10 @@ class ViewWindow
 
     /* AccelGroup accel_group; */
 
-    ViewWindowMainMenu main_menu;
-
     Window window;
+
+    ViewWindowMainMenu main_menu;
+    MainMenu main_menu_widget;
 
     VerticalLayout root_box;
     VerticalLayout view_box;
@@ -115,6 +122,9 @@ class ViewWindow
     bool close_called;
 
     bool window_is_active;
+
+    ActionPair[] action_pair_list;
+    ActionPair[] action_pair_list_special;
 
     this(Controller controller, string window_uuid, ViewWindowContentSetup* setup)
     {
@@ -163,24 +173,73 @@ class ViewWindow
         view_module_filename.fontSize(9);
 
         main_menu = new ViewWindowMainMenu(this);
+        main_menu_widget = main_menu.getWidget();
+        main_menu_widget.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
+        action_pair_list = main_menu.getActionPairList();
 
         auto menu_box = new HorizontalLayout;
         menu_box.layoutWidth(FILL_PARENT);
-        menu_box.addChild({
-            auto w = main_menu.getWidget();
-            w.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
-            return w;
-        }());
+        menu_box.addChild(main_menu_widget);
         menu_box.addChild(synchronous_window_rect);
         menu_box.addChild(view_module_grid);
 
         root_box = new VerticalLayout;
         root_box.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
         window.mainWidget = root_box;
+        window.mainWidget.fontSize = 10;
 
         root_box.addChild(menu_box);
         root_box.addChild(view_box = new VerticalLayout);
         view_box.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
+
+        /* root_box.keyToAction = delegate Action(Widget source, uint keyCode, uint flags) {
+            return main_menu_widget.findKeyAction(keyCode, flags);
+        }; */
+
+        root_box.keyEvent = delegate bool(Widget source, KeyEvent event) {
+
+            if (event.action != KeyAction.KeyUp)
+            {
+                return true;
+            }
+
+            writeln("key ", event.keyCode, " ", event.flags);
+
+            Action cb_a;
+            bool delegate(Action a) cb;
+
+            foreach (ActionPair ap; action_pair_list)
+            {
+                if (ap.action.checkAccelerator(event.keyCode, event.flags))
+                {
+                    cb = ap.callback;
+                    cb_a = ap.action;
+                    break;
+                }
+            }
+
+            if (cb is null && action_pair_list_special !is null)
+            {
+                foreach (ActionPair ap; action_pair_list_special)
+                {
+                    if (ap.action.checkAccelerator(event.keyCode, event.flags))
+                    {
+                        cb = ap.callback;
+                        cb_a = ap.action;
+                        break;
+                    }
+                }
+            }
+
+            if (cb is null)
+            {
+                return true;
+            }
+
+            cb(cb_a);
+
+            return true;
+        };
 
         if (apply_setup)
         {
@@ -478,7 +537,11 @@ class ViewWindow
             return mc[1];
         }
 
-        auto res = mc[0].loadData(setup.project, setup.filename);
+        auto module_controller = mc[0];
+
+        module_controller.setViewWindow(this);
+
+        auto res = module_controller.loadData(setup.project, setup.filename);
         if (res !is null)
         {
             window.showMessageBox(UIString.fromRaw("Couldn't load file contents"),
@@ -486,7 +549,7 @@ class ViewWindow
             // NOTE: this should not return with error
         }
 
-        auto smc = setModuleController(mc[0]);
+        auto smc = setModuleController(module_controller);
         if (smc !is null)
         {
             return smc;
@@ -538,7 +601,9 @@ class ViewWindow
         view_box.addChild(view_widget);
         /* view_box.packStart(view_widget, true, true, 0); */
 
-        this.main_menu.setSpecialMenuItem(mc.getModInfo().name, mm_widget);
+        this.main_menu.setSpecialMenuItem(mm_widget);
+
+        action_pair_list_special = mm_res.getActionPairList();
 
         this.current_module_controller = mc;
 
