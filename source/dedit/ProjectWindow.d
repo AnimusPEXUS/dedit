@@ -153,12 +153,13 @@ class ProjectWindow
                 }
             }
 
-            controller.view_windows.listItems(delegate void(ViewWindow w) {
+            controller.view_windows.listItems(delegate bool(ViewWindow w) {
                 if (w.project == project)
                 {
                     w.keep_settings_on_window_close = true;
                     w.close();
                 }
+                return true;
             });
 
             auto i = controller.project_windows.length - controller.project_windows.find(this)

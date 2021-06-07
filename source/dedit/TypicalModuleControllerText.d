@@ -205,8 +205,10 @@ class MainMenu : ModuleControllerMainMenu
 
     TypicalModuleControllerText tmct;
 
-    private MenuItem mm;
-    private MenuItem mm_menu_format;
+    dlangui.widgets.menu.MainMenu menuBar;
+    MenuItem main_menu;
+
+    MenuItem mm_menu_format;
 
     ActionPair[] action_pair_list;
 
@@ -214,14 +216,17 @@ class MainMenu : ModuleControllerMainMenu
     {
         this.tmct = tmct;
 
-        mm = new MenuItem(new Action(0, to!dstring({
-                    auto x = tmct.getModInfo();
-                    return x.menuName != "" ? x.menuName : x.name;
-                }())));
+        menuBar = new dlangui.widgets.menu.MainMenu;
+
+        main_menu = new MenuItem();
+
+        auto menu_dlang = new MenuItem(new Action(0, "Dlang"d));
+        main_menu.add(menu_dlang);
 
         ActionPair ap;
 
-        ap = ActionPair(new Action(0, "Format"d, null), delegate bool(const(Action) a) {
+        ap = ActionPair(new Action(0, "Format"d, null, KeyCode.KEY_F,
+                KeyFlag.Control | KeyFlag.Alt), delegate bool(const(Action) a) {
             debug
             {
                 writeln("onMenuItemClick Format");
@@ -242,7 +247,9 @@ class MainMenu : ModuleControllerMainMenu
         mm_menu_format = new MenuItem(ap.action);
         mm_menu_format.menuItemAction = ap.callback;
 
-        mm.add(mm_menu_format);
+        menu_dlang.add(mm_menu_format);
+
+        menuBar.menuItems = main_menu;
     }
 
     TypicalModuleControllerText getModuleController()
@@ -250,25 +257,15 @@ class MainMenu : ModuleControllerMainMenu
         return tmct;
     }
 
-    MenuItem getWidget()
+    dlangui.widgets.menu.MainMenu getWidget()
     {
-        return mm;
+        return menuBar;
     }
 
     ActionPair[] getActionPairList()
     {
         return action_pair_list;
     }
-
-    /* void onMIFormatActivate(MenuItem mi)
-    {
-
-        auto s = this.tmct.getView().getSettings();
-        (cast(Buffer)(this.tmct.getBuffer())).format();
-        this.tmct.getView().setSettings(s);
-
-    } */
-
 }
 
 class View : ModuleControllerView
@@ -297,6 +294,17 @@ class View : ModuleControllerView
 
         sv = new SourceEdit();
         sv.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
+        sv.keyEvent = delegate bool(Widget source, KeyEvent event) {
+
+            if (tmct.window.haveKeyEventBinding(event))
+            {
+                /* writeln("tmct.window.haveKeyEventBinding(event) == true"); */
+                tmct.window.triggerKeyEventBinding(event);
+                return true;
+            }
+
+            return false;
+        };
         layout.addChild(sv);
         if (tmct.settings.applyLanguageSettingsToSourceView !is null)
         {
@@ -341,7 +349,6 @@ class View : ModuleControllerView
     void outlineToolUserWishesToRefreshData()
     {
         OutlineToolInputData* delegate(string txt) tt;
-
         try
         {
             tt = this.tmct.settings.prepareDataForOutlineTool;
@@ -386,8 +393,7 @@ class ViewSettings
     JSONValue toJSONValue()
     {
         /* JSONValue ret = JSONValue(cast(JSONValue[string]) null); */
-        JSONValue ret = JSONValue();
-        /* ret["cursor_line"] = JSONValue(cursor_line);
+        JSONValue ret = JSONValue(); /* ret["cursor_line"] = JSONValue(cursor_line);
         ret["cursor_column"] = JSONValue(cursor_column);
         ret["scroll_position"] = JSONValue(scroll_position);
         ret["right_paned_position"] = JSONValue(right_paned_position); */

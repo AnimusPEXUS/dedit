@@ -493,10 +493,11 @@ class Controller
                 c.close();
             }
 
-            view_windows.listItems(delegate void(ViewWindow w) {
+            view_windows.listItems(delegate bool(ViewWindow w) {
                 w.keep_settings_on_window_close = true;
                 w.saveSettings();
                 w.close();
+                return true;
             });
 
             foreach (i, ref c; project_windows)
@@ -638,6 +639,55 @@ class Controller
         }
 
         return cast(Exception) null;
+    }
+
+    void navigateViewWindowDirection(bool next)
+    {
+        if (view_windows.length() < 2)
+        {
+            return;
+        }
+
+        for (int i = 0; i != view_windows.length(); i++)
+        {
+            auto w = view_windows.get(i);
+            if (w.window_is_active)
+            {
+                int j;
+                if (next)
+                {
+                    j = i + 1;
+                }
+                else
+                {
+                    j = i - 1;
+                }
+
+                if (j < 0)
+                {
+                    writeln(j, " < 0");
+                    j = cast(int)(view_windows.length()) - 1;
+                }
+                if (j >= view_windows.length())
+                {
+                    writeln(j, " >= ", view_windows.length());
+                    j = 0;
+                }
+                auto w2 = view_windows.get(j);
+                w2.activateWindow();
+                break;
+            }
+        }
+    }
+
+    void navigateViewWindowPrev()
+    {
+        return navigateViewWindowDirection(false);
+    }
+
+    void navigateViewWindowNext()
+    {
+        return navigateViewWindowDirection(true);
     }
 
 }

@@ -93,11 +93,12 @@ const dedit.toolwidgetinterface.ToolWidgetInformation ToolProjectViewsWidgetInfo
         void reLoadList()
         {
             dstring[] complete_list;
-            controller.view_windows.listItems(delegate void(ViewWindow w) {
+            controller.view_windows.listItems(delegate bool(ViewWindow w) {
                 if (w.project == project)
                 {
                     complete_list ~= to!dstring(w.filename);
                 }
+                return true;
             });
             debug
             {
@@ -146,8 +147,19 @@ const dedit.toolwidgetinterface.ToolWidgetInformation ToolProjectViewsWidgetInfo
         {
             debug
             {
-                writeln("itemClick");
+                writeln("itemClick ", list_adapter.items[itemIndex]);
             }
+
+            auto lis = to!string(list_adapter.items[itemIndex]);
+
+            controller.view_windows.listItems(delegate bool(ViewWindow w) {
+                if (w.project == project && w.filename == lis)
+                {
+                    w.activateWindow();
+                    return false;
+                }
+                return true;
+            });
             return true;
         }
 

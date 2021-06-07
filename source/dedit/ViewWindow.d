@@ -5,6 +5,7 @@ import std.path;
 import std.algorithm;
 import std.json;
 import std.uuid;
+import std.typecons;
 
 import dlangui;
 
@@ -109,6 +110,8 @@ class ViewWindow
     VerticalLayout root_box;
     VerticalLayout view_box;
 
+    HorizontalLayout menu_box2;
+
     TextWidget view_module_project;
     TextWidget view_module_filename;
 
@@ -161,7 +164,8 @@ class ViewWindow
         view_module_grid.colCount(2);
 
         synchronous_window_rect = new CheckBox;
-        synchronous_window_rect.text = "Synchronize Project Views Movements"d;
+        synchronous_window_rect.text = "SPVM"d;
+        synchronous_window_rect.tooltipText = "Synchronize Project Views Movements"d;
 
         view_module_grid.addChild(new TextWidget().text("project:"d).fontSize(9));
         view_module_grid.addChild(view_module_project = new TextWidget());
@@ -174,12 +178,19 @@ class ViewWindow
 
         main_menu = new ViewWindowMainMenu(this);
         main_menu_widget = main_menu.getWidget();
-        main_menu_widget.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
+        /* main_menu_widget.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT); */
         action_pair_list = main_menu.getActionPairList();
+
+        menu_box2 = new HorizontalLayout;
+        /* menu_box2.layoutWidth(FILL_PARENT); */
+
+        /* menu_box2.addChild(); */
 
         auto menu_box = new HorizontalLayout;
         menu_box.layoutWidth(FILL_PARENT);
+
         menu_box.addChild(main_menu_widget);
+        menu_box.addChild(menu_box2);
         menu_box.addChild(synchronous_window_rect);
         menu_box.addChild(view_module_grid);
 
@@ -197,48 +208,7 @@ class ViewWindow
         }; */
 
         root_box.keyEvent = delegate bool(Widget source, KeyEvent event) {
-
-            if (event.action != KeyAction.KeyUp)
-            {
-                return true;
-            }
-
-            writeln("key ", event.keyCode, " ", event.flags);
-
-            Action cb_a;
-            bool delegate(Action a) cb;
-
-            foreach (ActionPair ap; action_pair_list)
-            {
-                if (ap.action.checkAccelerator(event.keyCode, event.flags))
-                {
-                    cb = ap.callback;
-                    cb_a = ap.action;
-                    break;
-                }
-            }
-
-            if (cb is null && action_pair_list_special !is null)
-            {
-                foreach (ActionPair ap; action_pair_list_special)
-                {
-                    if (ap.action.checkAccelerator(event.keyCode, event.flags))
-                    {
-                        cb = ap.callback;
-                        cb_a = ap.action;
-                        break;
-                    }
-                }
-            }
-
-            if (cb is null)
-            {
-                return true;
-            }
-
-            cb(cb_a);
-
-            return true;
+            return triggerKeyEventBinding(event);
         };
 
         if (apply_setup)
@@ -272,6 +242,72 @@ class ViewWindow
         writeln("ViewWindow destroyed");
     }
 
+    bool haveKeyEventBinding(KeyEvent event)
+    {
+        return findKeyEventBinding(event)[0];
+    }
+
+    Tuple!(bool, Action, bool delegate(Action a)) findKeyEventBinding(KeyEvent event)
+    {
+
+        Action cb_a;
+        bool delegate(Action a) cb;
+
+        foreach (ActionPair ap; action_pair_list)
+        {
+            if (ap.action.checkAccelerator(event.keyCode, event.flags))
+            {
+                cb = ap.callback;
+                cb_a = ap.action;
+                break;
+            }
+        }
+
+        if (cb is null && action_pair_list_special !is null)
+        {
+            foreach (ActionPair ap; action_pair_list_special)
+            {
+                if (ap.action.checkAccelerator(event.keyCode, event.flags))
+                {
+                    cb = ap.callback;
+                    cb_a = ap.action;
+                    break;
+                }
+            }
+        }
+
+        if (cb is null)
+        {
+            return tuple(false, cast(Action) null, cast(bool delegate(Action a)) null);
+        }
+
+        return tuple(true, cb_a, cb);
+    }
+
+    bool triggerKeyEventBinding(KeyEvent event)
+    {
+        /* if (source != root_box)
+        {
+            writeln("source != root_box");
+        } */
+
+        if (event.action != KeyAction.KeyUp)
+        {
+            return true;
+        }
+
+        writeln("key ", event.keyCode, " ", event.flags);
+
+        auto res = findKeyEventBinding(event);
+
+        if (res[0] == false)
+        {
+            return true;
+        }
+
+        return res[2](res[1]);
+    }
+
     private void projectOrFilenameUpdated()
     {
         if (window !is null)
@@ -300,20 +336,16 @@ class ViewWindow
             return true;
         }
 
-        controller.view_windows.listItems(delegate void(ViewWindow win) {
+        controller.view_windows.listItems(delegate bool(ViewWindow win) {
             if (win.window == window || win.project != project
                 || !win.synchronous_window_rect.checked)
             {
-                return;
+                return true;
             }
-
-            /* debug
-                {
-                    writeln(win.filename, " : resizing and moving window: ", win.filename);
-                } */
 
             win.window.moveAndResizeWindow(rect);
 
+            return true;
         });
         return true;
     }
@@ -564,14 +596,11 @@ class ViewWindow
     {
         if (current_module_controller !is null)
         {
-            auto mm = current_module_controller.getMainMenu();
-
-            /* mm.uninstallAccelerators(this.accel_group); */
-
-            main_menu.removeSpecialMenuItem();
             current_module_controller.destroy();
             current_module_controller = null;
         }
+        menu_box2.removeAllChildren();
+        action_pair_list_special = [];
         view_box.removeAllChildren();
     }
 
@@ -601,12 +630,21 @@ class ViewWindow
         view_box.addChild(view_widget);
         /* view_box.packStart(view_widget, true, true, 0); */
 
-        this.main_menu.setSpecialMenuItem(mm_widget);
+        menu_box2.addChild(mm_widget);
 
         action_pair_list_special = mm_res.getActionPairList();
 
         this.current_module_controller = mc;
 
         return null;
+    }
+
+    void activateWindow()
+    {
+        controller.view_windows.listItems(delegate bool(ViewWindow w) {
+            w.window_is_active = w == this;
+            return true;
+        });
+        window.activateWindow();
     }
 }

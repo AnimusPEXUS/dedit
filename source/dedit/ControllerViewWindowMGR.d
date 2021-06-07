@@ -29,6 +29,16 @@ class ControllerViewWindowMGR
         return null;
     }
 
+    ViewWindow get(size_t index)
+    {
+        return list[index];
+    }
+
+    size_t length()
+    {
+        return list.length;
+    }
+
     bool isIn(ViewWindow vw)
     {
         return isIn(vw.project, vw.filename);
@@ -82,11 +92,14 @@ class ControllerViewWindowMGR
         }
     }
 
-    void listItems(void delegate(ViewWindow win) l)
+    void listItems(bool delegate(ViewWindow win) l)
     {
         foreach (size_t i, ref ViewWindow w; list)
         {
-            l(w);
+            if (!l(w))
+            {
+                break;
+            }
         }
     }
 

@@ -44,7 +44,7 @@ interface ModuleControllerMainMenu
 {
     ModuleController getModuleController();
 
-    MenuItem getWidget();
+    MainMenu getWidget();
     ActionPair[] getActionPairList();
 }
 
