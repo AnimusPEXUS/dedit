@@ -220,7 +220,7 @@ class MainMenu : ModuleControllerMainMenu
 
         main_menu = new MenuItem();
 
-        auto menu_dlang = new MenuItem(new Action(0, "Dlang"d));
+        auto menu_dlang = new MenuItem(new Action(0, to!dstring(tmct.getModInfo().name)));
         main_menu.add(menu_dlang);
 
         ActionPair ap;
@@ -292,6 +292,8 @@ class View : ModuleControllerView
         layout = new HorizontalLayout;
         layout.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
 
+        auto outline = new OutlineTool(tmct);
+
         sv = new SourceEdit();
         sv.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
         sv.keyEvent = delegate bool(Widget source, KeyEvent event) {
@@ -318,6 +320,12 @@ class View : ModuleControllerView
         auto sb = (cast(Buffer)(this.tmct.getBuffer())).getSourceBuffer();
         /* this.tmct.settings.applyLanguageSettingsToSourceBuffer(sb); */
         sv.content = sb;
+
+        auto resizer = new ResizerWidget;
+        layout.addChild(resizer);
+        auto ow = outline.getWidget();
+        ow.layoutHeight(FILL_PARENT);
+        layout.addChild(ow);
     }
 
     TypicalModuleControllerText getModuleController()

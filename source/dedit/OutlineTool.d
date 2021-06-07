@@ -1,8 +1,15 @@
 module dedit.OutlineTool;
 
 import std.stdio;
+import std.typecons;
+import std.json;
 
 import dlangui;
+
+import dutils.dlanguiutils.StringGridWidgetWithTools;
+
+import dedit.Controller;
+import dedit.TypicalModuleControllerText;
 
 struct OutlineToolInputDataUnit
 {
@@ -16,89 +23,61 @@ struct OutlineToolInputData
     OutlineToolInputDataUnit*[] data;
 }
 
-struct OutlineToolOptions
+/* struct OutlineToolOptions
 {
     void delegate(int new_line_number) userWishesToGoToLine;
     void delegate() userWishesToRefreshData;
-}
+} */
 
 class OutlineTool
 {
 
-    OutlineToolOptions* options;
+    TypicalModuleControllerText tmct;
 
     VerticalLayout mainBox;
-    /* Box mainBox; */
 
-    /* ScrolledWindow sw; */
-    /* TreeView tw; */
-    /* ListStore tw_ls; */
-
-    this(OutlineToolOptions* options)
+    this(TypicalModuleControllerText tmct)
     {
 
-        this.options = options;
-
         mainBox = new VerticalLayout;
-        /*
-        sw = new ScrolledWindow();
-        sw.setOverlayScrolling(false);
 
-        tw = new TreeView();
-        sw.add(tw);
+        auto tool_bar = new ToolBar;
 
-        tw_ls = new ListStore(cast(GType[])[GType.UINT, GType.STRING]);
+        auto button_referesh = new ImageButton(new Action(0, "refresh", null));
 
-        mainBox = new Box(GtkOrientation.VERTICAL, 0);
+        tool_bar.addChild(button_referesh);
 
-        auto button_refresh = new Button("refresh");
-        button_refresh.addOnClicked(&buttonRefreshClicked);
+        auto grid = new StringGridWidgetWithTools("GRID1");
+        grid.layoutWidth(FILL_PARENT).layoutHeight(FILL_PARENT);
+        grid.rowSelect = true;
+        grid.headerCols = 0;
+        grid.fixedCols = 0;
+        grid.fixedRows = 0;
+        grid.cols = 2;
+        grid.rows = 0;
+        grid.setColTitle(0, "Line");
+        grid.setColTitle(1, "Entity");
+        /* grid.cellSelected = &onCellSelected; */
+        /* grid.cellActivated = &onCellActivated; */
 
-        mainBox.packStart(button_refresh, false, true, 0);
-        mainBox.packStart(sw, true, true, 0);
+        mainBox.addChild(tool_bar);
+        mainBox.addChild(grid);
+        /* Box mainBox; */
 
-        tw.setModel(tw_ls);
+        /* ScrolledWindow sw; */
+        /* TreeView tw; */
+        /* ListStore tw_ls; */
 
-        setupTableColumns(tw); */
     }
 
     private void buttonRefreshClicked(Button b)
     {
 
-        /* if (options.userWishesToRefreshData !is null)
-        {
-            debug
-            {
-                writeln("refresh button clicked");
-            }
-            options.userWishesToRefreshData();
-        } */
-
     }
-
-    /* private void setupTableColumns(TreeView tw)
-    {
-        /* {
-            auto rend = new CellRendererText();
-            // rend.setProperty("ellipsize", PangoEllipsizeMode.START);
-            auto col = new TreeViewColumn("line", rend, "text", 0);
-            // this.fileNameTreeViewColumn = col;
-            // col.setResizable(true);
-            tw.insertColumn(col, 0);
-        }
-
-        {
-            auto rend = new CellRendererText();
-            rend.setProperty("ellipsize", PangoEllipsizeMode.END);
-            auto col = new TreeViewColumn("contents", rend, "text", 1);
-            // col.setResizable(true);
-            tw.insertColumn(col, 1);
-        } * /
-    } */
 
     void close()
     {
-        /* mainBox.destroy(); */
+
     }
 
     Widget getWidget()
@@ -108,99 +87,19 @@ class OutlineTool
 
     void setData(OutlineToolInputData* data)
     {
-        /* assert(data !is null);
-        // assert(data.data !is null);
-
-        foreach (size_t k, OutlineToolInputDataUnit* v; data.data)
-        {
-            bool found = false;
-
-            TreeIter iter = new TreeIter;
-            bool ok = tw_ls.getIterFirst(iter);
-
-            while (ok)
-            {
-                Value val = tw_ls.getValue(iter, 0);
-                auto line_num = val.getUint();
-
-                val = tw_ls.getValue(iter, 1);
-                auto line_text = val.getString();
-
-                if (line_num == v.line && line_text == v.text)
-                {
-                    found = true;
-                    break;
-                }
-                ok = tw_ls.iterNext(iter);
-            }
-
-            if (!found)
-            {
-                iter = new TreeIter;
-                tw_ls.append(iter);
-                tw_ls.setValue(iter, 0, v.line);
-                tw_ls.setValue(iter, 1, v.text);
-            }
-        }
-
-        {
-            TreeIter iter = new TreeIter;
-            bool ok = tw_ls.getIterFirst(iter);
-
-            while (ok)
-            {
-                Value val = tw_ls.getValue(iter, 0);
-                auto line_num = val.getUint();
-
-                val = tw_ls.getValue(iter, 1);
-                auto line_text = val.getString();
-
-                bool found = false;
-
-                foreach (size_t k, OutlineToolInputDataUnit* v; data.data)
-                {
-                    if (line_num == v.line && line_text == v.text)
-                    {
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found)
-                {
-                    ok = tw_ls.remove(iter);
-                }
-                else
-                {
-                    ok = tw_ls.iterNext(iter);
-                }
-
-            }
-        } */
 
     }
 
-    string getSettings()
+    Tuple!(JSONValue, Exception) getSettings()
     {
-        /*auto x = new OutlineToolSettings();
-        x.scroll_position = (cast(Scrollbar)(sw.getVscrollbar())).getValue();
-        auto y = x.toJSONValue();
-        return y.toJSON();*/
-        return "";
+        auto ret = JSONValue(cast(JSONValue[string]) null);
+
+        return tuple(ret, cast(Exception) null);
     }
 
-    void setSettings(string value)
+    Exception setSettings(JSONValue v)
     {
-
-        /*
-        new Idle(delegate bool() {
-
-            auto x = new OutlineToolSettings(value);
-            (cast(Scrollbar)(sw.getVscrollbar())).setValue(x.scroll_position);
-
-            return false;
-        });*/
-
+        return cast(Exception) null;
     }
 
 }

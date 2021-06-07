@@ -191,6 +191,9 @@ class ViewWindow
 
         menu_box.addChild(main_menu_widget);
         menu_box.addChild(menu_box2);
+        auto x = new HSpacer;
+        x.layoutWidth(FILL_PARENT);
+        menu_box.addChild(x);
         menu_box.addChild(synchronous_window_rect);
         menu_box.addChild(view_module_grid);
 
